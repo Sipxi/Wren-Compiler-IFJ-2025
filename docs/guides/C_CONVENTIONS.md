@@ -43,6 +43,12 @@
 
 ---
 
+## ВАЖНО! ВЗЯТО ИЗ ДОКУМЕНТАЦИИ
+```
+Úvod všech zdrojových textů musí obsahovat zakomentovaný název projektu, přihlašovací jména
+a jména studujících, kteří/které se na daném souboru skutečně autorsky podíleli/y.
+```
+
 ## 📏 Форматирование
 
 * **Отступы**: 4 пробела, без табов.
@@ -71,7 +77,12 @@
 
 ## 🗂️ Файлы и модули
 
-* Один `.c` + `.h` на модуль.
+* **Один заголовочный файл = один исходный файл**
+   - `lexer.h` ↔ `lexer.c`
+   - `parser.h` ↔ `parser.c`
+* **Понятные имена файлов**
+   - `lexer.c` вместо `lex.c`
+   - `semantic.c` вместо `sem.c`
 * Имена файлов: `snake_case.c`, `snake_case.h`
 * **Защита заголовков** (или `#pragma once`):
 
@@ -94,6 +105,11 @@
   #include <stdio.h>
   #include <stdlib.h>
   ```
+
+## ❌ Плохие практики:
+- Весь код в одном файле
+- Непонятные имена (`a.c`, `temp.c`)
+- Смешивание логики разных модулей
 
 ---
 
@@ -137,3 +153,6 @@
 * Форматировать код перед пушем.
 * Компиляторные предупреждения: собирать с `-Wall -Wextra -Werror`.
 
+
+---
+*@Sipxi Последнее обновление: 12:47 AM 9/21/2025*
