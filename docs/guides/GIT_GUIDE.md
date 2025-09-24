@@ -21,7 +21,7 @@ git pull                  # подтянуть последние изменен
 git checkout -b имя/ветки # создать новую ветку и перейти в неё
 git add .                 # добавить все изменения в коммит
 git commit -m "msg"       # сохранить изменения (коммит)
-git push origin ветка     # отправить ветку на GitHub
+git push -u origin ветка     # отправить ветку на GitHub
 git status                # показать текущее состояние
 git log                   # показать историю коммитов
 ````
@@ -151,7 +151,7 @@ git branch
 4. Отправляем свою ветку на GitHub:
 
    ```bash
-   git push origin sipxi/lexer
+   git push -u origin sipxi/lexer
    ```
 
 ---
@@ -187,7 +187,7 @@ git branch -d sipxi/lexer
 ### 2. Удаляем удалённую ветку на GitHub
 
 ```bash
-git push origin --delete sipxi/lexer
+git push -u origin --delete sipxi/lexer
 ```
 
 * Это удалит ветку с GitHub, чтобы её там не оставалось
@@ -204,7 +204,7 @@ git branch -d <имя ветки>
 3. Удалить удалённую ветку:
 
 ```bash
-git push origin --delete <имя ветки>
+git push -u origin --delete <имя ветки>
 ```
 
 
@@ -236,7 +236,7 @@ git push origin --delete <имя ветки>
    * Пишет код
    * Делает `git add .`
    * Делает `git commit -m "реализовал числа"`
-   * Делает `git push`
+   * Делает `git push` (` git push -u origin ветка`)
 
 3. Вечером:
 
