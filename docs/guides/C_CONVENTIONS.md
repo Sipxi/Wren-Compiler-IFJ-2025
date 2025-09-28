@@ -50,6 +50,14 @@
 ```
 Úvod všech zdrojových textů musí obsahovat zakomentovaný název projektu, přihlašovací jména
 a jména studujících, kteří/které se na daném souboru skutečně autorsky podíleli/y.
+
+
+style:
+
+/**
+* Last edited by: Misha
+* 
+*/
 ```
 
 ## 📏 Форматирование
