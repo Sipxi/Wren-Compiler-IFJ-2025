@@ -43,7 +43,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         // This is a simplified example for multi-character tokens
         else if (is_letter(current_char)) {
 
-            int index = 1;
+            int index = 0;
             while (is_letter(current_char) || (current_char == '_') || is_digit(current_char)) {
                 index++;
                 current_char = fgetc(file);
@@ -85,5 +85,3 @@ bool write_str(FILE *file, int count, char **str){
 
     return true;
 }
-
-

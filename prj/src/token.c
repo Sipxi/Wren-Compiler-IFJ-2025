@@ -15,6 +15,7 @@ Token *token_init() {
     token->type = TOKEN_NULL;
     token->line = 0; // Start at line 0
     return token;
+    
 }
 
 void token_free(Token *token) {
@@ -24,4 +25,5 @@ void token_free(Token *token) {
 
     free(token->data);
     free(token);
+    //hello
 }
