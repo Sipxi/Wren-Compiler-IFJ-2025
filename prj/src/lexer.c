@@ -85,5 +85,3 @@ bool write_str(FILE *file, int count, char **str){
 
     return true;
 }
-
-
