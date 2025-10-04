@@ -24,4 +24,5 @@ void token_free(Token *token) {
 
     free(token->data);
     free(token);
+    //hello
 }
