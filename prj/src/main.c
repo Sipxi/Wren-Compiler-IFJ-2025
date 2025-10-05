@@ -3,12 +3,16 @@
 #include "lexer.h"
 
 int main() {
+
     FILE *file = fopen("example.wren", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return 1;
     }
+
     Lexer *lexer = lexer_init();
+
+
     if (lexer == NULL) {
         fprintf(stderr, "Error initializing lexer.\n");
         fclose(file);
