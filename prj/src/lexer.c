@@ -63,7 +63,6 @@ char peek_char(FILE *file) {
     return (char)character;
 }
 
-
 char peek_next_char(FILE *file) {
     int character = fgetc(file);
     int next_character = fgetc(file);
@@ -72,7 +71,6 @@ char peek_next_char(FILE *file) {
     return (char)next_character;
 }
 
-// TODO исправить это говно
 //? @Sipxi Нам действительно нужен двойной указатель?
 //? Не можем ли мы сделать realloc *temp а затем просто *str = *temp?
 bool write_str(FILE *file, int count, char **str) {
@@ -102,10 +100,10 @@ bool write_str(FILE *file, int count, char **str) {
 
 char lexer_consume_char(Lexer *lexer, FILE *file) {
     // Увеличить позицию лексера
-    lexer->position++;
     // Читать следующий символ из файла
+    lexer->position++;
     char character = fgetc(file);
-    // Обновить текущий токен лексера
+
     return character;
 }
 
@@ -117,8 +115,10 @@ void set_single_token(Lexer *lexer, TokenType type, const char data) {
 }
 
 void read_identifier(Lexer *lexer, FILE *file, char current_char) {
+    // В начале ещё ничего не прочитано
     int characters_read = 0;
 
+    // Мы знаем, что первый символ является буквой
     while (is_letter(current_char) || (current_char == '_') ||
            is_digit(current_char)) {
         current_char = lexer_consume_char(lexer, file);
@@ -135,11 +135,12 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
 }
 
 void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
+    // Первый символ является '_', можно читать дальше
     current_char = lexer_consume_char(lexer, file);
     int characters_read = 1;
-    // Прочитать следующий символ
-    char next_characters[2];
 
+    char next_characters[2];
+    // Проверить следующие два символа
     next_characters[0] = peek_char(file);
     next_characters[1] = peek_next_char(file);
     if (next_characters[0] != '_' || (is_letter(next_characters[1]) == false)) {
@@ -150,19 +151,17 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
            is_digit(current_char)) {
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
-        // Обновить позицию лексера
     }
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
     ungetc(current_char, file);
     // Уменьшить счетчик, так как последний символ не принадлежит идентифик
     characters_read--;
 
-    // Set token type, line number, and data
     lexer->current_token->type = TOKEN_GLOBAL_IDENTIFIER;
     lexer->current_token->line = lexer->line;
 
     // Переместить указатель файла назад к последнему прочитанному символу
-    write_str(file, characters_read, &lexer->current_token->data);  // TODO исправить это говно
+    write_str(file, characters_read, &lexer->current_token->data);
 }
 
 /*
@@ -178,37 +177,49 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
 Token get_next_token(Lexer *lexer, FILE *file) {
     // Просмотреть текущий символ в файле без его удаления из потока
     char current_char = peek_char(file);
+
     // Читать символы из файла до EOF или нахождения токена
     while (current_char != EOF) {
+
         /* Обработка обычных идентификаторов (слова, начинающиеся с буквы) */
         if (is_letter(current_char)) {
             read_identifier(lexer, file, current_char);
+
         /* Проверить, является ли идентификатор ключевым словом */
             if (is_keyword(lexer->current_token->data)){
                 lexer->current_token->type = TOKEN_KEYWORD;
             }
             return *lexer->current_token;
+
         /* Обработка глобальных идентификаторов (слова, начинающиеся с _) */
         } else if (current_char == '_') {
-            // Прочитать глобальный идентификатор
             read_global_identifier(lexer, file, current_char);
             return *lexer->current_token;
+
         /* Обработка конца строки */
         } else if (current_char == '\n') {
             current_char = lexer_consume_char(lexer, file);
             set_single_token(lexer, TOKEN_EOL, current_char);
 
-            // Обновить номер строки и позицию
+            // Обновить номер строки и позицию после обработки конца строки
             lexer->line++;
             lexer->position = 1;
             return *lexer->current_token;
         }
+
         /* Обработка пробелов и табуляций */
         else if (is_whitespace(current_char)) {
             current_char = lexer_consume_char(lexer, file);
             set_single_token(lexer, TOKEN_WHITESPACE, current_char);
             return *lexer->current_token;
         }
+        /* Обработка точки */
+        else if (current_char == '.') {
+            current_char = lexer_consume_char(lexer, file);
+            set_single_token(lexer, TOKEN_DOT, current_char);
+            return *lexer->current_token;
+        }
+
         /* Временное решение для неизвестных символов */
         else{
             current_char = lexer_consume_char(lexer, file);
