@@ -61,11 +61,15 @@ bool write_str(FILE *file, int count, char **str) {
     // Переместить указатель файла назад к последней прочитанной последовательности символов
     fseek(file, -1 * count, SEEK_CUR);
 
-    // Перевыделить новую память
-    if (realloc(*str, count + 1) == NULL) {
+    // Выделить или перераспределить память для строки
+    // +1 для нулевого терминатора
+    // фикс от копайлота
+    char *temp = realloc(*str, count + 1);
+    if (temp == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return false;
     }
+    *str = temp;
 
     // Заполнить новую память символами из файла
     // Мы знаем точно, сколько нам нужно
@@ -88,9 +92,8 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
         // Обновить позицию лексера
         lexer->position++;
     }
-    // Set token type, line number, and data
+    // Set token type
     lexer->current_token->type = TOKEN_IDENTIFIER;
-    lexer->current_token->line = lexer->line;
 
     // Переместить указатель файла назад к последнему прочитанному символу
     write_str(file, characters_read, &lexer->current_token->data);  // TODO исправить это говно
@@ -104,6 +107,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
     // Прочитать следующий символ
     current_char = fgetc(file);
     characters_read++;
+    lexer->position++;
     if (current_char != '_'){
         raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid global identifier");
     }
@@ -135,7 +139,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             // Установить тип токена, номер строки и данные
             lexer->current_token->type = TOKEN_INT;
             
-            lexer->current_token->line = lexer->line;
             lexer->current_token->data[0] = current_char;
             // Не забывайте о нулевом терминаторе строки
             lexer->current_token->data[1] = '\0';
@@ -170,7 +173,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         /* Временное решение для неизвестных символов */
         else{
             lexer->current_token->type = TOKEN_NULL;
-            lexer->current_token->line = lexer->line;
             lexer->current_token->data[0] = current_char;
             lexer->current_token->data[1] = '\0';
             lexer->position++;
@@ -183,7 +185,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
     //! Например, что если у нас в файле будет неизвестный символ?
     lexer->position++;
     lexer->current_token->type = TOKEN_EOF;
-    lexer->current_token->line = lexer->line;
     lexer->current_token->data[0] = '\0'; 
     return *lexer->current_token;
 }
