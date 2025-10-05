@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.html": "html",
+        "token.h": "c",
+        "lexer.h": "c"
+    }
+}

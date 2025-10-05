@@ -1,15 +1,17 @@
 #include <stdio.h>
-
 #include "lexer.h"
-/*
-Основной файл который будет запускать сам проект пока что
+
+/* 
+Игровая площадка для тестирования чего угодно
+Пожалуйста, не удаляйте этот файл, он нам еще пригодится 
 Если хотите запустить этот файл:
 
-make run
+make test-pg
 */
 
+
 int main() {
-    //TODO - we need to change from file to stdin
+    printf("Hello, Lexer!\n");
     FILE *file = fopen("example.wren", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");

@@ -8,19 +8,32 @@ SRCDIR = src
 INCDIR = include
 OBJDIR = obj
 
-# Source files
-SOURCES = $(wildcard $(SRCDIR)/*.c)
-OBJECTS = $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+# Source files (excluding main.c and test.c - they have their own main functions)
+LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/test.c, $(wildcard $(SRCDIR)/*.c))
+LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-# Target executable
-TARGET = ifj_compiler
+# Main program files
+MAIN_SOURCE = $(SRCDIR)/main.c
+MAIN_OBJECT = $(OBJDIR)/main.o
 
-# Default target
-all: $(TARGET)
+# Test program files
+TEST_SOURCE = $(SRCDIR)/test.c
+TEST_OBJECT = $(OBJDIR)/test.o
 
-# Create target executable
-$(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $@
+# Target executables
+MAIN_TARGET = ifj_compiler
+TEST_TARGET = test_playground
+
+# Default target - compile everything
+all: $(MAIN_TARGET) $(TEST_TARGET)
+
+# Create main executable
+$(MAIN_TARGET): $(LIB_OBJECTS) $(MAIN_OBJECT)
+	$(CC) $^ -o $@
+
+# Create test executable
+$(TEST_TARGET): $(LIB_OBJECTS) $(TEST_OBJECT)
+	$(CC) $^ -o $@
 
 # Compile source files to object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
@@ -32,33 +45,15 @@ $(OBJDIR):
 
 # Clean build files
 clean:
-	rm -rf $(OBJDIR) $(TARGET)
+	rm -rf $(OBJDIR) $(MAIN_TARGET) $(TEST_TARGET)
 
-# Force rebuild
-rebuild: clean all
+# Run the main program
+run: $(MAIN_TARGET)
+	./$(MAIN_TARGET)
 
-# Run the program
-run: $(TARGET)
-	./$(TARGET)
-
-# Debug target with additional debugging flags
-debug: CFLAGS += -DDEBUG -O0
-debug: $(TARGET)
-
-# Release target with optimization
-release: CFLAGS += -O2 -DNDEBUG
-release: clean $(TARGET)
-
-# Show help
-help:
-	@echo "Available targets:"
-	@echo "  all      - Build the project (default)"
-	@echo "  clean    - Remove build files"
-	@echo "  rebuild  - Clean and build"
-	@echo "  run      - Build and run the program"
-	@echo "  debug    - Build with debug flags"
-	@echo "  release  - Build optimized release version"
-	@echo "  help     - Show this help message"
+# Run the test playground
+test-pg: $(TEST_TARGET)
+	./$(TEST_TARGET)
 
 # Phony targets
-.PHONY: all clean rebuild run debug release help
+.PHONY: all clean run test-pg
