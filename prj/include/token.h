@@ -4,9 +4,9 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-/*===== Token Structure and Functions =====*/
+/*===== Структура и функции токенов =====*/
 
-/* Enumeration of possible token types */
+/* Перечисление возможных типов токенов */
 typedef enum {
     TOKEN_NULL,
     TOKEN_STRING,
@@ -24,17 +24,18 @@ typedef enum {
     TOKEN_EOF,
     TOKEN_EOL,
     TOKEN_OPERATOR,
+    TOKEN_ASSIGN,
     TOKEN_BRACKET,
     TOKEN_COMMENT
 } TokenType;
 
 /**
- * Structure representing a token in the source code.
+ * Структура, представляющая токен в исходном коде.
  *
- * Fields:
- * - type: The type of the token (from the TokenType enumeration).
- * - data: Pointer to the string data of the token.
- * - line: The line number where the token was found.
+ * Поля:
+ * - type: Тип токена (из перечисления TokenType).
+ * - data: Указатель на строковые данные токена.
+ * - line: Номер строки, где был найден токен.
  */
 typedef struct {
     TokenType type;
@@ -43,19 +44,29 @@ typedef struct {
 } Token;
 
 /**
- * Initializes a Token structure.
- * This functions allocates memory for the data field
- * and sets the type and line number to default values.
+ * Инициализирует структуру Token.
+ * Эта функция выделяет память для поля данных
+ * и устанавливает тип и номер строки на значения по умолчанию.
  *
- * @return Pointer for the initialized Token structure.
+ * @return Указатель на инициализированную структуру Token.
  */
 Token *token_init();
 
 /**
- * Frees the memory allocated for the data field of a Token structure.
+ * Освобождает память, выделенную для поля данных структуры Token.
  *
- * @param token Pointer to the Token structure to free.
+ * @param token Указатель на структуру Token для освобождения.
  */
 void token_free(Token *token);
+
+/* === Вспомогательные функции === */
+
+/**
+ * Преобразует тип токена в строковое представление.
+ *
+ * @param type Тип токена (из перечисления TokenType).
+ * @return Строковое представление типа токена.
+ */
+char *token_type_to_string(TokenType type);
 
 #endif

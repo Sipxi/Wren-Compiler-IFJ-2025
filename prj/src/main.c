@@ -9,7 +9,7 @@ make run
 */
 
 int main() {
-    //TODO - we need to change from file to stdin
+    //TODO - нужно изменить с файла на stdin
     FILE *file = fopen("example.wren", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");

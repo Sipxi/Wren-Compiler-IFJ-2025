@@ -1,1 +1,1 @@
-var
+var kurwa = 1
