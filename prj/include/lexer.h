@@ -1,10 +1,11 @@
 #ifndef LEXER_H
 #define LEXER_H
 
+#include "token.h"
+#include "error.h"
 #include <stdbool.h>
 #include <stdio.h>
-
-#include "token.h"
+#include <string.h>
 
 /*===== Структура и функции лексера =====*/
 
@@ -96,5 +97,15 @@ bool write_str(FILE *file, int count, char **str);
  * @param current_char Текущий обрабатываемый символ.
  */
 void read_identifier(Lexer *lexer, FILE *file, char current_char);
+
+void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
+/**
+ * Проверяет, является ли текущий идентификатор ключевым словом.
+ * 
+ * Если да, то обновляет тип токена на соответствующий тип ключевого слова.
+ * @param lexer Указатель на структуру Lexer.
+ * @return true если текущий идентификатор является ключевым словом, иначе false
+ */
+bool is_keyword(const char *str);
 
 #endif
