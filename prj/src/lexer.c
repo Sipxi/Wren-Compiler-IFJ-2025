@@ -105,13 +105,7 @@ char lexer_consume_char(Lexer *lexer, FILE *file) {
     lexer->position++;
     // Читать следующий символ из файла
     char character = fgetc(file);
-    if (character == '\n') {
-        // Если символ новой строки, увеличить номер строки и сбросить позицию
-        lexer->line++;
-        lexer->position = 1;
-    }
     // Обновить текущий токен лексера
-    lexer->current_token->line = lexer->line;
     return character;
 }
 
@@ -136,6 +130,7 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
     characters_read--;
 
     lexer->current_token->type = TOKEN_IDENTIFIER;
+    lexer->current_token->line = lexer->line;
     write_str(file, characters_read, &lexer->current_token->data);  // TODO исправить это говно
 }
 
@@ -157,6 +152,11 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
         characters_read++;
         // Обновить позицию лексера
     }
+    // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
+    ungetc(current_char, file);
+    // Уменьшить счетчик, так как последний символ не принадлежит идентифик
+    characters_read--;
+
     // Set token type, line number, and data
     lexer->current_token->type = TOKEN_GLOBAL_IDENTIFIER;
     lexer->current_token->line = lexer->line;
@@ -165,7 +165,16 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
     write_str(file, characters_read, &lexer->current_token->data);  // TODO исправить это говно
 }
 
+/*
+ По сути я теперь сделал несколько функций, которые нам помогают
+ легко читать и обработать токены.
 
+ Посмотрите и поймите функции:
+ lexer_consume_char - читает следующий символ и обновляет позицию лексера
+ set_single_token - устанавливает токен с указанным типом и данными (один символ)
+ peek_char - просматривает следующий символ в файле без его удаления из потока
+ peek_next_char - просматривает символ после следующего в файле без его удаления из потока
+*/
 Token get_next_token(Lexer *lexer, FILE *file) {
     // Просмотреть текущий символ в файле без его удаления из потока
     char current_char = peek_char(file);
@@ -178,7 +187,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             if (is_keyword(lexer->current_token->data)){
                 lexer->current_token->type = TOKEN_KEYWORD;
             }
-
             return *lexer->current_token;
         /* Обработка глобальных идентификаторов (слова, начинающиеся с _) */
         } else if (current_char == '_') {
@@ -189,6 +197,10 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         } else if (current_char == '\n') {
             current_char = lexer_consume_char(lexer, file);
             set_single_token(lexer, TOKEN_EOL, current_char);
+
+            // Обновить номер строки и позицию
+            lexer->line++;
+            lexer->position = 1;
             return *lexer->current_token;
         }
         /* Обработка пробелов и табуляций */
