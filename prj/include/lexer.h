@@ -108,4 +108,39 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
  */
 bool is_keyword(const char *str);
 
+bool is_whitespace(const char character);
+/**
+ * Просматривает следующий символ в файле без его удаления из потока.
+ *
+ * @param file Указатель на файл для просмотра следующего символа.
+ * @return Следующий символ в файле.
+ */
+char peek_char(FILE *file);
+
+/**
+ * Просматривает символ после следующего в файле без его удаления из потока.
+ * 
+ * @param file Указатель на файл для просмотра символа после следующего.
+ * @return Символ после следующего в файле.
+ */
+char peek_next_char(FILE *file);
+
+/**
+ * Читает следующий символ из файла и обновляет позицию лексера.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл для чтения следующего символа.
+ * @return Прочитанный символ.
+ */
+char lexer_consume_char(Lexer *lexer, FILE *file);
+
+/**
+ * Устанавливает токен с указанным типом и данными.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param type Тип токена для установки.
+ * @param data Данные токена для установки (один символ).
+*/
+void set_single_token(Lexer *lexer, TokenType type, const char data);
+
 #endif
