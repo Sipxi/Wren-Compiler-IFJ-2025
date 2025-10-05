@@ -14,8 +14,8 @@ Lexer *lexer_init() {
         return NULL;
     }
     // Инициализировать позицию и номер строки
-    // Начать позицию с 0 и номер строки с 1
-    lexer->position = 0;
+    // Начать позицию с 1 и номер строки с 1
+    lexer->position = 1;
     lexer->line = 1;
     lexer->current_token = token_init();
 
@@ -60,6 +60,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         if (current_char == '1') {
             // Установить тип токена, номер строки и данные
             lexer->current_token->type = TOKEN_INT;
+            
             lexer->current_token->line = lexer->line;
             lexer->current_token->data[0] = current_char;
             // Не забывайте о нулевом терминаторе строки
