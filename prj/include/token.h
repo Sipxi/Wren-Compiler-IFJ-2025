@@ -3,6 +3,10 @@
 
 #include <stddef.h>
 #include <stdlib.h>
+
+/*===== Token Structure and Functions =====*/
+
+/* Enumeration of possible token types */
 typedef enum {
     TOKEN_NULL,
     TOKEN_STRING,
@@ -24,7 +28,14 @@ typedef enum {
     TOKEN_COMMENT
 } TokenType;
 
-
+/**
+ * Structure representing a token in the source code.
+ *
+ * Fields:
+ * - type: The type of the token (from the TokenType enumeration).
+ * - data: Pointer to the string data of the token.
+ * - line: The line number where the token was found.
+ */
 typedef struct {
     TokenType type;
     char *data;
@@ -33,16 +44,16 @@ typedef struct {
 
 /**
  * Initializes a Token structure.
- * This functions allocates memory for the data field 
+ * This functions allocates memory for the data field
  * and sets the type and line number to default values.
- * 
- * @param token Pointer to the Token structure to initialize.
- * @return 0 on success, -1 on failure (e.g., memory allocation failure).
+ *
+ * @return Pointer for the initialized Token structure.
  */
-Token *token_init(); 
+Token *token_init();
+
 /**
  * Frees the memory allocated for the data field of a Token structure.
- * 
+ *
  * @param token Pointer to the Token structure to free.
  */
 void token_free(Token *token);
