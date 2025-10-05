@@ -1,21 +1,20 @@
 #include "lexer.h"
 
 bool is_letter(char character) {
-    return (character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z');
+    return (character >= 'a' && character <= 'z') ||
+           (character >= 'A' && character <= 'Z');
 }
 
-bool is_digit(char character) {
-    return (character >= '0' && character <= '9');
-}
+bool is_digit(char character) { return (character >= '0' && character <= '9'); }
 
 Lexer *lexer_init() {
-    // Allocate memory for the Lexer structure
+    // Выделить память для структуры Lexer
     Lexer *lexer = (Lexer *)malloc(sizeof(Lexer));
     if (lexer == NULL) {
         return NULL;
     }
-    // Initialize position and line number
-    // Start position at 0 and line number at 1
+    // Инициализировать позицию и номер строки
+    // Начать позицию с 0 и номер строки с 1
     lexer->position = 0;
     lexer->line = 1;
     lexer->current_token = token_init();
@@ -23,78 +22,101 @@ Lexer *lexer_init() {
     return lexer;
 }
 
+void read_identifier(Lexer *lexer, FILE *file, char current_char) {
+    // Прочитать полный идентификатор
+    int index = 1;
+    while (is_letter(current_char) || (current_char == '_') ||
+           is_digit(current_char)) {
+        current_char = fgetc(file);
+        index++;
+        // Обновить позицию лексера
+        lexer->position++;
+    }
+    // Set token type, line number, and data
+    lexer->current_token->type = TOKEN_IDENTIFIER;
+    lexer->current_token->line = lexer->line;
+
+    // Переместить указатель файла назад к последнему прочитанному символу
+    write_str(file, index, &lexer->current_token->data);  // TODO исправить это говно
+}
+
 void lexer_free(Lexer *lexer) {
     if (lexer == NULL) {
         return;
     }
-
     token_free(lexer->current_token);
     free(lexer);
 }
 
+// @Sipxi Немного отрефакторил
+//! теперь возвращаем указатель на токен вместо break
 Token get_next_token(Lexer *lexer, FILE *file) {
     char current_char;
-    // Read characters from the file until EOF or a token is found
+    // Читать символы из файла до EOF или нахождения токена
     while ((current_char = fgetc(file)) != EOF) {
-
-        //* This is a simplified example for one-character tokens
-        //? @Sipxi I think we are not counting lexer->position correctly
-        //? @Sipxi How to identify EOF token?
+        //* Это упрощённый пример для односимвольных токенов
+        //? @Sipxi Я думаю мы неправильно считаем lexer->position
+        //? @Sipxi Как идентифицировать токен EOF?
         if (current_char == '1') {
-            // Set token type, line number, and data
+            // Установить тип токена, номер строки и данные
             lexer->current_token->type = TOKEN_INT;
-            lexer->current_token->line= lexer->line;
-            lexer->current_token->data[0] = current_char;
-            // Don't forget to null-terminate the string
-            lexer->current_token->data[1] = '\0';
-            break;
-        }
-        //* This is a simplified example for multi-character tokens
-        else if (is_letter(current_char)) {
-
-            // Read the full identifier
-            int index = 0;
-            while (is_letter(current_char) || (current_char == '_') || is_digit(current_char)) {
-                index++;
-                current_char = fgetc(file);
-                
-            }
-            // Update lexer position
-            lexer->position += index;
-            // Set token type, line number, and data
-            lexer->current_token->type = TOKEN_IDENTIFIER;
             lexer->current_token->line = lexer->line;
-
-            // Move the file pointer back to the last read character
-            write_str(file, index, &lexer->current_token->data); // TODO fix this shit 
-            break;
-
+            lexer->current_token->data[0] = current_char;
+            // Не забывайте о нулевом терминаторе строки
+            lexer->current_token->data[1] = '\0';
+            lexer->position++;
+            return *lexer->current_token;
         }
-        lexer->position++;
+        //* Это упрощённый пример для многосимвольных токенов
+        else if (is_letter(current_char)) {
+            read_identifier(lexer, file, current_char);
+            return *lexer->current_token;
+
+        } else if (current_char == ' ') {
+            lexer->current_token->type = TOKEN_WHITESPACE;
+            lexer->current_token->line = lexer->line;
+            lexer->current_token->data[0] = current_char;
+            lexer->current_token->data[1] = '\0';
+            lexer->position++;
+            return *lexer->current_token;
+        }
+        else if (current_char == '=') {
+            lexer->current_token->type = TOKEN_ASSIGN;
+            lexer->current_token->line = lexer->line;
+            lexer->current_token->data[0] = current_char;
+            lexer->current_token->data[1] = '\0';
+            lexer->position++;
+            return *lexer->current_token;
+        }
     }
-    
+
+    lexer->position++;
+    lexer->current_token->type = TOKEN_EOF;
+    lexer->current_token->line = lexer->line;
+    lexer->current_token->data[0] = '\0';  // Нет данных для токена EOF
     return *lexer->current_token;
 }
 
-// TODO fix this shit 
-//? @Sipxi Do we really need double pointer?
-//? Can't we make realloc *temp and then just *str = *temp instead?
-bool write_str(FILE *file, int count, char **str){
-    // Move the file pointer back to the last read sequence of characters
+// TODO исправить это говно
+//? @Sipxi Нам действительно нужен двойной указатель?
+//? Не можем ли мы сделать realloc *temp а затем просто *str = *temp?
+bool write_str(FILE *file, int count, char **str) {
+    // Переместить указатель файла назад к последней прочитанной последовательности символов
     fseek(file, -1 * count, SEEK_CUR);
-    
-    // Realloc new memory
+
+    // Перевыделить новую память
     if (realloc(*str, count + 1) == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return false;
     }
 
-    // Populate new memory with characters from the file
-    // We know exactly how much we need
-    for (int i = 0; i < count; i++) {
+    // Заполнить новую память символами из файла
+    // Мы знаем точно, сколько нам нужно
+    //! @Sipxi Мы читаем count-1, потому что мы уже прочитали один символ в основном цикле
+    for (int i = 0; i < count-1; i++) {
         (*str)[i] = fgetc(file);
     }
-    // Don't forget to null-terminate the string
+    // Не забывайте о нулевом терминаторе строки
     (*str)[count] = '\0';
 
     return true;

@@ -6,15 +6,15 @@
 
 #include "token.h"
 
-/*===== Lexer Structure and Functions =====*/
+/*===== Структура и функции лексера =====*/
 
 /**
- * Structure representing a lexer for tokenizing source code.
+ * Структура, представляющая лексер для токенизации исходного кода.
  *
- * Fields:
- * - position: Current position in the source code.
- * - line: Current line number.
- * - current_token: Pointer to the current token being processed.
+ * Поля:
+ * - position: Текущая позиция в исходном коде.
+ * - line: Текущий номер строки.
+ * - current_token: Указатель на текущий обрабатываемый токен.
  */
 typedef struct {
     int position;
@@ -23,66 +23,78 @@ typedef struct {
 } Lexer;
 
 /**
- * Initializes a Lexer structure.
+ * Инициализирует структуру Lexer.
  *
- * This function allocates memory for the Lexer structure
- * and initializes its fields.
+ * Эта функция выделяет память для структуры Lexer
+ * и инициализирует её поля.
  *
- * @return Pointer to the initialized Lexer structure.
+ * @return Указатель на инициализированную структуру Lexer.
  */
 Lexer *lexer_init();
 
 /**
- * Retrieves the next token from the source code.
+ * Получает следующий токен из исходного кода.
  *
- * This function reads characters from the provided file
- * and constructs the next token based on the lexer rules.
+ * Эта функция читает символы из предоставленного файла
+ * и создаёт следующий токен на основе правил лексера.
  *
- * @param lexer Pointer to the Lexer structure.
- * @param file Pointer to the file containing the source code.
- * @return The next Token structure.
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @return Следующая структура Token.
  */
 Token get_next_token(Lexer *lexer, FILE *file);
 
 /**
- * Frees the memory allocated for a Lexer structure.
+ * Освобождает память, выделенную для структуры Lexer.
  *
- * This function frees the current token and any other allocated memory.
+ * Эта функция освобождает текущий токен и любую другую выделенную память.
  *
- * @param lexer Pointer to the Lexer structure to free.
+ * @param lexer Указатель на структуру Lexer для освобождения.
  */
 void lexer_free(Lexer *lexer);
 
-/*===== Lexer Utility Functions =====*/
+/*===== Вспомогательные функции лексера =====*/
 
 /**
- * Checks if a character is a valid character for identifiers (letters and
- * digits).
+ * Проверяет, является ли символ допустимым символом для идентификаторов (буквы и
+ * цифры).
  *
- * @param character The character to check.
- * @return true if the character is a letter or digit, false otherwise.
+ * @param character Символ для проверки.
+ * @return true если символ является буквой или цифрой, иначе false.
  */
 bool is_letter(char character);
 
 /**
- * Checks if a character is a digit (0-9).
+ * Проверяет, является ли символ цифрой (0-9).
  *
- * @param character The character to check.
- * @return true if the character is a digit, false otherwise.
+ * @param character Символ для проверки.
+ * @return true если символ является цифрой, иначе false.
  */
 bool is_digit(char character);
 
 /**
- * Writes a string to a file.
+ * Записывает строку в файл.
  *
- * This function writes a specified number of characters from a string to a
- * file.
+ * Эта функция записывает указанное количество символов из строки в
+ * файл.
  *
- * @param file Pointer to the file where the string will be written.
- * @param count The number of characters to write.
- * @param str The string to write.
- * @return The number of characters written.
+ * @param file Указатель на файл, в который будет записана строка.
+ * @param count Количество символов для записи.
+ * @param str Строка для записи.
+ * @return Количество записанных символов.
  */
 bool write_str(FILE *file, int count, char **str);
+
+/**
+ * Читает идентификатор из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * идентификатора.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param current_char Текущий обрабатываемый символ.
+ */
+void read_identifier(Lexer *lexer, FILE *file, char current_char);
 
 #endif

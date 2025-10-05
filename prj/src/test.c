@@ -1,14 +1,14 @@
 #include <stdio.h>
+
 #include "lexer.h"
 
-/* 
+/*
 Игровая площадка для тестирования чего угодно
-Пожалуйста, не удаляйте этот файл, он нам еще пригодится 
+Пожалуйста, не удаляйте этот файл, он нам еще пригодится
 Если хотите запустить этот файл:
 
 make test-pg
 */
-
 
 int main() {
     printf("Hello, Lexer!\n");
@@ -25,17 +25,13 @@ int main() {
         fclose(file);
         return 1;
     }
-    get_next_token(lexer, file);
-
-    if (lexer->current_token->type != TOKEN_NULL) {
-        printf("Token Type: %d, Data: %s, Line: %d\n",
-               lexer->current_token->type, lexer->current_token->data,
+    while (lexer->current_token->type != TOKEN_EOF) {
+        get_next_token(lexer, file);
+        printf("Token Type: %s, Data: %s, Line: %d\n",
+               token_type_to_string(lexer->current_token->type),
+               lexer->current_token->data,
                lexer->current_token->line);
-    } else {
-        printf(
-            "\033[1;31mLexical error.\nError code: 1\nUnexpected character at "
-            "line %d, position %d\033[0m\n",
-            lexer->line, lexer->position);
+        
     }
 
     fclose(file);
