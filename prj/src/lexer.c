@@ -143,7 +143,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
     // Проверить следующие два символа
     next_characters[0] = peek_char(file);
     next_characters[1] = peek_next_char(file);
-    if (next_characters[0] != '_' || (is_letter(next_characters[1]) == false)) {
+    if (next_characters[0] != '_' || !is_letter(next_characters[1])) {
         raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid global identifier");
     }
 
