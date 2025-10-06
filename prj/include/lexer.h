@@ -84,7 +84,7 @@ bool is_digit(char character);
  * @param str Строка для записи.
  * @return Количество записанных символов.
  */
-bool write_str(FILE *file, int count, char **str);
+bool write_str(FILE *file, int count, char *str);
 
 /**
  * Читает идентификатор из исходного кода.

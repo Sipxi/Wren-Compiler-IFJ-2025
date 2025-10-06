@@ -73,27 +73,27 @@ char peek_next_char(FILE *file) {
 
 //? @Sipxi Нам действительно нужен двойной указатель?
 //? Не можем ли мы сделать realloc *temp а затем просто *str = *temp?
-bool write_str(FILE *file, int count, char **str) {
+bool write_str(FILE *file, int count, char *str) {
     // Переместить указатель файла назад к последней прочитанной последовательности символов
     fseek(file, -1 * count, SEEK_CUR);
 
     // Выделить или перераспределить память для строки
     // +1 для нулевого терминатора
     // фикс от копайлота
-    char *temp = realloc(*str, count + 1);
+    char *temp = realloc(str, count + 1);
     if (temp == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return false;
     }
-    *str = temp;
+    str = temp;
 
     // Заполнить новую память символами из файла
     // Мы знаем точно, сколько нам нужно
     for (int i = 0; i < count; i++) {
-        (*str)[i] = fgetc(file);
+        str[i] = fgetc(file);
     }
     // Не забывайте о нулевом терминаторе строки
-    (*str)[count] = '\0';
+    str[count] = '\0';
 
     return true;
 }
@@ -131,7 +131,7 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
 
     lexer->current_token->type = TOKEN_IDENTIFIER;
     lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, &lexer->current_token->data);  // TODO исправить это говно
+    write_str(file, characters_read, lexer->current_token->data);  // TODO исправить это говно
 }
 
 void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
@@ -161,7 +161,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
     lexer->current_token->line = lexer->line;
 
     // Переместить указатель файла назад к последнему прочитанному символу
-    write_str(file, characters_read, &lexer->current_token->data);
+    write_str(file, characters_read, lexer->current_token->data);
 }
 
 /*
