@@ -108,6 +108,12 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
  */
 bool is_keyword(const char *str);
 
+/**
+ * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая строка).
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является пробельным, иначе false.
+ */
 bool is_whitespace(const char character);
 /**
  * Просматривает следующий символ в файле без его удаления из потока.
