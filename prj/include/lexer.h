@@ -144,7 +144,6 @@ char lexer_consume_char(Lexer *lexer, FILE *file);
  * 
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл для возврата символа.
- * @return Возвращенный символ.
  */
 void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
 
