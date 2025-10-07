@@ -170,7 +170,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
 }
 
 void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
-    char last_whitespace = current_char;
+    char last_whitespace;
 
     do {
         last_whitespace = current_char;

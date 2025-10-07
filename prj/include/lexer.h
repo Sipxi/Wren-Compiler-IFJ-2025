@@ -94,7 +94,6 @@ bool write_str(FILE *file, int count, char *str);
  *
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
- * @param current_char Текущий обрабатываемый символ.
  */
 void read_identifier(Lexer *lexer, FILE *file, char current_char);
 
