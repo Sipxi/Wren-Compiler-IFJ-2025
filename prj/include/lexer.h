@@ -94,7 +94,6 @@ bool write_str(FILE *file, int count, char *str);
  *
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
- * @param current_char Текущий обрабатываемый символ.
  */
 void read_identifier(Lexer *lexer, FILE *file, char current_char);
 
@@ -139,6 +138,14 @@ char peek_next_char(FILE *file);
  * @return Прочитанный символ.
  */
 char lexer_consume_char(Lexer *lexer, FILE *file);
+
+/**
+ * Возвращает последний прочитанный символ обратно в поток и обновляет позицию лексера.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл для возврата символа.
+ */
+void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
 
 /**
  * Устанавливает токен с указанным типом и данными.

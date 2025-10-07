@@ -1,2 +1,1 @@
-var __global
-class work
+var  work

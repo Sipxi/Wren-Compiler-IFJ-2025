@@ -107,6 +107,13 @@ char lexer_consume_char(Lexer *lexer, FILE *file) {
     return character;
 }
 
+void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char) {
+    // Вернуть последний прочитанный символ обратно в поток
+    ungetc(current_char, file);
+    // Уменьшить позицию лексера
+    lexer->position--;
+}
+
 void set_single_token(Lexer *lexer, TokenType type, const char data) {
     lexer->current_token->type = type;
     lexer->current_token->line = lexer->line;
@@ -125,8 +132,7 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
         characters_read++;
     }
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
-    ungetc(current_char, file);
-    // Уменьшить счетчик, так как последний символ не принадлежит идентификатору
+    lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
 
     lexer->current_token->type = TOKEN_IDENTIFIER;
@@ -153,8 +159,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
         characters_read++;
     }
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
-    ungetc(current_char, file);
-    // Уменьшить счетчик, так как последний символ не принадлежит идентификатору
+    lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
 
     lexer->current_token->type = TOKEN_GLOBAL_IDENTIFIER;
@@ -162,6 +167,20 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
 
     // Переместить указатель файла назад к последнему прочитанному символу
     write_str(file, characters_read, lexer->current_token->data);
+}
+
+void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
+    char last_whitespace;
+
+    do {
+        last_whitespace = current_char;
+        current_char = lexer_consume_char(lexer, file);
+    } while (is_whitespace(current_char));
+
+    // Последний прочитанный символ не является пробельным, вернуть его обратно в поток
+    lexer_unconsume_char(lexer, file, current_char);
+    
+    set_single_token(lexer, TOKEN_WHITESPACE, last_whitespace);
 }
 
 /*
@@ -209,8 +228,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
 
         /* Обработка пробелов и табуляций */
         else if (is_whitespace(current_char)) {
-            current_char = lexer_consume_char(lexer, file);
-            set_single_token(lexer, TOKEN_WHITESPACE, current_char);
+            read_whitespace(lexer, file, current_char);
             return *lexer->current_token;
         }
         /* Обработка точки */
