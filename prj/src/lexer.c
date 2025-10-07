@@ -132,8 +132,7 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
         characters_read++;
     }
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
-    ungetc(current_char, file);
-    // Уменьшить счетчик, так как последний символ не принадлежит идентификатору
+    lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
 
     lexer->current_token->type = TOKEN_IDENTIFIER;
@@ -160,8 +159,7 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
         characters_read++;
     }
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
-    ungetc(current_char, file);
-    // Уменьшить счетчик, так как последний символ не принадлежит идентификатору
+    lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
 
     lexer->current_token->type = TOKEN_GLOBAL_IDENTIFIER;
