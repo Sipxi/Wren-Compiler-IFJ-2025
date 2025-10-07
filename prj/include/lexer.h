@@ -141,6 +141,15 @@ char peek_next_char(FILE *file);
 char lexer_consume_char(Lexer *lexer, FILE *file);
 
 /**
+ * Возвращает последний прочитанный символ обратно в поток и обновляет позицию лексера.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл для возврата символа.
+ * @return Возвращенный символ.
+ */
+void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
+
+/**
  * Устанавливает токен с указанным типом и данными.
  * 
  * @param lexer Указатель на структуру Lexer.
