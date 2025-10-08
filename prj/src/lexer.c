@@ -183,6 +183,26 @@ void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
     set_single_token(lexer, TOKEN_WHITESPACE, last_whitespace);
 }
 
+void read_number(Lexer *lexer, FILE *file, char current_char) {
+    current_char = lexer_consume_char(lexer, file);
+    int characters_read = 1;
+    if (current_char == '0' && is_digit(peek_char(file))) {
+        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid number format: leading zeros are not allowed");
+    }
+    
+    while (is_digit(current_char)) {
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+    }
+    
+    lexer_unconsume_char(lexer, file, current_char);
+    characters_read--;
+
+    lexer->current_token->type = TOKEN_INT;
+    lexer->current_token->line = lexer->line;
+    write_str(file, characters_read, lexer->current_token->data);  // TODO исправить это говно
+}
+
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
  легко читать и обработать токены.
@@ -235,6 +255,11 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         else if (current_char == '.') {
             current_char = lexer_consume_char(lexer, file);
             set_single_token(lexer, TOKEN_DOT, current_char);
+            return *lexer->current_token;
+        }
+        /* Обработка целых чисел */
+        else if (is_digit(current_char)) {
+            read_number(lexer, file, current_char);
             return *lexer->current_token;
         }
 

@@ -11,7 +11,7 @@ make test-pg
 */
 
 int main() {
-    printf("Hello, Lexer!\n");
+    // printf("Hello, Lexer!\n");
     FILE *file = fopen("example.wren", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
