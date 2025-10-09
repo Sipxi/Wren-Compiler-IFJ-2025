@@ -57,6 +57,84 @@ bool is_whitespace(const char character) {
     return character == ' ' || character == '\t' || character == '\r';
 }
 
+bool is_hex_digit(const char character) {
+    return (character >= '0' && character <= '9') ||
+           (character >= 'a' && character <= 'f') ||
+           (character >= 'A' && character <= 'F');
+}
+
+void check_exponent_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    current_char = lexer_consume_char(lexer, file);
+    characters_read++;
+
+    if (current_char == '+' || current_char == '-') {
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+    }
+
+    if (!is_digit(current_char)) {
+        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid exponent format");
+    }
+
+    while (is_digit(current_char)) {
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+    }
+
+    lexer_unconsume_char(lexer, file, current_char);
+    characters_read--;
+
+    lexer->current_token->type = TOKEN_EXP;
+    lexer->current_token->line = lexer->line;
+    write_str(file, characters_read, lexer->current_token->data);
+
+}
+
+void check_float_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    current_char = lexer_consume_char(lexer, file);
+    characters_read++;
+
+    if (!is_digit(current_char)) {
+        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid float format");
+    }
+    while (is_digit(current_char)) {
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+        if (current_char == 'e' || current_char == 'E') {
+            check_exponent_part(lexer, file, current_char, characters_read);
+            return;
+        }
+    }
+    lexer_unconsume_char(lexer, file, current_char);
+    characters_read--;
+    lexer->current_token->type = TOKEN_FLOAT;
+    lexer->current_token->line = lexer->line;
+    write_str(file, characters_read, lexer->current_token->data);
+
+}
+
+void check_hex_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    current_char = lexer_consume_char(lexer, file);
+    characters_read++;
+
+    if (!is_hex_digit(current_char)) {
+        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid hexadecimal format");
+    }
+
+    while (is_hex_digit(current_char)) {
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+    }
+
+    lexer_unconsume_char(lexer, file, current_char);
+    characters_read--;
+
+    lexer->current_token->type = TOKEN_HEX;
+    lexer->current_token->line = lexer->line;
+    write_str(file, characters_read, lexer->current_token->data);
+
+}
+
 char peek_char(FILE *file) {
     int character = fgetc(file);
     ungetc(character, file);
@@ -186,13 +264,22 @@ void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
 void read_number(Lexer *lexer, FILE *file, char current_char) {
     current_char = lexer_consume_char(lexer, file);
     int characters_read = 1;
-    if (current_char == '0' && is_digit(peek_char(file))) {
-        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid number format: leading zeros are not allowed");
-    }
-    
+
     while (is_digit(current_char)) {
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
+        if (current_char == 'e' || current_char == 'E') {
+            check_exponent_part(lexer, file, current_char, characters_read);
+            return;
+        }
+        else if (current_char == '.') {
+            check_float_part(lexer, file, current_char, characters_read);
+            return;
+        }
+        else if (current_char == 'x') {
+            check_hex_part(lexer, file, current_char, characters_read);
+            return;
+        }
     }
     
     lexer_unconsume_char(lexer, file, current_char);
@@ -200,8 +287,42 @@ void read_number(Lexer *lexer, FILE *file, char current_char) {
 
     lexer->current_token->type = TOKEN_INT;
     lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);  // TODO исправить это говно
+    write_str(file, characters_read, lexer->current_token->data);  
 }
+
+void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
+    current_char = lexer_consume_char(lexer, file);
+    int characters_read = 1;
+    if (is_digit(peek_char(file))) {
+        // Ошибка: ожидалась цифра после '0'
+        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid number format");
+    }
+    else if (peek_char(file) == 'x') {
+        // Обработка шестнадцатеричных чисел
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+        check_hex_part(lexer, file, current_char, characters_read);
+    }
+    else if (peek_char(file) == '.') {
+        // Обработка чисел с плавающей точкой
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+        check_float_part(lexer, file, current_char, characters_read);
+    }
+    else if (peek_char(file) == 'e' || peek_char(file) == 'E') {
+        // Обработка чисел в экспоненциальной форме
+        current_char = lexer_consume_char(lexer, file);
+        characters_read++;
+        check_exponent_part(lexer, file, current_char, characters_read);
+    }
+    else {
+        // Это просто '0'
+        lexer->current_token->type = TOKEN_INT;
+        lexer->current_token->line = lexer->line;
+        write_str(file, characters_read, lexer->current_token->data);
+    }
+}
+
 
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
@@ -257,9 +378,15 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             set_single_token(lexer, TOKEN_DOT, current_char);
             return *lexer->current_token;
         }
+
         /* Обработка целых чисел */
-        else if (is_digit(current_char)) {
+        else if (is_digit(current_char) && current_char != '0') {
             read_number(lexer, file, current_char);
+            return *lexer->current_token;
+        }
+
+        else if (current_char == '0') {
+            classify_number_token(lexer, file, current_char);
             return *lexer->current_token;
         }
 
