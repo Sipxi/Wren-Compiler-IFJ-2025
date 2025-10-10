@@ -64,9 +64,10 @@ bool is_hex_digit(const char character) {
 }
 
 void check_exponent_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    // Первый символ 'e' или 'E' уже прочитан
+    // Читаем следующий символ
     current_char = lexer_consume_char(lexer, file);
     characters_read++;
-    // Первый символ 'e' или 'E' уже прочитан
 
     // Проверить, есть ли знак '+' или '-'
     if (current_char == '+' || current_char == '-') {
@@ -93,9 +94,10 @@ void check_exponent_part(Lexer *lexer, FILE *file, char current_char, int charac
 }
 
 void check_float_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    // Первый символ '.' уже прочитан
+    // Читаем следующий символ
     current_char = lexer_consume_char(lexer, file);
     characters_read++;
-    // Первый символ '.' уже прочитан
 
     // Проверить, что следующий символ является цифрой
     if (!is_digit(current_char)) {
@@ -103,6 +105,7 @@ void check_float_part(Lexer *lexer, FILE *file, char current_char, int character
     }
     // Читать цифры после десятичной точки
     while (is_digit(current_char)) {
+        // Читаем следующий символ
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
         // Проверить, не начинается ли часть с экспонентой
@@ -122,15 +125,16 @@ void check_float_part(Lexer *lexer, FILE *file, char current_char, int character
 }
 
 void check_hex_part(Lexer *lexer, FILE *file, char current_char, int characters_read) {
+    // Первый символ 'x' уже прочитан
+    // Читаем следующий символ
     current_char = lexer_consume_char(lexer, file);
     characters_read++;
-    // Первый символ 'x' уже прочитан
 
     // Проверить, что следующий символ является шестнадцатеричной цифрой
     if (!is_hex_digit(current_char)) {
         raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid hexadecimal format");
     }
-    // Читать шестнадцатеричные цифры
+    // Читаем шестнадцатеричные цифры
     // Мы знаем, что первый символ является шестнадцатеричной цифрой
     while (is_hex_digit(current_char)) {
         current_char = lexer_consume_char(lexer, file);
@@ -273,8 +277,9 @@ void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
 }
 
 void read_number(Lexer *lexer, FILE *file, char current_char) {
-    int characters_read = 0;
     // Мы знаем, что первый символ является цифрой
+    current_char = lexer_consume_char(lexer, file);
+    int characters_read = 1;
     // Читать цифры, пока не встретится что-то другое
     while (is_digit(current_char)) {
         // Читаем следующий символ
@@ -304,23 +309,26 @@ void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
     current_char = lexer_consume_char(lexer, file);
     int characters_read = 1;
     if (is_digit(peek_char(file))) {
-        // Ошибка: ожидалась цифра после '0'
+        // Ошибка: цифра после '0'
         raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid number format");
     }
     else if (peek_char(file) == 'x') {
         // Обработка шестнадцатеричных чисел
+        // считываем 'x'
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
         check_hex_part(lexer, file, current_char, characters_read);
     }
     else if (peek_char(file) == '.') {
         // Обработка чисел с плавающей точкой
+        // считываем '.'
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
         check_float_part(lexer, file, current_char, characters_read);
     }
     else if (peek_char(file) == 'e' || peek_char(file) == 'E') {
         // Обработка чисел в экспоненциальной форме
+        // считываем 'e' или 'E'
         current_char = lexer_consume_char(lexer, file);
         characters_read++;
         check_exponent_part(lexer, file, current_char, characters_read);
