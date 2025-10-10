@@ -87,9 +87,7 @@ void check_exponent_part(Lexer *lexer, FILE *file, char current_char, int charac
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
     // Установить тип токена в TOKEN_EXP
-    lexer->current_token->type = TOKEN_EXP;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_EXP, file, characters_read);
 
 }
 
@@ -118,9 +116,7 @@ void check_float_part(Lexer *lexer, FILE *file, char current_char, int character
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
     // Установить тип токена в TOKEN_FLOAT
-    lexer->current_token->type = TOKEN_FLOAT;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
 
 }
 
@@ -144,9 +140,7 @@ void check_hex_part(Lexer *lexer, FILE *file, char current_char, int characters_
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
     // Установить тип токена в TOKEN_HEX
-    lexer->current_token->type = TOKEN_HEX;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_HEX, file, characters_read);
 
 }
 
@@ -212,6 +206,12 @@ void set_single_token(Lexer *lexer, TokenType type, const char data) {
     lexer->current_token->data[1] = '\0';
 }
 
+void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read) {
+    lexer->current_token->type = type;
+    lexer->current_token->line = lexer->line;
+    write_str(file, characters_read, lexer->current_token->data);
+}
+
 void read_identifier(Lexer *lexer, FILE *file, char current_char) {
     // В начале ещё ничего не прочитано
     int characters_read = 0;
@@ -225,10 +225,8 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
-
-    lexer->current_token->type = TOKEN_IDENTIFIER;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    // Установить тип токена в TOKEN_IDENTIFIER
+    set_multi_token(lexer, TOKEN_IDENTIFIER, file, characters_read);
 }
 
 void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
@@ -252,12 +250,8 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
     // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
-
-    lexer->current_token->type = TOKEN_GLOBAL_IDENTIFIER;
-    lexer->current_token->line = lexer->line;
-
-    // Переместить указатель файла назад к последнему прочитанному символу
-    write_str(file, characters_read, lexer->current_token->data);
+    // Установить тип токена в TOKEN_GLOBAL_IDENTIFIER
+    set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
 }
 
 void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
@@ -293,13 +287,11 @@ void read_number(Lexer *lexer, FILE *file, char current_char) {
             return;
         }
     }
-    // Последний прочитанный символ не является цифрой, вернуть его обратно в поток
+    // Последний прочитанный символ не принадлежит числу, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
     // Установить тип токена в TOKEN_INT
-    lexer->current_token->type = TOKEN_INT;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);  
+    set_multi_token(lexer, TOKEN_INT, file, characters_read);
 }
 
 void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
@@ -333,9 +325,7 @@ void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
     }
     else {
         // Это просто '0'
-        lexer->current_token->type = TOKEN_INT;
-        lexer->current_token->line = lexer->line;
-        write_str(file, characters_read, lexer->current_token->data);
+        set_single_token(lexer, TOKEN_INT, '0');
     }
 }
 
