@@ -287,7 +287,7 @@ void read_number(Lexer *lexer, FILE *file, char current_char) {
             return;
         }
     }
-    // Последний прочитанный символ не принадлежит идентификатору, вернуть его обратно в поток
+    // Последний прочитанный символ не принадлежит числу, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
     characters_read--;
     // Установить тип токена в TOKEN_INT
