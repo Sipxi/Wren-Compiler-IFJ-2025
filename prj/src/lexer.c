@@ -58,7 +58,7 @@ bool is_whitespace(const char character) {
 }
 
 bool is_hex_digit(const char character) {
-    return (character >= '0' && character <= '9') ||
+    return (is_digit(character)) ||
            (character >= 'a' && character <= 'f') ||
            (character >= 'A' && character <= 'F');
 }
