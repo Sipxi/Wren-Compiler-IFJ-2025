@@ -36,6 +36,12 @@ bool is_letter(char character) {
            (character >= 'A' && character <= 'Z');
 }
 
+bool is_operator(char character){
+    return (character == '+' || character == '-' || character == '=' || 
+        character == '/' || character == '*' || character == '!', 
+        character == '<' || character == '>') ? true : false;
+}
+
 bool is_digit(char character) { return (character >= '0' && character <= '9'); }
 
 bool is_keyword(const char *str){
@@ -175,12 +181,150 @@ void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
     do {
         last_whitespace = current_char;
         current_char = lexer_consume_char(lexer, file);
+
+        if (current_char == '/'){
+            if (peek_char == '*')
+                read_block_comment(lexer, file, current_char, true); 
+                current_char = ' ';
+        }
     } while (is_whitespace(current_char));
+
 
     // Последний прочитанный символ не является пробельным, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
     
     set_single_token(lexer, TOKEN_WHITESPACE, last_whitespace);
+}
+
+
+bool is_brecket(char character){
+    return (character == ')' || character == '(' || 
+        character == '}' || character == '{') ? true : false;
+}
+
+TokenType get_brecket_token(char character){
+    switch (character)
+    {
+    case '(':
+        return TOKEN_OPEN_PAREN;
+    case ')':
+        return TOKEN_CLOSE_PAREN;
+    case '{':
+        return TOKEN_OPEN_BRACE;
+    case '}':
+        return TOKEN_CLOSE_BRACE;
+    default:
+        return TOKEN_NULL;
+    }
+}
+
+void read_comment (Lexer *lexer, FILE *file, char current_char){
+    current_char = lexer_consume_char(lexer, file);
+    
+    while(current_char != '\n' && current_char != EOF)
+        current_char = lexer_consume_char(lexer, file);
+    if (current_char == EOF)
+        lexer_unconsume_char(lexer, file, current_char);
+    set_single_token(lexer, TOKEN_EOL, '/n');
+}
+
+void read_block_comment (Lexer *lexer, FILE *file, char current_char, bool after_whitespace){
+    int count_block_comment = 1;
+    while (count_block_comment > 0){
+        current_char = lexer_consume_char(lexer, file);
+        
+        // Проверка на конец блока
+        if (current_char == EOF){
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid block comment");
+        }
+        else if (current_char == '*'){
+            current_char = lexer_consume_char(lexer, file);
+            if(current_char == '/')
+                count_block_comment--;
+        }
+        else if (current_char == '/'){
+            current_char = lexer_consume_char(lexer, file);
+            if(current_char == '*')
+                count_block_comment++;
+        }   
+    }
+    
+    if (after_whitespace == true)
+        return
+        
+    read_whitespace(lexer, file, ' ');
+}
+
+void read_operator (Lexer *lexer, FILE *file, char current_char){
+    switch (current_char)
+    {
+    case '+':
+        set_single_token(lexer, TOKEN_PLUS, current_char);
+        break;
+
+    case '-':
+        set_single_token(lexer, TOKEN_MINUS, current_char);
+        break;
+
+    case '*':
+        set_single_token(lexer, TOKEN_MULTIPLY, current_char);
+        break;
+
+    case '!':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == '=')
+            set_single_token(lexer, TOKEN_NOT_EQUAL, current_char);
+        else{
+            lexer_unconsume_char(lexer, file, current_char);
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid operator");
+        }
+        break;
+
+    case '=':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == "=")
+            set_single_token(lexer, TOKEN_EQUAL, current_char);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_ASSIGN, current_char);
+        }
+        break;
+
+    case '<':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == "=")
+            set_single_token(lexer, TOKEN_EQUAL_LESS, current_char);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_LESS, current_char);
+        }
+        break;
+
+    case '>':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == "=")
+            set_single_token(lexer, TOKEN_EQUAL_BETTER, current_char);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_BETTER, current_char);
+        }
+        break;
+
+    case '/':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == "/")
+            read_comment(lexer, file, current_char);
+        else if (current_char == '*')
+            read_block_comment(lexer, file, current_char, false);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_BETTER, current_char);
+        }
+        break;
+
+    default:
+        break;
+    }
 }
 
 /*
@@ -237,6 +381,22 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             set_single_token(lexer, TOKEN_DOT, current_char);
             return *lexer->current_token;
         }
+
+        /* Обработка скобок */
+        else if (is_brecket(current_char)){
+            TokenType token = get_brecket_token(current_char);
+            set_single_token(lexer, token, current_char);
+            return *lexer->current_token;
+        }
+
+        /* Обработка операторов */
+        else if (is_operator(current_char)){
+            read_operator(lexer, file, current_char);
+            return *lexer->current_token;
+        }
+
+
+
 
         /* Временное решение для неизвестных символов */
         else{

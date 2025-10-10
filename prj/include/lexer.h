@@ -74,13 +74,29 @@ bool is_letter(char character);
 bool is_digit(char character);
 
 /**
+ * Проверка, является ли символ скобкой 
+ * 
+ * @param character Символ для проверки.
+ * @return true если символ является скобкой, иначе false.
+ */
+bool is_brecket(char character);
+
+/**
+ * Функция для возврата нужного токена скобки
+ * 
+ * @param character Символ для перевода.
+ * @return Токен от нужной скобки
+ */
+TokenType get_brecket_token (char character);
+
+/**
  * Записывает указанное количество символов из файла в строку.
  *
  * Эта функция читает символы из файла и записывает их в указанную строку.
  * @param file Указатель на файл, из которого будут прочитаны символы.
  * @param count Количество символов для чтения.
  * @param str Строка для записи.
- * @return Количество записанных символов.
+ * @return true если запись прошла успешно, иначе false.
  */
 bool write_str(FILE *file, int count, char *str);
 
@@ -106,12 +122,56 @@ void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
 bool is_keyword(const char *str);
 
 /**
+ * Читает оператор из исходного кода
+ * 
+ * Эта функция читает символы из файла для создания токена
+ * идентификатора.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ */
+void read_operator (Lexer *lexer, FILE *file, char current_char);
+
+/**
+ * Читает однострочный комментарий из исходного кода.
+ * 
+ * Эта функция читает символы из файла для поиска конца однострочного комментария4
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ */
+void read_comment (Lexer *lexer, FILE *file, char current_char);
+
+/**
+ * Читает блоковый комментарий из исходного кода.
+ *
+ * Эта функция читает символы из файла для поиска конца блокового комментария.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
+ */
+void read_block_comment (Lexer *lexer, FILE *file, char current_char, bool after_whitespace);
+
+/**
  * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая строка).
  *
  * @param character Символ для проверки.
  * @return true если символ является пробельным, иначе false.
  */
 bool is_whitespace(const char character);
+
+/**
+ * Проверяет, является ли символ оператором.
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является оператором, иначе false.
+ */
+bool is_operator(char character);
+
 /**
  * Просматривает следующий символ в файле без его удаления из потока.
  *

@@ -48,10 +48,21 @@ char *token_type_to_string(TokenType type) {
         case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
         case TOKEN_EOF: return "TOKEN_EOF";
         case TOKEN_EOL: return "TOKEN_EOL";
-        case TOKEN_OPERATOR: return "TOKEN_OPERATOR";
         case TOKEN_ASSIGN: return "TOKEN_ASSIGN";
-        case TOKEN_BRACKET: return "TOKEN_BRACKET";
-        case TOKEN_COMMENT: return "TOKEN_COMMENT";
+        case TOKEN_OPEN_PAREN: return "TOKEN_OPEN_PAREN";
+        case TOKEN_CLOSE_PAREN: return "TOKEN_CLOSE_PAREN";
+        case TOKEN_OPEN_BRACE: return "TOKEN_OPEN_BRACE";
+        case TOKEN_CLOSE_BRACE: return "TOKEN_CLOSE_BRACE";
+        case TOKEN_PLUS: return "TOKEN_PLUS";
+        case TOKEN_MINUS: return "TOKEN_MINUS";
+        case TOKEN_MULTIPLY: return "TOKEN_MULTIPLY";
+        case TOKEN_EQUAL: return "TOKEN_EQUAL";
+        case TOKEN_NOT_EQUAL: return "TOKEN_NOT_EQUAL";
+        case TOKEN_BETTER: return "TOKEN_BETTER";
+        case TOKEN_EQUAL_BETTER: return "TOKEN_EQUAL_BETTER";
+        case TOKEN_LESS: return "TOKEN_LESS";
+        case TOKEN_EQUAL_LESS: return "TOKEN_EQUAL_LESS";
+        case TOKEN_DIVISION: return "TOKEN_DIVISION";
         default: return "UNKNOWN_TOKEN_TYPE";
     }
 }
