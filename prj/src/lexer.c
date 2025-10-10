@@ -164,8 +164,6 @@ char peek_next_char(FILE *file) {
     return (char)next_character;
 }
 
-//? @Sipxi Нам действительно нужен двойной указатель?
-//? Не можем ли мы сделать realloc *temp а затем просто *str = *temp?
 bool write_str(FILE *file, int count, char *str) {
     // Переместить указатель файла назад к последней прочитанной последовательности символов
     fseek(file, -1 * count, SEEK_CUR);
@@ -230,7 +228,7 @@ void read_identifier(Lexer *lexer, FILE *file, char current_char) {
 
     lexer->current_token->type = TOKEN_IDENTIFIER;
     lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);  // TODO исправить это говно
+    write_str(file, characters_read, lexer->current_token->data);
 }
 
 void read_global_identifier(Lexer *lexer, FILE *file, char current_char) {
@@ -403,6 +401,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             return *lexer->current_token;
         }
 
+        /* Обработка чисел, начинающихся с 0 (возможно, шестнадцатеричных или с плавающей точкой) */
         else if (current_char == '0') {
             classify_number_token(lexer, file, current_char);
             return *lexer->current_token;
