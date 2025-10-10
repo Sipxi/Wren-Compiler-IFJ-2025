@@ -200,7 +200,7 @@ void set_single_token(Lexer *lexer, TokenType type, const char data);
  * @param type Тип токена для установки.
  * @param file Указатель на файл, содержащий исходный код.
  * @param characters_read Количество символов, прочитанных для токена.
- * @param current_char Последний прочитанный символ, который не принадлежит токену.
+ * 
  * 
 */
 void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read);
