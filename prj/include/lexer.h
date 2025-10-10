@@ -205,7 +205,7 @@ void set_single_token(Lexer *lexer, TokenType type, const char data);
 void read_identifier(Lexer *lexer, FILE *file, char current_char);
 
 /**
- * Читает глобальный идентификатор, например (__а2) из исходного кода.
+ * Читает глобальный идентификатор, например (__a2) из исходного кода.
  *
  * Эта функция читает символы из файла для создания токена
  * глобального идентификатора.
