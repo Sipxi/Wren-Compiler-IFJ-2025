@@ -277,6 +277,18 @@ void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
 void set_single_token(Lexer *lexer, TokenType type, const char data);
 
 /**
+ * Устанавливает токен с указанным типом и данными.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param type Тип токена для установки.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param characters_read Количество символов, прочитанных для токена.
+ * 
+ * 
+*/
+void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read);
+
+/**
  * Читает идентификатор из исходного кода.
  *
  * Эта функция читает символы из файла для создания токена
