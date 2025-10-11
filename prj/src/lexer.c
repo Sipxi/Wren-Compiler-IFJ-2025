@@ -452,7 +452,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '!':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_token(lexer, TOKEN_NOT_EQUAL, "!=");
+            set_single_token(lexer, TOKEN_NOT_EQUAL, current_char);
         // Если после '!' не стоит '=', то это ошибка
         else{
             lexer_unconsume_char(lexer, file, current_char);
@@ -473,7 +473,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '<':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_token(lexer, TOKEN_EQUAL_LESS, "<=");
+            set_single_token(lexer, TOKEN_EQUAL_LESS, '<');
         else {
             lexer_unconsume_char(lexer, file, current_char);
             set_single_token(lexer, TOKEN_LESS, '<');
@@ -483,7 +483,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '>':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_single_token(lexer, TOKEN_EQUAL_GREATER, ">=");
+            set_single_token(lexer, TOKEN_EQUAL_GREATER, '>');
         else {
             lexer_unconsume_char(lexer, file, current_char);
             set_single_token(lexer, TOKEN_GREATER, '>');
