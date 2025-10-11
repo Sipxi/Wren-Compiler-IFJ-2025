@@ -7,8 +7,12 @@
 Если хотите запустить этот файл:
 
 make test-pg
+<<<<<<< HEAD
 ./test_playground < input_file.wren   # Read from file via redirection
 echo "your code" | ./test_playground  # Read from pipe
+=======
+
+>>>>>>> main
 */
 
 // Print token data safely, visualizing special characters
@@ -19,6 +23,18 @@ void print_token_data(const char *data) {
             case '\t': printf("\\t"); break;
             default:   putchar(*p); break;
         }
+<<<<<<< HEAD
+=======
+    }
+}
+
+int main() {
+    // Use stdin for input (supports redirection like: ./test < input.wren)
+    FILE *file = fopen("example.wren", "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file.\n");
+        return 1;
+>>>>>>> main
     }
 }
 
