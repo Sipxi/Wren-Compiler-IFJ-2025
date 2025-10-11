@@ -111,18 +111,7 @@ bool is_bracket(char character);
  * @param str Строка для записи.
  * @return Количество записанных символов.
  */
-bool write_str(FILE *file, int count, char *str);
-
-/**
- * Записывает указанное количество символов из файла в строку.
- *
- * Эта функция читает символы из файла и записывает их в указанную строку.
- * @param file Указатель на файл, из которого будут прочитаны символы.
- * @param count Количество символов для чтения.
- * @param str Строка для записи.
- * @return true если запись прошла успешно, иначе false.
- */
-bool write_str(FILE *file, int count, char *str);
+bool write_str(FILE *file, int count, char **str);
 
 /**
  * Проверяет, является ли текущий идентификатор ключевым словом.

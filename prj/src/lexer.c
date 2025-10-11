@@ -69,30 +69,37 @@ bool is_hex_digit(const char character) {
            (character >= 'A' && character <= 'F');
 }
 
-bool write_str(FILE *file, int count, char *str) {
+bool write_str(FILE *file, int count, char **str) {
     // Переместить указатель файла назад к последней прочитанной последовательности символов
-    fseek(file, -1 * count, SEEK_CUR);
+    if (fseek(file, -count, SEEK_CUR) != 0) {
+        fprintf(stderr, "fseek failed\n");
+        return false;
+    }
 
-    // Выделить или перераспределить память для строки
-    // +1 для нулевого терминатора
-    // фикс от копайлота
-    char *temp = realloc(str, count + 1);
+    // Выделить или перераспределить память для строки (+1 для нулевого терминатора)
+    char *temp = realloc(*str, count + 1);
     if (temp == NULL) {
         fprintf(stderr, "Memory allocation failed\n");
         return false;
     }
-    str = temp;
+    *str = temp;
 
     // Заполнить новую память символами из файла
-    // Мы знаем точно, сколько нам нужно
     for (int i = 0; i < count; i++) {
-        str[i] = fgetc(file);
+        int c = fgetc(file);
+        if (c == EOF) {
+            (*str)[i] = '\0';
+            return false;
+        }
+        (*str)[i] = (char)c;
     }
-    // Не забывайте о нулевом терминаторе строки
-    str[count] = '\0';
+
+    // Нулевой терминатор
+    (*str)[count] = '\0';
 
     return true;
 }
+
 
 bool is_bracket(char character){
     return (character == ')' || character == '(' || 
@@ -237,7 +244,7 @@ void set_single_token(Lexer *lexer, TokenType type, const char data) {
 void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read) {
     lexer->current_token->type = type;
     lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    write_str(file, characters_read, &lexer->current_token->data);
 }
 
 void read_identifier(Lexer *lexer, FILE *file) {
