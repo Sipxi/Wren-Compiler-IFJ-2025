@@ -507,21 +507,24 @@ void read_operator(Lexer *lexer, FILE *file){
     }
 }
 
+// Функции для чтения строк
 void read_string(Lexer *lexer, FILE *file) {
+    // Проглатываем первую кавычку
     int characters_read = 1;
     lexer_consume_char(lexer, file);
     
     if (peek_char(file) == '"') {
         if (peek_next_char(file) == '"') {
-            read_multiline_string(lexer, file, characters_read);
+            read_multiline_string(lexer, file, characters_read); // Многострочная строка
         } else {
-            read_empty_string(lexer, file, characters_read);
+            read_empty_string(lexer, file, characters_read); // Пустая строка
         }
     } else {
-        read_regular_string(lexer, file, characters_read);
+        read_regular_string(lexer, file, characters_read);// Обычная строка
     }
 }
 
+// Многострочный стринг: """..."""
 void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
     lexer_consume_char(lexer, file);
     lexer_consume_char(lexer, file);
@@ -535,53 +538,56 @@ void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
                        "Unterminated multi-line string literal");
         }
         
+        // находим первые 2 скобки
         if (current == '"' && peek_next_char(file) == '"') {
             lexer_consume_char(lexer, file);
             lexer_consume_char(lexer, file);
             characters_read += 2;
-            
+            // 3-я скобка, то выходим
             if (peek_char(file) == '"') {
             lexer_consume_char(lexer, file);
             characters_read++;
             break;
             }                    
         } else if (current == '"') {
-            lexer_consume_char(lexer, file);
+            lexer_consume_char(lexer, file); 
             characters_read++;
         } else {
+            // если новая строка - делаем апдейт строки и позиции
             if (current == '\n') {
             lexer->line++;
             lexer->position = 1;
             }
-            lexer_consume_char(lexer, file);
+            lexer_consume_char(lexer, file); //двигаемся по буквам
             characters_read++;
         }
     }
 
-    lexer->current_token->type = TOKEN_MULTI_STRING;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_MULTI_STRING, file, characters_read);
 }
 
+// Пустой стринг ""
 void read_empty_string(Lexer *lexer, FILE *file, int characters_read) {
     lexer_consume_char(lexer, file);
     characters_read++;
-    lexer->current_token->type = TOKEN_STRING;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_STRING, file, characters_read);
 }
 
+// Обычный стринг "..."
 void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
+    //Пока не наткнемся на скобочку
     while (peek_char(file) != '"') {
-        lexer_consume_char(lexer, file);
+        lexer_consume_char(lexer, file); //обрабатываем символы
         characters_read++;
 
+        // Обрабатываем escape-последовательность \"
         if (peek_char(file) == '\\') {
             lexer_consume_char(lexer, file);
             lexer_consume_char(lexer, file);
             characters_read += 2;
         }
 
+        // Ошибка в случае
         if (peek_char(file) == EOF || peek_char(file) == '\n') {
             raise_error(LEXER_ERROR, lexer->line, lexer->position, 
                        "Unterminated string literal");
@@ -589,9 +595,7 @@ void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
     }
     lexer_consume_char(lexer, file);
     characters_read++;
-    lexer->current_token->type = TOKEN_STRING;
-    lexer->current_token->line = lexer->line;
-    write_str(file, characters_read, lexer->current_token->data);
+    set_multi_token(lexer, TOKEN_STRING, file, characters_read);
 }
 
 
@@ -663,7 +667,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             return *lexer->current_token;
         }
 
-        /*Обработка стринга*/
+        /*Обработка стрингов*/
         else if(current_char == '"'){
             read_string(lexer, file);
             return *lexer->current_token;

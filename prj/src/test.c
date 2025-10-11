@@ -7,12 +7,6 @@
 Если хотите запустить этот файл:
 
 make test-pg
-<<<<<<< HEAD
-./test_playground < input_file.wren   # Read from file via redirection
-echo "your code" | ./test_playground  # Read from pipe
-=======
-
->>>>>>> main
 */
 
 // Print token data safely, visualizing special characters
@@ -23,8 +17,6 @@ void print_token_data(const char *data) {
             case '\t': printf("\\t"); break;
             default:   putchar(*p); break;
         }
-<<<<<<< HEAD
-=======
     }
 }
 
@@ -34,20 +26,14 @@ int main() {
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return 1;
->>>>>>> main
     }
-}
-
-int main() {
-    // Use stdin for input (supports redirection like: ./test < input.wren)
-    FILE *file = stdin;
 
     Lexer *lexer = lexer_init();
-    if (!lexer) {
+    if (lexer == NULL) {
         fprintf(stderr, "Error initializing lexer.\n");
+        fclose(file);
         return 1;
     }
-
     while (lexer->current_token->type != TOKEN_EOF) {
         get_next_token(lexer, file);
 
