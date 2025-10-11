@@ -96,6 +96,47 @@ bool write_str(FILE *file, int count, char *str);
 void read_identifier(Lexer *lexer, FILE *file, char current_char);
 
 void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
+
+
+/**
+ * Читает строку из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * строки.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+void read_string(Lexer *lexer, FILE *file);
+
+/*
+ * Обрабатывает вариант многострочной строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * многострочной строки.
+ */
+void read_multiline_string(Lexer *lexer, FILE *file, int characters_read);
+/*
+ * Обрабатывает вариант пустой строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * пустой строки.
+ */
+void read_empty_string(Lexer *lexer, FILE *file, int characters_read);
+/*
+ * Обрабатывает вариант регулярной строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * регулярной строки.
+ */
+void read_regular_string(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param characters_read Количество прочитанных символов.
+ */
+
+
 /**
  * Проверяет, является ли текущий идентификатор ключевым словом.
  * 

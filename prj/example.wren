@@ -1,1 +1,9 @@
-0x134 0.8e4 1 1.823 0.123e-10 0.0 0e0 0.0e+0
+"""sra
+ka\""""popa"
+
+"123"
+"sadjsadl"
+"""
+asdsad
+asdsad  sdf
+""""asd\""
