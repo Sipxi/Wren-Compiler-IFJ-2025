@@ -33,6 +33,7 @@ int main() {
     Lexer *lexer = lexer_init();
     if (!lexer) {
         fprintf(stderr, "Error initializing lexer.\n");
+        fclose(file);
         return 1;
     }
 
