@@ -39,7 +39,7 @@ bool is_letter(char character) {
 bool is_operator(char character){
     return (character == '+' || character == '-' || character == '=' || 
         character == '/' || character == '*' || character == '!' || 
-        character == '<' || character == '>') ? true : false;
+        character == '<' || character == '>');
 }
 
 bool is_digit(char character) { return (character >= '0' && character <= '9'); }
@@ -361,7 +361,7 @@ void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
 
 bool is_bracket(char character){
     return (character == ')' || character == '(' || 
-        character == '}' || character == '{') ? true : false;
+        character == '}' || character == '{');
 }
 
 TokenType get_bracket_token(char character){
@@ -452,7 +452,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '!':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_single_token(lexer, TOKEN_NOT_EQUAL, current_char);
+            set_token(lexer, TOKEN_NOT_EQUAL, "!=");
         // Если после '!' не стоит '=', то это ошибка
         else{
             lexer_unconsume_char(lexer, file, current_char);
@@ -473,7 +473,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '<':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_single_token(lexer, TOKEN_EQUAL_LESS, '<');
+            set_token(lexer, TOKEN_EQUAL_LESS, "<=");
         else {
             lexer_unconsume_char(lexer, file, current_char);
             set_single_token(lexer, TOKEN_LESS, '<');
@@ -483,7 +483,7 @@ void read_operator (Lexer *lexer, FILE *file){
     case '>':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_single_token(lexer, TOKEN_EQUAL_GREATER, '>');
+            set_single_token(lexer, TOKEN_EQUAL_GREATER, ">=");
         else {
             lexer_unconsume_char(lexer, file, current_char);
             set_single_token(lexer, TOKEN_GREATER, '>');
@@ -500,7 +500,7 @@ void read_operator (Lexer *lexer, FILE *file){
             read_block_comment(lexer, file, current_char, false);
         else {
             lexer_unconsume_char(lexer, file, current_char);
-            set_single_token(lexer, TOKEN_DIVISION, current_char);
+            set_single_token(lexer, TOKEN_DIVISION, '/');
         }
         break;
 
