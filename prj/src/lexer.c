@@ -36,6 +36,12 @@ bool is_letter(char character) {
            (character >= 'A' && character <= 'Z');
 }
 
+bool is_operator(char character){
+    return (character == '+' || character == '-' || character == '=' || 
+        character == '/' || character == '*' || character == '!' || 
+        character == '<' || character == '>');
+}
+
 bool is_digit(char character) { return (character >= '0' && character <= '9'); }
 
 bool is_keyword(const char *str){
@@ -260,7 +266,19 @@ void read_whitespace(Lexer *lexer, FILE *file, char current_char) {
     do {
         last_whitespace = current_char;
         current_char = lexer_consume_char(lexer, file);
+
+        // ТК блоковый комментарий являеться whitespace
+        // дабы избежать нескольких токенов whitespace подряд
+        // проверяем на блоковый комментарий
+        // после прочтения пробельного символа
+        if (current_char == '/'){
+            if (peek_char(file) == '*'){
+                read_block_comment(lexer, file, current_char, true); 
+                current_char = ' ';
+            }
+        }
     } while (is_whitespace(current_char));
+
 
     // Последний прочитанный символ не является пробельным, вернуть его обратно в поток
     lexer_unconsume_char(lexer, file, current_char);
@@ -330,6 +348,157 @@ void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
 }
 
 
+
+bool is_bracket(char character){
+    return (character == ')' || character == '(' || 
+        character == '}' || character == '{');
+}
+
+TokenType get_bracket_token(char character){
+    // Определить тип токена на основе символа
+    switch (character)
+    {
+    case '(':
+        return TOKEN_OPEN_PAREN;
+    case ')':
+        return TOKEN_CLOSE_PAREN;
+    case '{':
+        return TOKEN_OPEN_BRACE;
+    case '}':
+        return TOKEN_CLOSE_BRACE;
+    default:
+        return TOKEN_NULL;
+    }
+}
+
+void read_comment (Lexer *lexer, FILE *file, char current_char){
+    current_char = lexer_consume_char(lexer, file);
+    
+    // Комментарий идет до конца строки.
+    while(current_char != '\n' && current_char != EOF)
+        current_char = lexer_consume_char(lexer, file);
+
+    // Если достигнут конец файла, вернуть символ обратно в поток
+    // Не имеет смысла давать токен EOL
+    if (current_char == EOF)
+        lexer_unconsume_char(lexer, file, current_char);
+
+    set_single_token(lexer, TOKEN_EOL, '\n');
+}
+
+void read_block_comment (Lexer *lexer, FILE *file, char current_char, bool after_whitespace){
+    int count_block_comment = 1; // Счетчик открытых блоков комментариев
+
+    // цикл пока не закроются все блоки комментариев
+    while (count_block_comment > 0){
+        current_char = lexer_consume_char(lexer, file);
+        
+        // Если файл закончился, а блок не закрыт
+        // значит ошибка
+        if (current_char == EOF){
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid block comment");
+        }
+        // Проверка на конец блока
+        else if (current_char == '*'){
+            current_char = lexer_consume_char(lexer, file);
+            if(current_char == '/')
+                count_block_comment--;
+        }
+        // проверка на начало нового блока
+        else if (current_char == '/'){
+            current_char = lexer_consume_char(lexer, file);
+            if(current_char == '*')
+                count_block_comment++;
+        }   
+    }
+    
+    // Если блок комментария был после пробела
+    // то продолжается основной цикл чтения пробелов
+    if (after_whitespace == true)
+        return;
+    
+    // Запуск поиска следующего whitespace
+    // Дабы избежать нескольких токенов whitespace подряд
+    read_whitespace(lexer, file, ' ');
+}
+
+void read_operator (Lexer *lexer, FILE *file){
+    char current_char = lexer_consume_char(lexer, file);
+    // Определить тип токена на основе символа
+    switch (current_char)
+    {
+    case '+':
+        set_single_token(lexer, TOKEN_PLUS, current_char);
+        break;
+
+    case '-':
+        set_single_token(lexer, TOKEN_MINUS, current_char);
+        break;
+
+    case '*':
+        set_single_token(lexer, TOKEN_MULTIPLY, current_char);
+        break;
+
+    case '!':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == '=')
+            set_single_token(lexer, TOKEN_NOT_EQUAL, current_char);
+        // Если после '!' не стоит '=', то это ошибка
+        else{
+            lexer_unconsume_char(lexer, file, current_char);
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid operator");
+        }
+        break;
+
+    case '=':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == '=')
+            set_single_token(lexer, TOKEN_EQUAL, current_char);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_ASSIGN, '=');
+        }
+        break;
+
+    case '<':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == '=')
+            set_single_token(lexer, TOKEN_EQUAL_LESS, '<');
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_LESS, '<');
+        }
+        break;
+
+    case '>':
+        current_char = lexer_consume_char(lexer, file);
+        if (current_char == '=')
+            set_single_token(lexer, TOKEN_EQUAL_GREATER, '>');
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_GREATER, '>');
+        }
+        break;
+
+    case '/':
+        current_char = lexer_consume_char(lexer, file);
+        // Проверка на комментарий
+        if (current_char == '/')
+            read_comment(lexer, file, current_char);
+        // Проверка на блоковый комментарий
+        else if (current_char == '*')
+            read_block_comment(lexer, file, current_char, false);
+        else {
+            lexer_unconsume_char(lexer, file, current_char);
+            set_single_token(lexer, TOKEN_DIVISION, '/');
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
  легко читать и обработать токены.
@@ -396,6 +565,24 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             classify_number_token(lexer, file, current_char);
             return *lexer->current_token;
         }
+
+        /* Обработка скобок */
+        else if (is_bracket(current_char)){
+            current_char = lexer_consume_char(lexer, file);
+            // получение типа токена
+            TokenType token = get_bracket_token(current_char);
+            set_single_token(lexer, token, current_char);
+            return *lexer->current_token;
+        }
+
+        /* Обработка операторов и комментариев */
+        else if (is_operator(current_char)){
+            read_operator(lexer, file);
+            return *lexer->current_token;
+        }
+
+
+
 
         /* Временное решение для неизвестных символов */
         else{
