@@ -24,7 +24,6 @@ void print_token_data(const char *data) {
 int main() {
     // Use stdin for input (supports redirection like: ./test < input.wren)
     FILE *file = fopen("example.wren", "r");
-    //    FILE *file = stdin; --- IGNORE ---
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return 1;
