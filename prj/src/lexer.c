@@ -359,12 +359,12 @@ void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
 
 
 
-bool is_brecket(char character){
+bool is_bracket(char character){
     return (character == ')' || character == '(' || 
         character == '}' || character == '{') ? true : false;
 }
 
-TokenType get_brecket_token(char character){
+TokenType get_bracket_token(char character){
     // Определить тип токена на основе символа
     switch (character)
     {
@@ -483,10 +483,10 @@ void read_operator (Lexer *lexer, FILE *file){
     case '>':
         current_char = lexer_consume_char(lexer, file);
         if (current_char == '=')
-            set_single_token(lexer, TOKEN_EQUAL_BETTER, '>');
+            set_single_token(lexer, TOKEN_EQUAL_GREATER, '>');
         else {
             lexer_unconsume_char(lexer, file, current_char);
-            set_single_token(lexer, TOKEN_BETTER, '>');
+            set_single_token(lexer, TOKEN_GREATER, '>');
         }
         break;
 
@@ -500,7 +500,7 @@ void read_operator (Lexer *lexer, FILE *file){
             read_block_comment(lexer, file, current_char, false);
         else {
             lexer_unconsume_char(lexer, file, current_char);
-            set_single_token(lexer, TOKEN_BETTER, current_char);
+            set_single_token(lexer, TOKEN_DIVISION, current_char);
         }
         break;
 
@@ -577,10 +577,10 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         }
 
         /* Обработка скобок */
-        else if (is_brecket(current_char)){
+        else if (is_bracket(current_char)){
             current_char = lexer_consume_char(lexer, file);
             // получение типа токена
-            TokenType token = get_brecket_token(current_char);
+            TokenType token = get_bracket_token(current_char);
             set_single_token(lexer, token, current_char);
             return *lexer->current_token;
         }

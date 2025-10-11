@@ -58,8 +58,8 @@ char *token_type_to_string(TokenType type) {
         case TOKEN_MULTIPLY: return "TOKEN_MULTIPLY";
         case TOKEN_EQUAL: return "TOKEN_EQUAL";
         case TOKEN_NOT_EQUAL: return "TOKEN_NOT_EQUAL";
-        case TOKEN_BETTER: return "TOKEN_BETTER";
-        case TOKEN_EQUAL_BETTER: return "TOKEN_EQUAL_BETTER";
+        case TOKEN_GREATER: return "TOKEN_GREATER";
+        case TOKEN_EQUAL_GREATER: return "TOKEN_EQUAL_GREATER";
         case TOKEN_LESS: return "TOKEN_LESS";
         case TOKEN_EQUAL_LESS: return "TOKEN_EQUAL_LESS";
         case TOKEN_DIVISION: return "TOKEN_DIVISION";

@@ -79,7 +79,7 @@ bool is_digit(char character);
  * @param character Символ для проверки.
  * @return true если символ является скобкой, иначе false.
  */
-bool is_brecket(char character);
+bool is_bracket(char character);
 
 /**
  * Функция для возврата нужного токена скобки
@@ -87,7 +87,7 @@ bool is_brecket(char character);
  * @param character Символ для перевода.
  * @return Токен от нужной скобки
  */
-TokenType get_brecket_token (char character);
+TokenType get_bracket_token (char character);
 
 /**
  * Записывает указанное количество символов из файла в строку.
@@ -136,7 +136,7 @@ void read_operator (Lexer *lexer, FILE *file);
 /**
  * Читает однострочный комментарий из исходного кода.
  * 
- * Эта функция читает символы из файла для поиска конца однострочного комментария4
+ * Эта функция читает символы из файла для поиска конца однострочного комментария.
  * 
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
