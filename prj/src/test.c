@@ -16,6 +16,7 @@ void print_token_data(const char *data) {
         switch (*p) {
             case '\n': printf("\\n"); break;
             case '\t': printf("\\t"); break;
+            case '\r': printf("\\r"); break;
             default:   putchar(*p); break;
         }
     }
@@ -43,7 +44,7 @@ int main() {
                token_type_to_string(lexer->current_token->type));
         
         print_token_data(lexer->current_token->data);
-        
+
         printf(", Line: %d\n", lexer->current_token->line);
     }
 
