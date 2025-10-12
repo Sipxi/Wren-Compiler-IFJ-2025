@@ -7,3 +7,9 @@ ka\""""popa"
 asdsad
 asdsad  sdf
 """"asd\""
+
+""" asd
+asdasfn dsfk    dsfk
+    fdg
+    " dsfsd " fdsds
+dsf     """

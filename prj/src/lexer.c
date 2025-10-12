@@ -549,9 +549,6 @@ void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
             characters_read++;
             break;
             }                    
-        } else if (current == '"') {
-            lexer_consume_char(lexer, file); 
-            characters_read++;
         } else {
             // если новая строка - делаем апдейт строки и позиции
             if (current == '\n') {
@@ -580,8 +577,11 @@ void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
         lexer_consume_char(lexer, file); //обрабатываем символы
         characters_read++;
 
-        // Обрабатываем escape-последовательность \"
+        // Находим \ - значит дальше может быть ексейп-секвенция \"
+        // Нам нужно отдельно обработать этот случай вне while, что бы не выйти из стринга
         if (peek_char(file) == '\\') {
+            // Обрабатываем \ и " за ним
+            // Вместо " может быть и любой другой символ, нас не интересует какой
             lexer_consume_char(lexer, file);
             lexer_consume_char(lexer, file);
             characters_read += 2;
