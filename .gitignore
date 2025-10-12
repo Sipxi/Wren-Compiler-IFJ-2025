@@ -1,0 +1,18 @@
+# Compiled binaries
+ifj_compiler
+test_playground
+test_lexer
+test_debug
+
+# Object files
+*.o
+*.obj
+
+# Build directories
+obj/
+build/
+
+
+# IDE and editor files
+.vscode/
+.vs/
