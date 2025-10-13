@@ -213,8 +213,9 @@ void read_operator(Lexer *lexer, FILE *file);
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
  * @param character Текущий символ.
+ * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
  */
-void read_comment(Lexer *lexer, FILE *file);
+void read_comment(Lexer *lexer, FILE *file, bool after_whitespace);
 
 /**
  * Читает блоковый комментарий из исходного кода.
@@ -301,7 +302,8 @@ void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_re
 
 /**
  * 
- * Считывает последовательность пробельных символов из входного потока,
+ * Считывает последовательность пробельных символов, новых строк из входного потока
+ * и последующими за ними комментариями, 
  * возвращает первый непустой символ обратно и создаёт токен TOKEN_WHITESPACE.
  *
  * Эта функция читает символы из файла для создания одного токена.
