@@ -7,7 +7,6 @@
 Если хотите запустить этот файл:
 
 make test-pg
-
 */
 
 // Print token data safely, visualizing special characters
@@ -31,12 +30,11 @@ int main() {
     }
 
     Lexer *lexer = lexer_init();
-    if (!lexer) {
+    if (lexer == NULL) {
         fprintf(stderr, "Error initializing lexer.\n");
         fclose(file);
         return 1;
     }
-
     while (lexer->current_token->type != TOKEN_EOF) {
         get_next_token(lexer, file);
 

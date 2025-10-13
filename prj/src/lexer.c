@@ -556,6 +556,98 @@ void read_operator(Lexer *lexer, FILE *file){
     }
 }
 
+// Функции для чтения строк
+void read_string(Lexer *lexer, FILE *file) {
+    // Проглатываем первую кавычку
+    int characters_read = 1;
+    lexer_consume_char(lexer, file);
+    
+    if (peek_char(file) == '"') {
+        if (peek_next_char(file) == '"') {
+            read_multiline_string(lexer, file, characters_read); // Многострочная строка
+        } else {
+            read_empty_string(lexer, file, characters_read); // Пустая строка
+        }
+    } else {
+        read_regular_string(lexer, file, characters_read);// Обычная строка
+    }
+}
+
+// Многострочный стринг: """..."""
+void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
+    lexer_consume_char(lexer, file);
+    lexer_consume_char(lexer, file);
+    characters_read += 2;
+
+    while (true) {
+        char current = peek_char(file);
+        
+        if (current == EOF) {
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, 
+                       "Unterminated multi-line string literal");
+        }
+        
+        // находим первые 2 скобки
+        if (current == '"' && peek_next_char(file) == '"') {
+            lexer_consume_char(lexer, file);
+            lexer_consume_char(lexer, file);
+            characters_read += 2;
+            // 3-я скобка, то выходим
+            if (peek_char(file) == '"') {
+            lexer_consume_char(lexer, file);
+            characters_read++;
+            break;
+            }                    
+        } else {
+            // если новая строка - делаем апдейт строки и позиции
+            if (current == '\n') {
+            lexer->line++;
+            lexer->position = 1;
+            }
+            lexer_consume_char(lexer, file); //двигаемся по буквам
+            characters_read++;
+        }
+    }
+
+    set_multi_token(lexer, TOKEN_MULTI_STRING, file, characters_read);
+}
+
+// Пустой стринг ""
+void read_empty_string(Lexer *lexer, FILE *file, int characters_read) {
+    lexer_consume_char(lexer, file);
+    characters_read++;
+    set_multi_token(lexer, TOKEN_STRING, file, characters_read);
+}
+
+// Обычный стринг "..."
+void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
+    //Пока не наткнемся на скобочку
+    while (peek_char(file) != '"') {
+        lexer_consume_char(lexer, file); //обрабатываем символы
+        characters_read++;
+
+        // Находим \ - значит дальше может быть ексейп-секвенция \"
+        // Нам нужно отдельно обработать этот случай вне while, что бы не выйти из стринга
+        if (peek_char(file) == '\\') {
+            // Обрабатываем \ и " за ним
+            // Вместо " может быть и любой другой символ, нас не интересует какой
+            lexer_consume_char(lexer, file);
+            lexer_consume_char(lexer, file);
+            characters_read += 2;
+        }
+
+        // Ошибка в случае
+        if (peek_char(file) == EOF || peek_char(file) == '\n') {
+            raise_error(LEXER_ERROR, lexer->line, lexer->position, 
+                       "Unterminated string literal");
+        }
+    }
+    lexer_consume_char(lexer, file);
+    characters_read++;
+    set_multi_token(lexer, TOKEN_STRING, file, characters_read);
+}
+
+
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
  легко читать и обработать токены.
@@ -587,6 +679,17 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         } else if (current_char == '_') {
             read_global_identifier(lexer, file);
             return *lexer->current_token;
+
+        /* Обработка конца строки */
+        } 
+        else if (current_char == '\n') {
+            current_char = lexer_consume_char(lexer, file);
+            set_single_token(lexer, TOKEN_EOL, current_char);
+
+            // Обновить номер строки и позицию после обработки конца строки
+            lexer->line++;
+            lexer->position = 1;
+            return *lexer->current_token;
         }
 
         /* Обработка пробелов, табуляций, новых строк 
@@ -611,6 +714,12 @@ Token get_next_token(Lexer *lexer, FILE *file) {
         /* Обработка чисел, начинающихся с 0 (возможно, шестнадцатеричных или с плавающей точкой) */
         else if (current_char == '0') {
             classify_number_token(lexer, file);
+            return *lexer->current_token;
+        }
+
+        /*Обработка стрингов*/
+        else if(current_char == '"'){
+            read_string(lexer, file);
             return *lexer->current_token;
         }
 
