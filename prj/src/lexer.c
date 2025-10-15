@@ -374,10 +374,13 @@ void classify_number_token(Lexer *lexer, FILE *file) {
     // Первый символ '0', нужно проверить следующий символ
     lexer_consume_char(lexer, file);
     int characters_read = 1;
+    // Оказывается, 0456 это нормальное число во wren, выведет 456
+    // Поэтому 0 просто убираем и читаем дальше как обычное число
     if (is_digit(peek_char(file))) {
-        // Ошибка: цифра после '0'
-        raise_error(LEXER_ERROR, lexer->line, lexer->position, "Invalid number format");
+        read_number(lexer, file);
+        return;
     }
+    // Во wren работает только 0x, а не 0X для hex
     else if (peek_char(file) == 'x') {
         // Обработка шестнадцатеричных чисел
         // считываем 'x'
@@ -392,6 +395,7 @@ void classify_number_token(Lexer *lexer, FILE *file) {
         characters_read++;
         check_float_part(lexer, file, characters_read);
     }
+    // Во wren работает e и E для экспоненты
     else if (peek_char(file) == 'e' || peek_char(file) == 'E') {
         // Обработка чисел в экспоненциальной форме
         // считываем 'e' или 'E'
@@ -705,7 +709,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             return *lexer->current_token;
         }
 
-        /* Обработка целых чисел */
+        /* Обработка целых чисел, которые не начинаются с 0 */
         else if (is_digit(current_char) && current_char != '0') {
             read_number(lexer, file);
             return *lexer->current_token;
