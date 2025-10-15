@@ -1,6 +1,5 @@
 #include "lexer.h"
 #include "error.h"
-#include <stdio.h>
 #include <string.h>
 
 /* ======================================*/
@@ -971,8 +970,6 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
     lexer_free(lexer);
     exit(error_code);
 }
-
-
 
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
