@@ -1,50 +1,337 @@
 #include "lexer.h"
+#include "error.h"
+#include <stdio.h>
+#include <string.h>
 
-Lexer *lexer_init() {
-    // Выделить память для структуры Lexer
-    Lexer *lexer = (Lexer *)malloc(sizeof(Lexer));
-    if (lexer == NULL) {
-        return NULL;
-    }
-    // Инициализировать позицию и номер строки
-    // Начать позицию с 1 и номер строки с 1
-    lexer->position = 1;
-    lexer->line = 1;
-    lexer->current_token = token_init();
+/* ======================================*/
+/* ===== Определение приватных функций лексера =====*/
+/* ======================================*/
 
-    return lexer;
-}
+/**
+ * Проверяет, является ли символ допустимым символом для идентификаторов (буквы и
+ * цифры).
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является буквой или цифрой, иначе false.
+ */
+static bool is_letter(char character);
 
-void lexer_free(Lexer *lexer) {
-    if (lexer == NULL) {
-        return;
-    }
-    token_free(lexer->current_token);
-    free(lexer);
-}
+/**
+ * Проверяет, является ли символ оператором.
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является оператором, иначе false.
+ */
+static bool is_operator(char character);
 
-void lexer_error(Lexer *lexer, int error_code, const char *message) {
-    fprintf(stderr, "\033[1;31mLexical error.\nError code: %d\n%s at line %d, position %d\033[0m\n",
-            error_code, message, lexer->line, lexer->position);
-    // Освободить память и завершить программу с кодом ошибки
-    lexer_free(lexer);
-    exit(error_code);
-}
+/**
+ * Проверяет, является ли символ цифрой (0-9).
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является цифрой, иначе false.
+ */
+static bool is_digit(char character);
 
-bool is_letter(char character) {
+/**
+ * Проверяет, является ли текущий идентификатор ключевым словом.
+ * 
+ * Если да, то обновляет тип токена на соответствующий тип ключевого слова.
+ * @param lexer Указатель на структуру Lexer.
+ * @return true если текущий идентификатор является ключевым словом, иначе false
+ */
+static bool is_keyword(const char *str);
+
+/**
+ * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая строка).
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является пробельным, иначе false.
+ */
+static bool is_whitespace(const char character);
+
+/**
+ * Проверяет, является ли символ шестнадцатеричной цифрой (0-9, a-f, A-F).
+ *
+ * @param character Символ для проверки.
+ * @return true если символ является шестнадцатеричной цифрой, иначе false.
+ */
+static bool is_hex_digit(const char character);
+
+/**
+ * Проверка, является ли символ скобкой 
+ * 
+ * @param character Символ для проверки.
+ * @return true если символ является скобкой, иначе false.
+ */
+static bool is_bracket(char character);
+
+/**
+ * Записывает указанное количество символов из файла в строку.
+ *
+ * Эта функция читает символы из файла и записывает их в указанную строку.
+ * @param file Указатель на файл, из которого будут прочитаны символы.
+ * @param count Количество символов для чтения.
+ * @param str Строка для записи.
+ * @return Количество записанных символов.
+ */
+static bool write_str(FILE *file, int count, char **str);
+
+/**
+ * Функция для возврата нужного токена скобки
+ * 
+ * @param character Символ для перевода.
+ * @return Токен от нужной скобки
+ */
+static TokenType get_bracket_token (char character);
+
+/**
+ * Просматривает следующий символ в файле без его удаления из потока.
+ *
+ * @param file Указатель на файл для просмотра следующего символа.
+ * @return Следующий символ в файле.
+ */
+static char peek_char(FILE *file);
+
+/**
+ * Просматривает символ после следующего в файле без его удаления из потока.
+ * 
+ * @param file Указатель на файл для просмотра символа после следующего.
+ * @return Символ после следующего в файле.
+ */
+static char peek_next_char(FILE *file);
+
+/**
+ * Читает следующий символ из файла и обновляет позицию лексера.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл для чтения следующего символа.
+ * @return Прочитанный символ.
+ */
+static char lexer_consume_char(Lexer *lexer, FILE *file);
+
+/**
+ * Проверяет и обрабатывает часть экспоненты числа
+ *
+ * Эта функция читает символы из файла,
+ * и обрабатывает возможный знак '+' или '-' и последующие цифры.
+ * Если формат экспоненты неверен, вызывается ошибка лексера.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param current_char Текущий символ, который уже был прочитан ('e' или 'E').
+ * @param characters_read Количество символов, прочитанных до вызова этой функции.
+ */
+static void check_exponent_part(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * Проверяет и обрабатывает часть числа с плавающей точкой
+ *
+ * Эта функция читает символы из файла,
+ * и обрабатывает последующие цифры.
+ * Если формат числа с плавающей точкой неверен, вызывается ошибка лексера.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param current_char Текущий символ, который уже был прочитан ('.').
+ * @param characters_read Количество символов, прочитанных до вызова этой функции.
+ */
+static void check_float_part(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * Проверяет и обрабатывает часть шестнадцатеричного числа
+ *
+ * Эта функция читает символы из файла,
+ * и обрабатывает последующие шестнадцатеричные цифры.
+ * Если формат шестнадцатеричного числа неверен, вызывается ошибка лексера.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param current_char Текущий символ, который уже был прочитан ('x').
+ * @param characters_read Количество символов, прочитанных до вызова этой функции.
+ */
+static void check_hex_part(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * Возвращает последний прочитанный символ обратно в поток и обновляет позицию лексера.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл для возврата символа.
+ */
+static void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
+
+/**
+ * Устанавливает токен с указанным типом и данными.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param type Тип токена для установки.
+ * @param data Данные токена для установки (один символ).
+*/
+static void set_single_token(Lexer *lexer, TokenType type, const char data);
+
+/**
+ * Устанавливает токен с указанным типом и данными.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param type Тип токена для установки.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param characters_read Количество символов, прочитанных для токена.
+ * 
+ * 
+*/
+static void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read);
+
+/**
+ * Читает идентификатор из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * идентификатора.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void read_identifier(Lexer *lexer, FILE *file);
+
+/**
+ * Читает глобальный идентификатор, например (__a2) из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * глобального идентификатора.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void read_global_identifier(Lexer *lexer, FILE *file);
+
+/**
+ * 
+ * Считывает последовательность пробельных символов, новых строк из входного потока
+ * и последующими за ними комментариями, 
+ * возвращает первый непустой символ обратно и создаёт токен TOKEN_WHITESPACE.
+ *
+ * Эта функция читает символы из файла для создания одного токена.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void read_whitespace(Lexer *lexer, FILE *file);
+
+/**
+ * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена числа.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void read_number(Lexer *lexer, FILE *file);
+
+/**
+ * Классифицирует число, начинающееся с '0', как целое, с плавающей точкой,
+ * экспоненциальное или шестнадцатеричное.
+ *
+ * Эта функция читает символы из файла для создания токена числа.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void classify_number_token(Lexer *lexer, FILE *file);
+
+/**
+ * Читает однострочный комментарий из исходного кода.
+ * 
+ * Эта функция читает символы из файла для поиска конца однострочного комментария.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
+ */
+static void read_comment(Lexer *lexer, FILE *file, bool after_whitespace);
+
+/**
+ * Читает блоковый комментарий из исходного кода.
+ *
+ * Эта функция читает символы из файла для поиска конца блокового комментария.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
+ */
+static void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace);
+
+/**
+ * Читает оператор из исходного кода
+ * 
+ * Эта функция читает символы из файла для создания токена
+ * идентификатора.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param character Текущий символ.
+ */
+static void read_operator(Lexer *lexer, FILE *file);
+
+/**
+ * Читает строку из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * строки.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ */
+static void read_string(Lexer *lexer, FILE *file);
+
+/**
+ * Обрабатывает вариант многострочной строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * многострочной строки.
+ */
+static void read_multiline_string(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * Обрабатывает вариант пустой строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * пустой строки.
+ */
+static void read_empty_string(Lexer *lexer, FILE *file, int characters_read);
+
+/**
+ * Обрабатывает вариант регулярной строки из исходного кода.
+ *
+ * Эта функция читает символы из файла для создания токена
+ * регулярной строки.
+ * 
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param characters_read Количество символов, прочитанных для токена.
+ */
+static void read_regular_string(Lexer *lexer, FILE *file, int characters_read);
+
+
+/* ====================================*/
+/* ===== Имплементация приватных функций лексера =====*/
+/* ====================================*/
+
+static bool is_letter(char character) {
     return (character >= 'a' && character <= 'z') ||
            (character >= 'A' && character <= 'Z');
 }
 
-bool is_operator(char character){
+static bool is_operator(char character){
     return (character == '+' || character == '-' || character == '=' || 
         character == '/' || character == '*' || character == '!' || 
         character == '<' || character == '>');
 }
 
-bool is_digit(char character) { return (character >= '0' && character <= '9'); }
+static bool is_digit(char character) {
+    return (character >= '0' && character <= '9');
+}
 
-bool is_keyword(const char *str){
+static bool is_keyword(const char *str){
     const char *keywords[] = {
         "class", "if", "else", "is", "null", "return", "var", "while",
         "Ifj", "static", "import", "for", "Num", "String", "Null"
@@ -59,17 +346,17 @@ bool is_keyword(const char *str){
 
 }
 
-bool is_whitespace(const char character) {
+static bool is_whitespace(const char character) {
     return character == ' ' || character == '\t' || character == '\r' || character == '\n';
 }
 
-bool is_hex_digit(const char character) {
+static bool is_hex_digit(const char character) {
     return (is_digit(character)) ||
            (character >= 'a' && character <= 'f') ||
            (character >= 'A' && character <= 'F');
 }
 
-bool write_str(FILE *file, int count, char **str) {
+static bool write_str(FILE *file, int count, char **str) {
     // Переместить указатель файла назад к последней прочитанной последовательности символов
     if (fseek(file, -count, SEEK_CUR) != 0) {
         fprintf(stderr, "fseek failed\n");
@@ -100,13 +387,12 @@ bool write_str(FILE *file, int count, char **str) {
     return true;
 }
 
-
-bool is_bracket(char character){
+static bool is_bracket(char character){
     return (character == ')' || character == '(' || 
         character == '}' || character == '{');
 }
 
-TokenType get_bracket_token(char character){
+static TokenType get_bracket_token(char character){
     // Определить тип токена на основе символа
     switch (character)
     {
@@ -123,13 +409,13 @@ TokenType get_bracket_token(char character){
     }
 }
 
-char peek_char(FILE *file) {
+static char peek_char(FILE *file) {
     int character = fgetc(file);
     ungetc(character, file);
     return (char)character;
 }
 
-char peek_next_char(FILE *file) {
+static char peek_next_char(FILE *file) {
     int character = fgetc(file);
     int next_character = fgetc(file);
     ungetc(next_character, file);
@@ -137,7 +423,7 @@ char peek_next_char(FILE *file) {
     return (char)next_character;
 }
 
-char lexer_consume_char(Lexer *lexer, FILE *file) {
+static char lexer_consume_char(Lexer *lexer, FILE *file) {
     // Увеличить позицию лексера
     // Читать следующий символ из файла
     lexer->position++;
@@ -146,7 +432,7 @@ char lexer_consume_char(Lexer *lexer, FILE *file) {
     return character;
 }
 
-void check_exponent_part(Lexer *lexer, FILE *file, int characters_read) {
+static void check_exponent_part(Lexer *lexer, FILE *file, int characters_read) {
     // Первый символ 'e' или 'E' уже прочитан
     // Читаем следующий символ
     char current_char = lexer_consume_char(lexer, file);
@@ -174,7 +460,7 @@ void check_exponent_part(Lexer *lexer, FILE *file, int characters_read) {
 
 }
 
-void check_float_part(Lexer *lexer, FILE *file, int characters_read) {
+static void check_float_part(Lexer *lexer, FILE *file, int characters_read) {
     // Первый символ '.' уже прочитан
     // Читаем следующий символ
     char current_char = lexer_consume_char(lexer, file);
@@ -203,7 +489,7 @@ void check_float_part(Lexer *lexer, FILE *file, int characters_read) {
 
 }
 
-void check_hex_part(Lexer *lexer, FILE *file, int characters_read) {
+static void check_hex_part(Lexer *lexer, FILE *file, int characters_read) {
     // Первый символ 'x' уже прочитан
     // Читаем следующий символ
     char current_char = lexer_consume_char(lexer, file);
@@ -227,27 +513,27 @@ void check_hex_part(Lexer *lexer, FILE *file, int characters_read) {
 
 }
 
-void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char) {
+static void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char) {
     // Вернуть последний прочитанный символ обратно в поток
     ungetc(current_char, file);
     // Уменьшить позицию лексера
     lexer->position--;
 }
 
-void set_single_token(Lexer *lexer, TokenType type, const char data) {
+static void set_single_token(Lexer *lexer, TokenType type, const char data) {
     lexer->current_token->type = type;
     lexer->current_token->line = lexer->line;
     lexer->current_token->data[0] = data;
     lexer->current_token->data[1] = '\0';
 }
 
-void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read) {
+static void set_multi_token(Lexer *lexer, TokenType type, FILE *file, int characters_read) {
     lexer->current_token->type = type;
     lexer->current_token->line = lexer->line;
     write_str(file, characters_read, &lexer->current_token->data);
 }
 
-void read_identifier(Lexer *lexer, FILE *file) {
+static void read_identifier(Lexer *lexer, FILE *file) {
     // В начале ещё ничего не прочитано
     int characters_read = 1;
     char current_char = lexer_consume_char(lexer, file);
@@ -265,7 +551,7 @@ void read_identifier(Lexer *lexer, FILE *file) {
     set_multi_token(lexer, TOKEN_IDENTIFIER, file, characters_read);
 }
 
-void read_global_identifier(Lexer *lexer, FILE *file) {
+static void read_global_identifier(Lexer *lexer, FILE *file) {
     // Первый символ является '_', можно читать дальше
     char current_char = lexer_consume_char(lexer, file);
     int characters_read = 1;
@@ -291,7 +577,7 @@ void read_global_identifier(Lexer *lexer, FILE *file) {
     set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
 }
 
-void read_whitespace(Lexer *lexer, FILE *file) {
+static void read_whitespace(Lexer *lexer, FILE *file) {
     char current_char = lexer_consume_char(lexer, file);
     char last_whitespace = current_char;
     bool found_newline = false; // Флаг для отслеживания новой строки
@@ -344,7 +630,7 @@ void read_whitespace(Lexer *lexer, FILE *file) {
         set_single_token(lexer, TOKEN_WHITESPACE, last_whitespace);
 }
 
-void read_number(Lexer *lexer, FILE *file) {
+static void read_number(Lexer *lexer, FILE *file) {
     // Мы знаем, что первый символ является цифрой
     char current_char = lexer_consume_char(lexer, file);
     int characters_read = 1;
@@ -370,7 +656,7 @@ void read_number(Lexer *lexer, FILE *file) {
     set_multi_token(lexer, TOKEN_INT, file, characters_read);
 }
 
-void classify_number_token(Lexer *lexer, FILE *file) {
+static void classify_number_token(Lexer *lexer, FILE *file) {
     // Первый символ '0', нужно проверить следующий символ
     lexer_consume_char(lexer, file);
     int characters_read = 1;
@@ -409,7 +695,7 @@ void classify_number_token(Lexer *lexer, FILE *file) {
     }
 }
 
-void read_comment(Lexer *lexer, FILE *file, bool after_whitespace){
+static void read_comment(Lexer *lexer, FILE *file, bool after_whitespace){
     char current_char = lexer_consume_char(lexer, file);
     
     // Комментарий идет до конца строки.
@@ -430,7 +716,7 @@ void read_comment(Lexer *lexer, FILE *file, bool after_whitespace){
     }
 }
 
-void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace){
+static void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace){
     int count_block_comment = 1; // Счетчик открытых блоков комментариев
     char current_char = lexer_consume_char(lexer, file);
     // цикл пока не закроются все блоки комментариев
@@ -476,7 +762,7 @@ void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace){
     read_whitespace(lexer, file);
 }
 
-void read_operator(Lexer *lexer, FILE *file){
+static void read_operator(Lexer *lexer, FILE *file){
     char current_char = lexer_consume_char(lexer, file);
     // Определить тип токена на основе символа
     switch (current_char)
@@ -561,7 +847,7 @@ void read_operator(Lexer *lexer, FILE *file){
 }
 
 // Функции для чтения строк
-void read_string(Lexer *lexer, FILE *file) {
+static void read_string(Lexer *lexer, FILE *file) {
     // Проглатываем первую кавычку
     int characters_read = 1;
     lexer_consume_char(lexer, file);
@@ -578,7 +864,7 @@ void read_string(Lexer *lexer, FILE *file) {
 }
 
 // Многострочный стринг: """..."""
-void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
+static void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
     lexer_consume_char(lexer, file);
     lexer_consume_char(lexer, file);
     characters_read += 2;
@@ -617,14 +903,14 @@ void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
 }
 
 // Пустой стринг ""
-void read_empty_string(Lexer *lexer, FILE *file, int characters_read) {
+static void read_empty_string(Lexer *lexer, FILE *file, int characters_read) {
     lexer_consume_char(lexer, file);
     characters_read++;
     set_multi_token(lexer, TOKEN_STRING, file, characters_read);
 }
 
 // Обычный стринг "..."
-void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
+static void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
     //Пока не наткнемся на скобочку
     while (peek_char(file) != '"') {
         lexer_consume_char(lexer, file); //обрабатываем символы
@@ -650,6 +936,42 @@ void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
     characters_read++;
     set_multi_token(lexer, TOKEN_STRING, file, characters_read);
 }
+
+/* ==================================== */
+/* ===== Имплементация публичных функций лексера =====*/
+/* ==================================== */
+
+Lexer *lexer_init() {
+    // Выделить память для структуры Lexer
+    Lexer *lexer = (Lexer *)malloc(sizeof(Lexer));
+    if (lexer == NULL) {
+        return NULL;
+    }
+    // Инициализировать позицию и номер строки
+    // Начать позицию с 1 и номер строки с 1
+    lexer->position = 1;
+    lexer->line = 1;
+    lexer->current_token = token_init();
+
+    return lexer;
+}
+
+void lexer_free(Lexer *lexer) {
+    if (lexer == NULL) {
+        return;
+    }
+    token_free(lexer->current_token);
+    free(lexer);
+}
+
+void lexer_error(Lexer *lexer, int error_code, const char *message) {
+    fprintf(stderr, "\033[1;31mLexical error.\nError code: %d\n%s at line %d, position %d\033[0m\n",
+            error_code, message, lexer->line, lexer->position);
+    // Освободить память и завершить программу с кодом ошибки
+    lexer_free(lexer);
+    exit(error_code);
+}
+
 
 
 /*
