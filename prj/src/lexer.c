@@ -593,7 +593,7 @@ static void read_global_identifier(Lexer *lexer, FILE *file) {
     set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
 }
 
-bool read_whitespace(Lexer *lexer, FILE *file) {
+static bool read_whitespace(Lexer *lexer, FILE *file) {
     char current_char = lexer_consume_char(lexer, file);
     bool found_newline = false; // Флаг для отслеживания новой строки
 
@@ -605,7 +605,7 @@ bool read_whitespace(Lexer *lexer, FILE *file) {
             if (peek_char(file) == '*')
                 read_block_comment(lexer, file);
             // Проверка на однострочный комментарий
-            else if (current_char == '/' && peek_char(file) == '/') {
+            else if (peek_char(file) == '/') {
                 if (read_comment(lexer, file)) // если был найден EOF возращаем токен EOL
                     return true;
             } else // Это не комментарий, выходим из цикла
