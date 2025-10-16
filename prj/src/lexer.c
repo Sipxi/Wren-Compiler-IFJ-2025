@@ -1,6 +1,14 @@
+// Имплементация функций лексера для токенизации исходного кода
+//
+// Авторы: 
+// Serhij Čepil (253038)
+//
+//! Допишите ваши имена и номера
+
 #include "lexer.h"
 #include "error.h"
 #include <string.h>
+#include <stdbool.h>
 
 /* ======================================*/
 /* ===== Определение приватных функций лексера =====*/
@@ -845,8 +853,9 @@ static void read_operator(Lexer *lexer, FILE *file){
     }
 }
 
-// Функции для чтения строк
 static void read_string(Lexer *lexer, FILE *file) {
+    // Функции для чтения строк
+    
     // Проглатываем первую кавычку
     int characters_read = 1;
     lexer_consume_char(lexer, file);
@@ -862,8 +871,9 @@ static void read_string(Lexer *lexer, FILE *file) {
     }
 }
 
-// Многострочный стринг: """..."""
 static void read_multiline_string(Lexer *lexer, FILE *file, int characters_read) {
+    // Многострочный стринг: """..."""
+
     lexer_consume_char(lexer, file);
     lexer_consume_char(lexer, file);
     characters_read += 2;
@@ -901,16 +911,18 @@ static void read_multiline_string(Lexer *lexer, FILE *file, int characters_read)
     set_multi_token(lexer, TOKEN_MULTI_STRING, file, characters_read);
 }
 
-// Пустой стринг ""
 static void read_empty_string(Lexer *lexer, FILE *file, int characters_read) {
+    // Пустой стринг ""
+
     lexer_consume_char(lexer, file);
     characters_read++;
     set_multi_token(lexer, TOKEN_STRING, file, characters_read);
 }
 
-// Обычный стринг "..."
 static void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
-    //Пока не наткнемся на скобочку
+    // Обычный стринг "..."
+
+    // Пока не наткнемся на скобочку
     while (peek_char(file) != '"') {
         lexer_consume_char(lexer, file); //обрабатываем символы
         characters_read++;
