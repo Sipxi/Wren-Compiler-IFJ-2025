@@ -45,7 +45,6 @@ char *token_type_to_string(TokenType type) {
         case TOKEN_KEYWORD: return "TOKEN_KEYWORD";
         case TOKEN_DOT: return "TOKEN_DOT";
         case TOKEN_COMMA: return "TOKEN_COMMA";
-        case TOKEN_WHITESPACE: return "TOKEN_WHITESPACE";
         case TOKEN_EOF: return "TOKEN_EOF";
         case TOKEN_EOL: return "TOKEN_EOL";
         case TOKEN_ASSIGN: return "TOKEN_ASSIGN";
