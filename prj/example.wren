@@ -1,14 +1,2 @@
-//
-/*
-
-/* sadmsdflkasjdkf jasljkdf hajlskdfhj lakshdf jkahdkjlf a*/
-
-*/               //
-// /////////////////////////////////////////////////
-/**/
-
-
-
-
-
-
+var a = "hello"
+var b = """This is a multiline string"""
