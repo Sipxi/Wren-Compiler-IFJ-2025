@@ -361,6 +361,19 @@ static void read_empty_string(Lexer *lexer, FILE *file, int characters_read);
  */
 static void read_regular_string(Lexer *lexer, FILE *file, int characters_read);
 
+/**
+ * Изменяет состояние конечного автомата лексера и возвращает последний
+ * прочитанный символ обратно в поток.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @param current_state Указатель на текущее состояние конечного автомата
+ * лексера.
+ * @param next_state Следующее состояние конечного автомата лексера.
+ * @param current_char Текущий символ, который уже был прочитан.
+ */
+static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
+                         LexerFSMState next_state, char current_char);
 /* ====================================*/
 /* ===== Имплементация приватных функций лексера =====*/
 /* ====================================*/
@@ -1123,6 +1136,8 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
 
                     //! Нужно обработать STATE_WHITESPACE
+                    //! Не смог пока пофиксить логику с комментами и пробелами
+                    //! Поэтому оставил так, надо будет доделать
                 } else if (is_whitespace(current_char) || is_comment_start(file)) {
                     if (read_whitespace(lexer, file, current_char)) {
                         change_state(file, lexer, &state, STATE_EOL,
@@ -1168,12 +1183,14 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 }
             case STATE_IDENTIFIER:
+                //! Переделать чтобы совпадало с логикой автомата
                 read_identifier(lexer, file, current_char);
                 if (is_keyword(lexer->current_token->data)) {
                     lexer->current_token->type = TOKEN_KEYWORD;
                 }
                 return *lexer->current_token;
             case STATE_GLOBAL_IDENTIFIER:
+                //! Переделать чтобы совпадало с логикой автомата
                 read_global_identifier(lexer, file, current_char);
                 return *lexer->current_token;
             case STATE_DOT:
@@ -1190,20 +1207,24 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 read_number(lexer, file, current_char);
                 return *lexer->current_token;
             case STATE_ZERO_START:
+                //! Переделать чтобы совпадало с логикой автомата
                 classify_number_token(lexer, file, current_char);
                 return *lexer->current_token;
             case STATE_STRING:
+                //! Переделать чтобы совпадало с логикой автомата
                 read_string(lexer, file);
                 return *lexer->current_token;
             case STATE_BRACKET:
-            // Скобки нужны чтобы не было warning о декларации переменны в кейсе
-            // Я про этот код
+                //! Переделать чтобы совпадало с логикой автомата
+                // Скобки нужны чтобы не было warning о декларации переменны в кейсе
+                // Я про этот код
             {
                 TokenType token = get_bracket_token(current_char);
                 set_single_token(lexer, token, current_char);
                 return *lexer->current_token;
             }
             case STATE_OPERATOR:
+                //! Переделать чтобы совпадало с логикой автомата
                 read_operator(lexer, file, current_char);
                 return *lexer->current_token;
             case STATE_EOF:
