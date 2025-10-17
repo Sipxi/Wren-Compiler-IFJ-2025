@@ -20,7 +20,6 @@ typedef enum {
     TOKEN_KEYWORD,
     TOKEN_DOT,
     TOKEN_COMMA,
-    TOKEN_WHITESPACE,
     TOKEN_EOF,
     TOKEN_EOL,
     TOKEN_ASSIGN,

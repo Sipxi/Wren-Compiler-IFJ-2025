@@ -32,6 +32,13 @@ static bool is_letter(char character);
 static bool is_operator(char character);
 
 /**
+ * Проверяет, начинается ли текущая позиция в файле с комментария.
+ * @param file Указатель на файл для проверки.
+ * @return true если текущая позиция в файле начинается с комментария, иначе false.
+ */
+static bool is_comment_start(FILE *file);
+
+/**
  * Проверяет, является ли символ цифрой (0-9).
  *
  * @param character Символ для проверки.
@@ -219,8 +226,9 @@ static void read_global_identifier(Lexer *lexer, FILE *file);
  *
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
+ * @returns true если был создан токен TOKEN_EOL
  */
-static void read_whitespace(Lexer *lexer, FILE *file);
+static bool read_whitespace(Lexer *lexer, FILE *file);
 
 /**
  * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
@@ -252,8 +260,9 @@ static void classify_number_token(Lexer *lexer, FILE *file);
  * @param file Указатель на файл, содержащий исходный код.
  * @param character Текущий символ.
  * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
+ * @returns true если был найден EOF
  */
-static void read_comment(Lexer *lexer, FILE *file, bool after_whitespace);
+static bool read_comment(Lexer *lexer, FILE *file);
 
 /**
  * Читает блоковый комментарий из исходного кода.
@@ -265,7 +274,7 @@ static void read_comment(Lexer *lexer, FILE *file, bool after_whitespace);
  * @param character Текущий символ.
  * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
  */
-static void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace);
+static void read_block_comment(Lexer *lexer, FILE *file);
 
 /**
  * Читает оператор из исходного кода
@@ -584,45 +593,33 @@ static void read_global_identifier(Lexer *lexer, FILE *file) {
     set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
 }
 
-static void read_whitespace(Lexer *lexer, FILE *file) {
+static bool read_whitespace(Lexer *lexer, FILE *file) {
     char current_char = lexer_consume_char(lexer, file);
-    char last_whitespace = current_char;
     bool found_newline = false; // Флаг для отслеживания новой строки
 
-    // Если функция вызвана при обнаружении новой строки
-    if (current_char == '\n'){
-        found_newline = true;
-        // Обновляем номер строки и позицию после обработки конца строки
-        lexer->line++;
-        lexer->position = 1;
-    }
-
-    // Пока читаем пробельные символы
-    while (is_whitespace(current_char)) {
-        last_whitespace = current_char;
-
-        current_char = lexer_consume_char(lexer, file);
-
-        // ТК блоковый комментарий является whitespace
-        // проверяем на блоковый комментарий после прочтения пробельного символа
-        if (current_char == '/' && peek_char(file) == '*') {
-            read_block_comment(lexer, file, true);
-            // После комментария считаем пробельным символом
-            current_char = ' ';
-        
-        // Обработка однострочного комментария, чтобы он не создал дополнительный EOL
-        } else if (current_char == '/' && peek_char(file) == '/') {
-            read_comment(lexer, file, true);
-            // После комментария считаем символом новой строки
-            current_char = '\n';
+    // Пока читаем пробельные символы или потанциальное начало комментария
+    while (is_whitespace(current_char) || current_char == '/') {
+        // Обработка комментариев
+        if (current_char == '/') {
+            // Проверка на блочный комментарий
+            if (peek_char(file) == '*')
+                read_block_comment(lexer, file);
+            // Проверка на однострочный комментарий
+            else if (peek_char(file) == '/') {
+                if (read_comment(lexer, file)) // если был найден EOF возращаем токен EOL
+                    return true;
+            } else // Это не комментарий, выходим из цикла
+                break;
+            current_char = ' '; // Заменяем для этого цикла комментарий на пробел
         }
-
         // Если новая строка, обновляем номер строки и позицию
         if (current_char == '\n') {
             found_newline = true;
             lexer->line++;
             lexer->position = 1;
         }
+        current_char = lexer_consume_char(lexer, file);
+
     }
 
     // Последний прочитанный символ не является пробельным, вернуть его обратно в поток
@@ -632,9 +629,7 @@ static void read_whitespace(Lexer *lexer, FILE *file) {
     if (found_newline)
         set_single_token(lexer, TOKEN_EOL, '\n');
 
-    // Иначе создать токен для последнего пробельного символа
-    else
-        set_single_token(lexer, TOKEN_WHITESPACE, last_whitespace);
+    return found_newline;
 }
 
 static void read_number(Lexer *lexer, FILE *file) {
@@ -702,28 +697,34 @@ static void classify_number_token(Lexer *lexer, FILE *file) {
     }
 }
 
-static void read_comment(Lexer *lexer, FILE *file, bool after_whitespace){
+static bool is_comment_start(FILE *file){
+    if (peek_char(file) == '/') {
+        char next_char = peek_next_char(file);
+        return next_char == '/' || next_char == '*';
+    }
+    return false;
+}
+
+static bool read_comment(Lexer *lexer, FILE *file){
     char current_char = lexer_consume_char(lexer, file);
     
     // Комментарий идет до конца строки.
     while(current_char != '\n' && current_char != EOF)
         current_char = lexer_consume_char(lexer, file);
 
+    lexer_unconsume_char(lexer, file, current_char);
+    
     // Если достигнут конец файла, вернуть символ обратно в поток
     // и установить EOL
     if (current_char == EOF){
-        lexer_unconsume_char(lexer, file, current_char);
         set_single_token(lexer, TOKEN_EOL, '\n');
+        return true; 
     }
-    // Если комментарий был после пробела, 
-    // то продолжается основной цикл чтения пробелов
-    else if (!after_whitespace){
-        lexer_unconsume_char(lexer, file, current_char);
-        read_whitespace(lexer, file);
-    }
+
+    return false;
 }
 
-static void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace){
+static void read_block_comment(Lexer *lexer, FILE *file){
     int count_block_comment = 1; // Счетчик открытых блоков комментариев
     char current_char = lexer_consume_char(lexer, file);
     // цикл пока не закроются все блоки комментариев
@@ -756,17 +757,8 @@ static void read_block_comment(Lexer *lexer, FILE *file, bool after_whitespace){
             lexer->position = 1;
         }
         current_char = lexer_consume_char(lexer, file);
-        
     }
     
-    // Если блок комментария был после пробела
-    // то продолжается основной цикл чтения пробелов
-    if (after_whitespace == true)
-        return;
-    
-    // Запуск поиска следующего whitespace
-    // Дабы избежать нескольких токенов whitespace подряд
-    read_whitespace(lexer, file);
 }
 
 static void read_operator(Lexer *lexer, FILE *file){
@@ -833,19 +825,8 @@ static void read_operator(Lexer *lexer, FILE *file){
 
     case '/':
         current_char = lexer_consume_char(lexer, file);
-        // Проверка на комментарий
-        if (current_char == '/')
-            read_comment(lexer, file, false);
-
-        // Проверка на блоковый комментарий
-        else if (current_char == '*')
-            read_block_comment(lexer, file, false);
-
-        // Если это не комментарий, то это оператор деления
-        else {
-            lexer_unconsume_char(lexer, file, current_char);
-            set_single_token(lexer, TOKEN_DIVISION, '/');
-        }
+        lexer_unconsume_char(lexer, file, current_char);
+        set_single_token(lexer, TOKEN_DIVISION, '/');
         break;
 
     default:
@@ -1017,22 +998,15 @@ Token get_next_token(Lexer *lexer, FILE *file) {
 
         /* Обработка конца строки */
         } 
-        else if (current_char == '\n') {
-            current_char = lexer_consume_char(lexer, file);
-            set_single_token(lexer, TOKEN_EOL, current_char);
 
-            // Обновить номер строки и позицию после обработки конца строки
-            lexer->line++;
-            lexer->position = 1;
-            return *lexer->current_token;
+        /* Обработка пробелов, табуляций, новых строк и комментариев */
+        else if (is_whitespace(current_char) || is_comment_start(file)) {
+            if(read_whitespace(lexer, file)) // если при чтении последовательности белых знаков был найден EOL возращаем токен
+                return *lexer->current_token;
+            // иначе просто продолжаем читать дальше
+            current_char = peek_char(file);
         }
 
-        /* Обработка пробелов, табуляций, новых строк 
-        (включает обработку комментариев после \n или EOL) */
-        else if (is_whitespace(current_char)) {
-            read_whitespace(lexer, file);
-            return *lexer->current_token;
-        }
         /* Обработка точки */
         else if (current_char == '.') {
             current_char = lexer_consume_char(lexer, file);
@@ -1067,8 +1041,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             return *lexer->current_token;
         }
 
-        /* Обработка операторов и комментариев 
-        (включают обработку EOL и whitespace после комментария) */
+        /* Обработка операторов */
         else if (is_operator(current_char)){
             read_operator(lexer, file);
             return *lexer->current_token;
