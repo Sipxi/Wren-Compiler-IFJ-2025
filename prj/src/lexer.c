@@ -25,8 +25,6 @@ typedef enum {
     STATE_DOT,
     STATE_NUMBER,
     STATE_ZERO_START,
-    STATE_BRACKET,
-    STATE_OPERATOR,
     STATE_PLUS,
     STATE_MINUS,
     STATE_MULTIPLY,
@@ -129,13 +127,7 @@ static bool is_whitespace(const char character);
  */
 static bool is_hex_digit(const char character);
 
-/**
- * Проверка, является ли символ скобкой
- *
- * @param character Символ для проверки.
- * @return true если символ является скобкой, иначе false.
- */
-static bool is_bracket(char character);
+
 
 /**
  * Записывает указанное количество символов из файла в строку.
@@ -422,11 +414,6 @@ static bool write_str(FILE *file, int count, char **str) {
     (*str)[count] = '\0';
 
     return true;
-}
-
-static bool is_bracket(char character) {
-    return (character == ')' || character == '(' || character == '}' ||
-            character == '{');
 }
 
 static char peek_char(FILE *file) {
@@ -991,12 +978,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 } else if (current_char == ')') {
                     change_state(file, lexer, &state, STATE_CLOSE_PAREN, current_char);
-                    break;
-                } else if (is_bracket(current_char)) {
-                    change_state(file, lexer, &state, STATE_BRACKET, current_char);
-                    break;
-                } else if(is_operator(current_char)) {
-                    change_state(file, lexer, &state, STATE_OPERATOR, current_char);
                     break;
                 } else if (current_char == '\n') {
                     change_state(file, lexer, &state, STATE_EOL, current_char);
