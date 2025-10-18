@@ -67,14 +67,6 @@ typedef enum {
 static bool is_letter(char character);
 
 /**
- * Проверяет, является ли символ оператором.
- *
- * @param character Символ для проверки.
- * @return true если символ является оператором, иначе false.
- */
-static bool is_operator(char character);
-
-/**
  * Проверяет, начинается ли текущая позиция в файле с комментария.
  * @param file Указатель на файл для проверки.
  * @return -1 если не комментарий, 0 если однострочный комментарий, 1 если многострочный комментарий
@@ -349,12 +341,6 @@ static bool is_end_block_comment(FILE *file) {
 static bool is_letter(char character) {
     return (character >= 'a' && character <= 'z') ||
            (character >= 'A' && character <= 'Z');
-}
-
-static bool is_operator(char character) {
-    return (character == '+' || character == '-' || character == '=' ||
-            character == '/' || character == '*' || character == '!' ||
-            character == '<' || character == '>');
 }
 
 static bool is_digit(char character) {
