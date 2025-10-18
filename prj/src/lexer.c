@@ -46,9 +46,13 @@ typedef enum {
     STATE_STRING_ESCAPE,
     STATE_MULTILINE_STRING,
     STATE_COMMENT,
-    STATE_BLOCK_COMMENT,
     STATE_WHITESPACE,
-    STATE_DONE
+    STATE_DONE,
+    STATE_START_BLOCK_COMMENT,
+    STATE_END_BLOCK_COMMENT,
+    STATE_OPEN_BLOCK_COMMENT,
+    STATE_CLOSE_BLOCK_COMMENT,
+    STATE_BODY_BLOCK_COMMENT
 } LexerFSMState;
 
 /* ======================================*/
@@ -75,10 +79,9 @@ static bool is_operator(char character);
 /**
  * Проверяет, начинается ли текущая позиция в файле с комментария.
  * @param file Указатель на файл для проверки.
- * @return true если текущая позиция в файле начинается с комментария, иначе
- * false.
+ * @return -1 если не комментарий, 0 если однострочный комментарий, 1 если многострочный комментарий
  */
-static bool is_comment_start(FILE *file);
+static int is_comment_start(FILE *file);
 
 /**
  * Проверяет, является ли символ цифрой (0-9).
@@ -96,6 +99,18 @@ static bool is_digit(char character);
  * @return true если текущий идентификатор является ключевым словом, иначе false
  */
 static bool is_keyword(const char *str);
+
+/**
+ * Обрабатывает конец блокового комментария
+ *
+ * Эта функция читает символы из файла,
+ * и обрабатывает возможное завершение блокового комментария.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @return true если был найден конец блокового комментария, иначе false.
+ */
+static bool is_end_block_comment(FILE *file);
 
 /**
  * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая
@@ -132,14 +147,6 @@ static bool is_bracket(char character);
  * @return Количество записанных символов.
  */
 static bool write_str(FILE *file, int count, char **str);
-
-/**
- * Функция для возврата нужного токена скобки
- *
- * @param character Символ для перевода.
- * @return Токен от нужной скобки
- */
-static TokenType get_bracket_token(char character);
 
 /**
  * Просматривает следующий символ в файле без его удаления из потока.
@@ -265,20 +272,6 @@ static void read_identifier(Lexer *lexer, FILE *file, char current_char);
 static void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
 
 /**
- *
- * Считывает последовательность пробельных символов, новых строк из входного
- * потока и последующими за ними комментариями, возвращает первый непустой
- * символ обратно и создаёт токен TOKEN_WHITESPACE.
- *
- * Эта функция читает символы из файла для создания одного токена.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @returns true если был создан токен TOKEN_EOL
- */
-static bool read_whitespace(Lexer *lexer, FILE *file, char current_char);
-
-/**
  * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
  *
  * Эта функция читает символы из файла для создания токена числа.
@@ -298,44 +291,6 @@ static void read_number(Lexer *lexer, FILE *file, char current_char);
  * @param file Указатель на файл, содержащий исходный код.
  */
 static void classify_number_token(Lexer *lexer, FILE *file, char current_char);
-
-/**
- * Читает однострочный комментарий из исходного кода.
- *
- * Эта функция читает символы из файла для поиска конца однострочного
- * комментария.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param character Текущий символ.
- * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
- * @returns true если был найден EOF
- */
-static bool read_comment(Lexer *lexer, FILE *file);
-
-/**
- * Читает блоковый комментарий из исходного кода.
- *
- * Эта функция читает символы из файла для поиска конца блокового комментария.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param character Текущий символ.
- * @param after_whitespace Вызвана ли функция внутри проверки на пробел.
- */
-static void read_block_comment(Lexer *lexer, FILE *file);
-
-/**
- * Читает оператор из исходного кода
- *
- * Эта функция читает символы из файла для создания токена
- * идентификатора.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param character Текущий символ.
- */
-static void read_operator(Lexer *lexer, FILE *file, char current_char);
 
 /**
  * Читает строку из исходного кода.
@@ -394,6 +349,11 @@ static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
 /* ===== Имплементация приватных функций лексера =====*/
 /* ====================================*/
 
+static bool is_end_block_comment(FILE *file) {
+    // Проверить, является ли текущий символ концом блочного комментария
+    return peek_char(file) == '*' && peek_next_char(file) == '/';
+}
+
 static bool is_letter(char character) {
     return (character >= 'a' && character <= 'z') ||
            (character >= 'A' && character <= 'Z');
@@ -423,8 +383,7 @@ static bool is_keyword(const char *str) {
 }
 
 static bool is_whitespace(const char character) {
-    return character == ' ' || character == '\t' || character == '\r' ||
-           character == '\n';
+    return character == ' ' || character == '\t' || character == '\r';
 }
 
 static bool is_hex_digit(const char character) {
@@ -468,22 +427,6 @@ static bool write_str(FILE *file, int count, char **str) {
 static bool is_bracket(char character) {
     return (character == ')' || character == '(' || character == '}' ||
             character == '{');
-}
-
-static TokenType get_bracket_token(char character) {
-    // Определить тип токена на основе символа
-    switch (character) {
-        case '(':
-            return TOKEN_OPEN_PAREN;
-        case ')':
-            return TOKEN_CLOSE_PAREN;
-        case '{':
-            return TOKEN_OPEN_BRACE;
-        case '}':
-            return TOKEN_CLOSE_BRACE;
-        default:
-            return TOKEN_NULL;
-    }
 }
 
 static char peek_char(FILE *file) {
@@ -660,45 +603,6 @@ static void read_global_identifier(Lexer *lexer, FILE *file,
     set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
 }
 
-static bool read_whitespace(Lexer *lexer, FILE *file, char current_char) {
-    bool found_newline = false;  // Флаг для отслеживания новой строки
-
-    // Пока читаем пробельные символы или потанциальное начало комментария
-    while (is_whitespace(current_char) || current_char == '/') {
-        // Обработка комментариев
-        if (current_char == '/') {
-            // Проверка на блочный комментарий
-            if (peek_char(file) == '*') read_block_comment(lexer, file);
-            // Проверка на однострочный комментарий
-            else if (peek_char(file) == '/') {
-                if (read_comment(
-                        lexer,
-                        file))  // если был найден EOF возращаем токен EOL
-                    return true;
-            } else  // Это не комментарий, выходим из цикла
-                break;
-            current_char =
-                ' ';  // Заменяем для этого цикла комментарий на пробел
-        }
-        // Если новая строка, обновляем номер строки и позицию
-        if (current_char == '\n') {
-            found_newline = true;
-            lexer->line++;
-            lexer->position = 1;
-        }
-        current_char = lexer_consume_char(lexer, file);
-    }
-
-    // Последний прочитанный символ не является пробельным, вернуть его обратно
-    // в поток
-    lexer_unconsume_char(lexer, file, current_char);
-
-    // Если была найдена новая строка, создать токен TOKEN_EOL
-    if (found_newline) set_single_token(lexer, TOKEN_EOL, '\n');
-
-    return found_newline;
-}
-
 static void read_number(Lexer *lexer, FILE *file, char current_char) {
     // Мы знаем, что первый символ является цифрой
     int characters_read = 1;
@@ -760,140 +664,16 @@ static void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
     }
 }
 
-static bool is_comment_start(FILE *file) {
+static int is_comment_start(FILE *file) {
+    int result = -1;
     if (peek_char(file) == '/') {
         char next_char = peek_next_char(file);
-        return next_char == '/' || next_char == '*';
+        if (next_char == '/') 
+            result = 0;
+        else if (next_char == '*') 
+            result = 1;
     }
-    return false;
-}
-
-static bool read_comment(Lexer *lexer, FILE *file) {
-    char current_char = lexer_consume_char(lexer, file);
-
-    // Комментарий идет до конца строки.
-    while (current_char != '\n' && current_char != EOF)
-        current_char = lexer_consume_char(lexer, file);
-
-    lexer_unconsume_char(lexer, file, current_char);
-
-    // Если достигнут конец файла, вернуть символ обратно в поток
-    // и установить EOL
-    if (current_char == EOF) {
-        set_single_token(lexer, TOKEN_EOL, '\n');
-        return true;
-    }
-
-    return false;
-}
-
-static void read_block_comment(Lexer *lexer, FILE *file) {
-    int count_block_comment = 1;  // Счетчик открытых блоков комментариев
-    char current_char = lexer_consume_char(lexer, file);
-    // цикл пока не закроются все блоки комментариев
-    while (count_block_comment > 0) {
-        // Если файл закончился, а блок не закрыт
-        // значит ошибка
-        if (current_char == EOF) {
-            raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                        "Invalid block comment");
-        }
-        // Проверка на конец блока
-        else if (current_char == '*') {
-            current_char = peek_char(file);
-            if (current_char == '/') {
-                count_block_comment--;
-                lexer_consume_char(lexer, file);
-            }
-        }
-        // Проверка на начало нового блока, в случае вложенных блоков обновить
-        // счетчик
-        else if (current_char == '/') {
-            current_char = peek_char(file);
-            if (current_char == '*') {
-                count_block_comment++;
-                lexer_consume_char(lexer, file);
-            }
-        }
-        // Обновляем номер строки и позицию после обработки конца строки
-        else if (current_char == '\n') {
-            lexer->line++;
-            lexer->position = 1;
-        }
-        current_char = lexer_consume_char(lexer, file);
-    }
-}
-
-static void read_operator(Lexer *lexer, FILE *file, char current_char) {
-    // Определить тип токена на основе символа
-    switch (current_char) {
-        case '+':
-            set_single_token(lexer, TOKEN_PLUS, current_char);
-            break;
-
-        case '-':
-            set_single_token(lexer, TOKEN_MINUS, current_char);
-            break;
-
-        case '*':
-            set_single_token(lexer, TOKEN_MULTIPLY, current_char);
-            break;
-
-        case '!':
-            current_char = lexer_consume_char(lexer, file);
-            // Проверка на оператор "!="
-            if (current_char == '=')
-                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
-            // Если после '!' не стоит '=', то это ошибка
-            else {
-                lexer_unconsume_char(lexer, file, current_char);
-                raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                            "Invalid operator");
-            }
-            break;
-
-        case '=':
-            current_char = lexer_consume_char(lexer, file);
-            // Проверка на оператор "=="
-            if (current_char == '=')
-                set_multi_token(lexer, TOKEN_EQUAL, file, strlen("=="));
-            else {
-                lexer_unconsume_char(lexer, file, current_char);
-                set_single_token(lexer, TOKEN_ASSIGN, '=');
-            }
-            break;
-
-        case '<':
-            current_char = lexer_consume_char(lexer, file);
-            // Проверка на оператор "<="
-            if (current_char == '=')
-                set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
-            else {
-                lexer_unconsume_char(lexer, file, current_char);
-                set_single_token(lexer, TOKEN_LESS, '<');
-            }
-            break;
-
-        case '>':
-            current_char = lexer_consume_char(lexer, file);
-            // Проверка на оператор ">="
-            if (current_char == '=')
-                set_multi_token(lexer, TOKEN_EQUAL_GREATER, file, strlen(">="));
-            else {
-                lexer_unconsume_char(lexer, file, current_char);
-                set_single_token(lexer, TOKEN_GREATER, '>');
-            }
-            break;
-
-        case '/':
-            current_char = lexer_consume_char(lexer, file);
-            lexer_unconsume_char(lexer, file, current_char);
-            set_single_token(lexer, TOKEN_DIVISION, '/');
-            break;
-
-        default:
-            break;
-    }
+    return result;
 }
 
 static void read_string(Lexer *lexer, FILE *file) {
@@ -1060,7 +840,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
     ////file);
 
     ////     /* Проверить, является ли идентификатор ключевым словом */
-    ////         if (is_keyword(lexer->current_token->data)){
+    ////         if (is_keyword(lexer->current_token->data)) {
     ////             lexer->current_token->type = TOKEN_KEYWORD;
     ////         }
     ////         return *lexer->current_token;
@@ -1102,13 +882,13 @@ Token get_next_token(Lexer *lexer, FILE *file) {
     // //     }
 
         // // /*Обработка стрингов*/
-        // // else if(current_char == '"'){
+        // // else if(current_char == '"') {
         // //     read_string(lexer, file);
         // //     return *lexer->current_token;
         // // }
 
     // //     /* Обработка скобок */
-        // // else if (is_bracket(current_char)){
+        // // else if (is_bracket(current_char)) {
     // //         current_char = lexer_consume_char(lexer, file);
     //         // получение типа токена
     // //         TokenType token = get_bracket_token(current_char);
@@ -1117,7 +897,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
     // //     }
 
         // // /* Обработка операторов */
-        // // else if (is_operator(current_char)){
+        // // else if (is_operator(current_char)) {
         // //     read_operator(lexer, file);
         // //     return *lexer->current_token;
         // // }
@@ -1139,6 +919,8 @@ Token get_next_token(Lexer *lexer, FILE *file) {
 
     // FSM реализация лексера
     LexerFSMState state = STATE_START;
+    bool find_eol = false;
+    int count_block_comment = 0;
 
     while (true) {
         // Чтение текущего символа и обновление позиции лексера
@@ -1151,17 +933,10 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                                  current_char);
                     break;
 
-                    //! Нужно обработать STATE_WHITESPACE
-                    //! Не смог пока пофиксить логику с комментами и пробелами
-                    //! Поэтому оставил так, надо будет доделать
-                } else if (is_whitespace(current_char) || is_comment_start(file)) {
-                    if (read_whitespace(lexer, file, current_char)) {
-                        change_state(file, lexer, &state, STATE_EOL,
-                                     current_char);
-                        break;
-                    }
-                    // иначе просто продолжаем читать дальше
-                    continue;
+                } else if (is_whitespace(current_char)) {
+                    change_state(file, lexer, &state, STATE_WHITESPACE,
+                                    current_char);
+                    break;
                 } else if (current_char == '_') {
                     change_state(file, lexer, &state, STATE_GLOBAL_IDENTIFIER,
                                  current_char);
@@ -1172,80 +947,153 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 } else if (current_char == '.') {
                     change_state(file, lexer, &state, STATE_DOT, current_char);
                     break;
-                }
-                else if (is_digit(current_char) && current_char != '0'){
+                } else if (is_digit(current_char) && current_char != '0') {
                     change_state(file,lexer, &state, STATE_NUMBER, current_char);
                     break;
-                }
-                else if (current_char == '0'){
+                } else if (current_char == '0') {
                     change_state(file, lexer, &state, STATE_ZERO_START, current_char);
                     break;
-                }
-                else if (current_char == '"'){
+                } else if (current_char == '"') {
                     change_state(file, lexer, &state, STATE_STRING, current_char);
                     break;
-                }
-                else if (current_char == '+'){
+                } else if (current_char == '+') {
                     change_state(file, lexer, &state, STATE_PLUS, current_char);
                     break;
-                }
-                else if (current_char == '-'){
+                } else if (current_char == '-') {
                     change_state(file, lexer, &state, STATE_MINUS, current_char);
                     break;
-                }
-                else if (current_char == '*'){
+                } else if (current_char == '*') {
                     change_state(file, lexer, &state, STATE_MULTIPLY, current_char);
                     break;
-                }
-                else if (current_char == '!' && peek_char(file) == '='){
+                } else if (current_char == '!' && peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_NOT_EQUAL, current_char);
                     break;
-                }
-                else if (current_char == '='){
+                } else if (current_char == '=') {
                     change_state(file, lexer, &state, STATE_ASSIGN, current_char);
                     break;
-                }
-                else if (current_char == '<'){
+                } else if (current_char == '<') {
                     change_state(file, lexer, &state, STATE_LESS, current_char);
                     break;
-                }
-                else if (current_char == '>'){
+                } else if (current_char == '>') {
                     change_state(file, lexer, &state, STATE_GREATER, current_char);
                     break;
-                }
-                else if (current_char == '/'){
+                } else if (current_char == '/') {
                     change_state(file, lexer, &state, STATE_DIVISION, current_char);
                     break;
-                }
-                else if (current_char == '{') {
+                } else if (current_char == '{') {
                     change_state(file, lexer, &state, STATE_OPEN_BRACE, current_char);
                     break;
-                }
-                else if (current_char == '}') {
+                } else if (current_char == '}') {
                     change_state(file, lexer, &state, STATE_CLOSE_BRACE, current_char);
                     break;
-                }
-                else if (current_char == '(') {
+                } else if (current_char == '(') {
                     change_state(file, lexer, &state, STATE_OPEN_PAREN, current_char);
                     break;
-                }
-                else if (current_char == ')') {
+                } else if (current_char == ')') {
                     change_state(file, lexer, &state, STATE_CLOSE_PAREN, current_char);
                     break;
-                }
-                else if (is_bracket(current_char)){
+                } else if (is_bracket(current_char)) {
                     change_state(file, lexer, &state, STATE_BRACKET, current_char);
                     break;
-                }
-                else if(is_operator(current_char)){
+                } else if(is_operator(current_char)) {
                     change_state(file, lexer, &state, STATE_OPERATOR, current_char);
                     break;
-                }
-                else {
+                } else if (current_char == '\n') {
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                    break;
+                } else {
                     lexer_error(lexer, LEXER_ERROR,
                                 "Unknown character encountered");
                     break;
                 }
+            case STATE_WHITESPACE:
+                if (peek_char(file) == EOF) {
+                    current_char = lexer_consume_char(lexer, file);
+                    change_state(file, lexer, &state, STATE_START, current_char);
+                } else if (is_comment_start(file) == 0){
+                    change_state(file, lexer, &state, STATE_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else if (is_comment_start(file) == 1)
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char); 
+                else if (!is_whitespace(peek_char(file))){
+                    change_state(file, lexer, &state, STATE_START, current_char);
+                    lexer_consume_char(lexer, file);
+                }
+                break;
+            case STATE_DIVISION:
+                if (peek_char(file) == '/') {
+                    change_state(file, lexer, &state, STATE_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else if (peek_char(file) == '*')
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
+                else{
+                    set_single_token(lexer, TOKEN_DIVISION, current_char);
+                    return *lexer->current_token;
+                }
+                break;
+            case STATE_START_BLOCK_COMMENT:
+                current_char = lexer_consume_char(lexer, file);
+                count_block_comment++;
+                if (peek_char(file) == EOF  || peek_next_char(file) == EOF) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid block comment");
+                } else if (is_comment_start(file) == 1)
+                    lexer_consume_char(lexer, file);
+                else if (is_end_block_comment(file)) {
+                    change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else 
+                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
+                break;
+            case STATE_BODY_BLOCK_COMMENT:
+                if (current_char == EOF) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Unterminated block comment");
+                } else if (current_char == '\n')
+                    lexer->line++;
+
+                if (is_comment_start(file) == 1) {
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else if (is_end_block_comment(file)) {
+                    change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                }
+                break;
+            case STATE_END_BLOCK_COMMENT:
+                count_block_comment--;
+                current_char = lexer_consume_char(lexer, file); 
+                if (count_block_comment == 0 && find_eol)
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                else if (count_block_comment == 0)
+                    change_state(file, lexer, &state, STATE_WHITESPACE, current_char);
+                else   
+                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
+                break;
+            case STATE_COMMENT:
+                if (peek_char(file) == '\n' || peek_char(file) == EOF)
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                break;
+            case STATE_EOL:
+                find_eol = true;
+                if (current_char == '\n')
+                    lexer->line++;
+                if (current_char == EOF) {
+                    lexer_unconsume_char(lexer, file, current_char);
+                    set_single_token(lexer, TOKEN_EOL, '\n');
+                    return *lexer->current_token;
+                } else if (peek_char(file) == '/' && peek_next_char(file) == '/') {
+                    change_state(file, lexer, &state, STATE_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else if (peek_char(file) == '/' && peek_next_char(file) == '*') {
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
+                    lexer_consume_char(lexer, file);
+                } else if (!is_whitespace(peek_char(file)) && peek_char(file) != '\n') {
+                    set_single_token(lexer, TOKEN_EOL, '\n');
+                    return *lexer->current_token;
+                }
+                break;
+
             case STATE_IDENTIFIER:
                 //! Переделать чтобы совпадало с логикой автомата
                 read_identifier(lexer, file, current_char);
@@ -1259,9 +1107,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 return *lexer->current_token;
             case STATE_DOT:
                 set_single_token(lexer, TOKEN_DOT, current_char);
-                return *lexer->current_token;
-            case STATE_EOL:
-                set_single_token(lexer, TOKEN_EOL, '\0');
                 return *lexer->current_token;
             case STATE_NUMBER:
                 //! @Nikorya
@@ -1288,21 +1133,24 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_single_token(lexer, TOKEN_MULTIPLY, current_char);
                 return *lexer->current_token;
             case STATE_NOT_EQUAL:
-                read_operator(lexer, file, current_char);
+                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
+                lexer_consume_char(lexer, file);
                 return *lexer->current_token;
             case STATE_ASSIGN:
-                if (peek_char(file) == '='){
+                if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL, current_char);
+                    lexer_consume_char(lexer, file);
                     break;
                 }
                 set_single_token(lexer, TOKEN_ASSIGN, current_char);
                 return *lexer->current_token;
             case STATE_EQUAL:
-                change_state(file, lexer, &state, STATE_EQUAL, current_char);
+                set_multi_token(lexer, TOKEN_EQUAL, file, strlen("=="));
                 return *lexer->current_token;
             case STATE_LESS:
-                if (peek_char(file) == '='){
+                if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL_LESS, current_char);
+                    lexer_consume_char(lexer, file);
                     break;
                 }
                 set_single_token(lexer, TOKEN_LESS, current_char);
@@ -1311,8 +1159,9 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
                 return *lexer->current_token;
             case STATE_GREATER:
-                if (peek_char(file) == '='){
+                if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL_GREATER, current_char);
+                    lexer_consume_char(lexer, file);
                     break;
                 }
                 set_single_token(lexer, TOKEN_GREATER, current_char);
