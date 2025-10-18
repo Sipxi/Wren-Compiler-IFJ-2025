@@ -27,6 +27,21 @@ typedef enum {
     STATE_ZERO_START,
     STATE_BRACKET,
     STATE_OPERATOR,
+    STATE_PLUS,
+    STATE_MINUS,
+    STATE_MULTIPLY,
+    STATE_DIVISION,
+    STATE_ASSIGN,
+    STATE_EQUAL,
+    STATE_NOT_EQUAL,
+    STATE_LESS,
+    STATE_EQUAL_LESS,
+    STATE_GREATER,
+    STATE_EQUAL_GREATER,
+    STATE_OPEN_PAREN,
+    STATE_CLOSE_PAREN,
+    STATE_OPEN_BRACE,
+    STATE_CLOSE_BRACE,
     STATE_STRING,
     STATE_STRING_ESCAPE,
     STATE_MULTILINE_STRING,
@@ -1170,6 +1185,54 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_STRING, current_char);
                     break;
                 }
+                else if (current_char == '+'){
+                    change_state(file, lexer, &state, STATE_PLUS, current_char);
+                    break;
+                }
+                else if (current_char == '-'){
+                    change_state(file, lexer, &state, STATE_MINUS, current_char);
+                    break;
+                }
+                else if (current_char == '*'){
+                    change_state(file, lexer, &state, STATE_MULTIPLY, current_char);
+                    break;
+                }
+                else if (current_char == '!' && peek_char(file) == '='){
+                    change_state(file, lexer, &state, STATE_NOT_EQUAL, current_char);
+                    break;
+                }
+                else if (current_char == '='){
+                    change_state(file, lexer, &state, STATE_ASSIGN, current_char);
+                    break;
+                }
+                else if (current_char == '<'){
+                    change_state(file, lexer, &state, STATE_LESS, current_char);
+                    break;
+                }
+                else if (current_char == '>'){
+                    change_state(file, lexer, &state, STATE_GREATER, current_char);
+                    break;
+                }
+                else if (current_char == '/'){
+                    change_state(file, lexer, &state, STATE_DIVISION, current_char);
+                    break;
+                }
+                else if (current_char == '{') {
+                    change_state(file, lexer, &state, STATE_OPEN_BRACE, current_char);
+                    break;
+                }
+                else if (current_char == '}') {
+                    change_state(file, lexer, &state, STATE_CLOSE_BRACE, current_char);
+                    break;
+                }
+                else if (current_char == '(') {
+                    change_state(file, lexer, &state, STATE_OPEN_PAREN, current_char);
+                    break;
+                }
+                else if (current_char == ')') {
+                    change_state(file, lexer, &state, STATE_CLOSE_PAREN, current_char);
+                    break;
+                }
                 else if (is_bracket(current_char)){
                     change_state(file, lexer, &state, STATE_BRACKET, current_char);
                     break;
@@ -1215,18 +1278,59 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 //! Переделать чтобы совпадало с логикой автомата
                 read_string(lexer, file);
                 return *lexer->current_token;
-            case STATE_BRACKET:
-                //! Переделать чтобы совпадало с логикой автомата
-                // Скобки нужны чтобы не было warning о декларации переменны в кейсе
-                // Я про этот код
-            {
-                TokenType token = get_bracket_token(current_char);
-                set_single_token(lexer, token, current_char);
+            case STATE_PLUS:
+                set_single_token(lexer, TOKEN_PLUS, current_char);
                 return *lexer->current_token;
-            }
-            case STATE_OPERATOR:
-                //! Переделать чтобы совпадало с логикой автомата
+            case STATE_MINUS:
+                set_single_token(lexer, TOKEN_MINUS, current_char);
+                return *lexer->current_token;
+            case STATE_MULTIPLY:
+                set_single_token(lexer, TOKEN_MULTIPLY, current_char);
+                return *lexer->current_token;
+            case STATE_NOT_EQUAL:
                 read_operator(lexer, file, current_char);
+                return *lexer->current_token;
+            case STATE_ASSIGN:
+                if (peek_char(file) == '='){
+                    change_state(file, lexer, &state, STATE_EQUAL, current_char);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_ASSIGN, current_char);
+                return *lexer->current_token;
+            case STATE_EQUAL:
+                change_state(file, lexer, &state, STATE_EQUAL, current_char);
+                return *lexer->current_token;
+            case STATE_LESS:
+                if (peek_char(file) == '='){
+                    change_state(file, lexer, &state, STATE_EQUAL_LESS, current_char);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_LESS, current_char);
+                return *lexer->current_token;
+            case STATE_EQUAL_LESS:
+                set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
+                return *lexer->current_token;
+            case STATE_GREATER:
+                if (peek_char(file) == '='){
+                    change_state(file, lexer, &state, STATE_EQUAL_GREATER, current_char);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_GREATER, current_char);
+                return *lexer->current_token;
+            case STATE_EQUAL_GREATER:
+                set_multi_token(lexer, TOKEN_EQUAL_GREATER, file, strlen(">="));
+                return *lexer->current_token;
+            case STATE_OPEN_BRACE:
+                set_single_token(lexer, TOKEN_OPEN_BRACE, current_char);
+                return *lexer->current_token;
+            case STATE_CLOSE_BRACE:
+                set_single_token(lexer, TOKEN_CLOSE_BRACE, current_char);
+                return *lexer->current_token;
+            case STATE_OPEN_PAREN:
+                set_single_token(lexer, TOKEN_OPEN_PAREN, current_char);
+                return *lexer->current_token;
+            case STATE_CLOSE_PAREN:
+                set_single_token(lexer, TOKEN_CLOSE_PAREN, current_char);
                 return *lexer->current_token;
             case STATE_EOF:
                 set_single_token(lexer, TOKEN_EOF, EOF);
