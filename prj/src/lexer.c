@@ -34,10 +34,10 @@ typedef enum {
     STATE_HEX_NUMBER,
     STATE_FLOAT_NUMBER,
     STATE_EXP_NUMBER,
-    STATE_DECIMAL_POINT,
-    STATE_CHECK_EXPONENT,
-    STATE_SIGN_EXP_NUMBER,
-    STATE_HEX_PREFIX,
+    STATE_DECIMAL_POINT, //* Переходное состояние после десятичной точки 
+    STATE_CHECK_EXPONENT, //* Переходное состояние для проверки условий экспоненты
+    STATE_SIGN_EXP_NUMBER, //* Переходное состояние для знака в экспоненте
+    STATE_HEX_PREFIX, //* Переходное состояние после 0x
     STATE_PLUS,
     STATE_MINUS,
     STATE_MULTIPLY,
@@ -769,19 +769,27 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             case STATE_DOT:
                 set_single_token(lexer, TOKEN_DOT, current_char);
                 return *lexer->current_token;
+
             case STATE_NUMBER:
+                // Первый символ был цифрой (не '0') - увеличиваем счетчик
+                characters_read++;
+                // Считываем следующий символ после первой цифры
+                current_char = lexer_consume_char(lexer, file);
                 // Читать цифры, пока не встретится что-то другое
                 while (is_digit(current_char)) {
+                    // После того, как мы прочитали цифру, увеличиваем счетчик
+                    characters_read++;
                     // Читаем следующий символ
                     current_char = lexer_consume_char(lexer, file);
-                    characters_read++;
                 }
+                // Проверить, начинается ли десятичная часть или экспонента
                 if (current_char == '.') {
+                    // Сразу добавляем к счетчику символов, после if
                     characters_read++;
                     change_state(file, lexer, &state, STATE_DECIMAL_POINT, current_char);
                     break;
                 } else if (current_char == 'e' || current_char == 'E') {
-                    // Обработка чисел в экспоненциальной форме
+                    // Сразу добавляем к счетчику символов, после if
                     characters_read++;
                     change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
                     break;
@@ -793,9 +801,12 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_multi_token(lexer, TOKEN_INT, file, characters_read);
                 // Вернуть текущий токен
                 return *lexer->current_token;
+                
             case STATE_ZERO_START:
-                current_char = lexer_consume_char(lexer, file);
+                // Первый символ был '0' - увеличиваем счетчик
                 characters_read++;
+                // Считываем следующий символ после '0'
+                current_char = lexer_consume_char(lexer, file);
                 if (current_char == 'x') {
                     // Обработка шестнадцатеричных чисел
                     characters_read++;
@@ -814,27 +825,32 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 } else if (is_digit(current_char)) {
                     // Оказывается, 0456 это нормальное число во wren, выведет 456
                     // Поэтому 0 просто убираем и читаем дальше как обычное число
+                    // Уменьшаем счетчик, так как '0' не учитывается в числе
                     characters_read--;
                     change_state(file, lexer, &state, STATE_NUMBER, current_char);
                     break;
                 }
                 // Это просто '0'
                 set_single_token(lexer, TOKEN_INT, '0');
-
                 return *lexer->current_token;
+
             case STATE_DECIMAL_POINT:
+                // Считытываем следующий символ после '.'
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
                     raise_error(LEXER_ERROR, lexer->line, lexer->position,
                                 "Invalid float format");
                 }
+                // Добавляем к счетчику прочитанных символов
                 characters_read++;
                 change_state(file, lexer, &state, STATE_FLOAT_NUMBER, current_char);
                 break;
+
             case STATE_CHECK_EXPONENT:
+                // Считытываем следующий символ после 'e' или 'E'
                 current_char = lexer_consume_char(lexer, file);
                 if (current_char == '+' || current_char == '-') {
-                    
+                    // Считываем знак экспоненты
                     characters_read++;
                     change_state(file, lexer, &state, STATE_SIGN_EXP_NUMBER, current_char);
                     break;
@@ -844,18 +860,25 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     raise_error(LEXER_ERROR, lexer->line, lexer->position,
                                 "Invalid exponent format");
                 }
+                characters_read++;
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
                 break;
+
             case STATE_SIGN_EXP_NUMBER:
+                // Считываем следующий символ после '+' или '-'
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является цифрой
                 if (!is_digit(current_char)) {
                     raise_error(LEXER_ERROR, lexer->line, lexer->position,
                                 "Invalid exponent format");
                 }
+                // Увеличиваем счетчик прочитанных символов после знака
+                characters_read++;
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
                 break;
+
             case STATE_HEX_PREFIX:
+                // Считываем следующий символ после '0x'
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является шестнадцатеричной цифрой
                 if (!is_hex_digit(current_char)) {
@@ -865,12 +888,15 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 characters_read++;
                 change_state(file, lexer, &state, STATE_HEX_NUMBER, current_char);
                 break;
+
             case STATE_HEX_NUMBER:
                 current_char = lexer_consume_char(lexer, file);
                 // Читать шестнадцатеричные цифры
                 while (is_hex_digit(current_char)) {
-                    current_char = lexer_consume_char(lexer, file);
+                    // После того, как мы прочитали шестнадцатеричную цифру, увеличиваем счетчик
                     characters_read++;
+                    // Читаем следующий символ
+                    current_char = lexer_consume_char(lexer, file);
                 }
                 // Последний прочитанный символ не является шестнадцатеричной цифрой,
                 // вернуть его обратно в поток
@@ -878,15 +904,18 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Установить тип токена в TOKEN_HEX
                 set_multi_token(lexer, TOKEN_HEX, file, characters_read);
                 return *lexer->current_token;
+
             case STATE_FLOAT_NUMBER:
+                // Считываем второй символ после '.' (0.53, считываем '3')
                 current_char = lexer_consume_char(lexer, file);
                 // Читать цифры после десятичной точки
                 while (is_digit(current_char)) {
+                    // После того, как мы прочитали цифру, увеличиваем счетчик
+                    characters_read++;
                     // Читаем следующий символ
                     current_char = lexer_consume_char(lexer, file);
-                    characters_read++;
-                    // Проверить, не начинается ли часть с экспонентой
                 }
+                // Проверить, начинается ли экспонента
                 if (current_char == 'e' || current_char == 'E') {
                     characters_read++;
                     change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
@@ -898,12 +927,16 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Установить тип токена в TOKEN_FLOAT
                 set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
                 return *lexer->current_token;
+
             case STATE_EXP_NUMBER:
+                // Считываем второй символ после 'e' или 'E'
+                current_char = lexer_consume_char(lexer, file);
                 // Читать цифры после экспоненты
                 while (is_digit(current_char)) {
+                    // После того, как мы прочитали цифру, увеличиваем счетчик
+                    characters_read++;
                     // Читаем следующий символ
                     current_char = lexer_consume_char(lexer, file);
-                    characters_read++;
                 }
                 // Последний прочитанный символ не является цифрой, вернуть его обратно в
                 // поток
@@ -911,6 +944,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Установить тип токена в TOKEN_EXP
                 set_multi_token(lexer, TOKEN_EXP, file, characters_read);
                 return *lexer->current_token;
+
             case STATE_STRING:
                 //! Переделать чтобы совпадало с логикой автомата
                 read_string(lexer, file);
