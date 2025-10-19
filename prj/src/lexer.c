@@ -21,6 +21,8 @@ typedef enum {
     STATE_EOF,
     STATE_EOL,
     STATE_IDENTIFIER,
+    STATE_ONE_UNDERSCORE,
+    STATE_TWO_UNDERSCORE,   
     STATE_GLOBAL_IDENTIFIER,
     STATE_DOT,
     STATE_NUMBER,
@@ -243,17 +245,6 @@ static void set_multi_token(Lexer *lexer, TokenType type, FILE *file,
  * @param file Указатель на файл, содержащий исходный код.
  */
 static void read_identifier(Lexer *lexer, FILE *file, char current_char);
-
-/**
- * Читает глобальный идентификатор, например (__a2) из исходного кода.
- *
- * Эта функция читает символы из файла для создания токена
- * глобального идентификатора.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- */
-static void read_global_identifier(Lexer *lexer, FILE *file, char current_char);
 
 /**
  * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
@@ -548,34 +539,6 @@ static void read_identifier(Lexer *lexer, FILE *file, char current_char) {
     set_multi_token(lexer, TOKEN_IDENTIFIER, file, characters_read);
 }
 
-static void read_global_identifier(Lexer *lexer, FILE *file,
-                                   char current_char) {
-    // Первый символ является '_', можно читать дальше
-    int characters_read = 1;
-
-    char next_characters[2];
-    // Проверить следующие два символа
-    next_characters[0] = peek_char(file);
-    next_characters[1] = peek_next_char(file);
-    if (next_characters[0] != '_' || !is_letter(next_characters[1])) {
-        raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                    "Invalid global identifier");
-    }
-
-    // Читать символы, пока они принадлежат идентификатору
-    while (is_letter(current_char) || (current_char == '_') ||
-           is_digit(current_char)) {
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-    }
-    // Последний прочитанный символ не принадлежит идентификатору, вернуть его
-    // обратно в поток
-    lexer_unconsume_char(lexer, file, current_char);
-    characters_read--;
-    // Установить тип токена в TOKEN_GLOBAL_IDENTIFIER
-    set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file, characters_read);
-}
-
 static void read_number(Lexer *lexer, FILE *file, char current_char) {
     // Мы знаем, что первый символ является цифрой
     int characters_read = 1;
@@ -802,94 +765,6 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
  удаления из потока
 */
 Token get_next_token(Lexer *lexer, FILE *file) {
-    //// Просмотреть текущий символ в файле без его удаления из потока
-    //// char current_char = peek_char(file);
-
-    //// Читать символы из файла до EOF или нахождения токена
-    ////  while (current_char != EOF) {
-
-    ////     /* Обработка обычных идентификаторов (слова, начинающиеся с буквы)
-    ////   if (is_letter(current_char)) { /       read_identifier(lexer,
-    ////file);
-
-    ////     /* Проверить, является ли идентификатор ключевым словом */
-    ////         if (is_keyword(lexer->current_token->data)) {
-    ////             lexer->current_token->type = TOKEN_KEYWORD;
-    ////         }
-    ////         return *lexer->current_token;
-
-    ////     /* Обработка глобальных идентификаторов (слова, начинающиеся с _)
-    ////     } else if (current_char == '_') { /
-    ////   read_global_identifier(lexer, file); /         return
-    ////    *lexer->current_token;
-    
-    ////     /* Обработка конца строки */
-    ////     }
-
-    ////     /* Обработка пробелов, табуляций, новых строк и комментариев */
-    ////     else if (is_whitespace(current_char) || is_comment_start(file)) {
-    ////         if(read_whitespace(lexer, file)) // если при чтении
-    ////         последовательности белых знаков был найден EOL возращаем токен
-    ////             return *lexer->current_token;
-    //         // иначе просто продолжаем читать дальше
-    ////         current_char = peek_char(file);
-    ////     }
-
-    // //     /* Обработка точки */
-    // //     else if (current_char == '.') {
-    // //         current_char = lexer_consume_char(lexer, file);
-    // //         set_single_token(lexer, TOKEN_DOT, current_char);
-    // //         return *lexer->current_token;
-    // //     }
-
-    // //     /* Обработка целых чисел, которые не начинаются с 0 */
-    // //     else if (is_digit(current_char) && current_char != '0') {
-    // //         read_number(lexer, file);
-    // //         return *lexer->current_token;
-    // //     }
-
-    // //     /* Обработка чисел, начинающихся с 0 (возможно, шестнадцатеричных или
-    // //     с плавающей точкой) */ else if (current_char == '0') {
-    // //         classify_number_token(lexer, file);
-    // //         return *lexer->current_token;
-    // //     }
-
-        // // /*Обработка стрингов*/
-        // // else if(current_char == '"') {
-        // //     read_string(lexer, file);
-        // //     return *lexer->current_token;
-        // // }
-
-    // //     /* Обработка скобок */
-        // // else if (is_bracket(current_char)) {
-    // //         current_char = lexer_consume_char(lexer, file);
-    //         // получение типа токена
-    // //         TokenType token = get_bracket_token(current_char);
-    // //         set_single_token(lexer, token, current_char);
-    // //         return *lexer->current_token;
-    // //     }
-
-        // // /* Обработка операторов */
-        // // else if (is_operator(current_char)) {
-        // //     read_operator(lexer, file);
-        // //     return *lexer->current_token;
-        // // }
-
-    //     /* Временное решение для неизвестных символов */
-    //     else{
-    //         current_char = lexer_consume_char(lexer, file);
-    //         set_single_token(lexer, TOKEN_NULL, current_char);
-    //         return *lexer->current_token;
-    //     }
-    // }
-
-    // // Если достигнут EOF, установить тип токена в TOKEN_EOF
-    // //! Подумат лучше про бесконечный цикл в котором мы будем ловить EOF
-    // //! Например, что если у нас в файле будет неизвестный символ?
-    // current_char = lexer_consume_char(lexer, file);
-    // set_single_token(lexer, TOKEN_EOF, '\0');
-    // return *lexer->current_token;
-
     // FSM реализация лексера
     LexerFSMState state = STATE_START;
     bool find_eol = false;
@@ -905,13 +780,12 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_IDENTIFIER,
                                  current_char);
                     break;
-
                 } else if (is_whitespace(current_char)) {
                     change_state(file, lexer, &state, STATE_WHITESPACE,
                                     current_char);
                     break;
                 } else if (current_char == '_') {
-                    change_state(file, lexer, &state, STATE_GLOBAL_IDENTIFIER,
+                    change_state(file, lexer, &state, STATE_ONE_UNDERSCORE,
                                  current_char);
                     break;
                 } else if (current_char == EOF) {
@@ -1068,9 +942,30 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     lexer->current_token->type = TOKEN_KEYWORD;
                 }
                 return *lexer->current_token;
+            case STATE_ONE_UNDERSCORE:
+                current_char = lexer_consume_char(lexer, file);
+                if (current_char == '_'){
+                    change_state(file, lexer, &state, STATE_TWO_UNDERSCORE, current_char);
+                }
+                else{
+                    lexer_error(lexer, LEXER_ERROR,"Invalid global identifier");
+                }
+                break;
+            case STATE_TWO_UNDERSCORE:
+                current_char = lexer_consume_char(lexer, file);
+                if (is_letter(current_char)) {
+                    change_state(file, lexer, &state, STATE_GLOBAL_IDENTIFIER, current_char);
+                } else {
+                    lexer_error(lexer, LEXER_ERROR,"Invalid global identifier");
+                }
+                break;
             case STATE_GLOBAL_IDENTIFIER:
-                //! Переделать чтобы совпадало с логикой автомата
-                read_global_identifier(lexer, file, current_char);
+                if (is_letter(current_char) || (current_char == '_') ||
+                    is_digit(current_char)) {
+                        continue;
+                    }
+                set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file,
+                                lexer->position - lexer->current_token->line);
                 return *lexer->current_token;
             case STATE_DOT:
                 set_single_token(lexer, TOKEN_DOT, current_char);
