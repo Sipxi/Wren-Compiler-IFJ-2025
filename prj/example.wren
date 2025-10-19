@@ -1,11 +1,1 @@
-hello __a
-dsd
-aledsdas
-decimalnimasd
-ansStrdas
-decimalnimasdasdas
-decimalnimasdasdasd
-aledsdassadasd
-ansStrdasas
-decimalnimasdasdasas
-decimalnim
+hello __abc = 5
