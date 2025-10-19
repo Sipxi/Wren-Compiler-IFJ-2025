@@ -3,6 +3,7 @@
 // Авторы:
 // Serhij Čepil (253038)
 // Dmytro Kravchenko (273125)
+// Veronika Turbaievska (273123)
 //
 //! Допишите ваши имена и номера
 // TODO: Memory leak fix
@@ -18,6 +19,7 @@
 /* ======================================*/
 /* ===== FSM (Finite State Machine) =====*/
 /* ======================================*/
+
 typedef enum {
     STATE_START, //* Переходное состояние
     STATE_EOF,
@@ -29,6 +31,13 @@ typedef enum {
     STATE_DOT,
     STATE_NUMBER,
     STATE_ZERO_START,
+    STATE_HEX_NUMBER,
+    STATE_FLOAT_NUMBER,
+    STATE_EXP_NUMBER,
+    STATE_DECIMAL_POINT,
+    STATE_CHECK_EXPONENT,
+    STATE_SIGN_EXP_NUMBER,
+    STATE_HEX_PREFIX,
     STATE_PLUS,
     STATE_MINUS,
     STATE_MULTIPLY,
@@ -162,51 +171,6 @@ static char peek_next_char(FILE *file);
 static char lexer_consume_char(Lexer *lexer, FILE *file);
 
 /**
- * Проверяет и обрабатывает часть экспоненты числа
- *
- * Эта функция читает символы из файла,
- * и обрабатывает возможный знак '+' или '-' и последующие цифры.
- * Если формат экспоненты неверен, вызывается ошибка лексера.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param current_char Текущий символ, который уже был прочитан ('e' или 'E').
- * @param characters_read Количество символов, прочитанных до вызова этой
- * функции.
- */
-static void check_exponent_part(Lexer *lexer, FILE *file, int characters_read);
-
-/**
- * Проверяет и обрабатывает часть числа с плавающей точкой
- *
- * Эта функция читает символы из файла,
- * и обрабатывает последующие цифры.
- * Если формат числа с плавающей точкой неверен, вызывается ошибка лексера.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param current_char Текущий символ, который уже был прочитан ('.').
- * @param characters_read Количество символов, прочитанных до вызова этой
- * функции.
- */
-static void check_float_part(Lexer *lexer, FILE *file, int characters_read);
-
-/**
- * Проверяет и обрабатывает часть шестнадцатеричного числа
- *
- * Эта функция читает символы из файла,
- * и обрабатывает последующие шестнадцатеричные цифры.
- * Если формат шестнадцатеричного числа неверен, вызывается ошибка лексера.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param current_char Текущий символ, который уже был прочитан ('x').
- * @param characters_read Количество символов, прочитанных до вызова этой
- * функции.
- */
-static void check_hex_part(Lexer *lexer, FILE *file, int characters_read);
-
-/**
  * Возвращает последний прочитанный символ обратно в поток и обновляет позицию
  * лексера.
  *
@@ -236,27 +200,6 @@ static void set_single_token(Lexer *lexer, TokenType type, const char data);
  */
 static void set_multi_token(Lexer *lexer, TokenType type, FILE *file,
                             int characters_read);
-
-/**
- * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
- *
- * Эта функция читает символы из файла для создания токена числа.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- */
-static void read_number(Lexer *lexer, FILE *file, char current_char);
-
-/**
- * Классифицирует число, начинающееся с '0', как целое, с плавающей точкой,
- * экспоненциальное или шестнадцатеричное.
- *
- * Эта функция читает символы из файла для создания токена числа.
- *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- */
-static void classify_number_token(Lexer *lexer, FILE *file, char current_char);
 
 /**
  * Читает строку из исходного кода.
@@ -311,6 +254,7 @@ static void read_regular_string(Lexer *lexer, FILE *file, int characters_read);
  */
 static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
                          LexerFSMState next_state, char current_char);
+
 /* ====================================*/
 /* ===== Имплементация приватных функций лексера =====*/
 /* ====================================*/
@@ -333,6 +277,7 @@ static bool is_keyword(const char *str) {
     const char *keywords[] = {"class",  "if",  "else",  "is",     "null",
                               "return", "var", "while", "Ifj",    "static",
                               "import", "for", "Num",   "String", "Null"};
+    // Определить количество ключевых слов, с помощью sizeof
     int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
     for (int i = 0; i < num_keywords; i++) {
         if (strcmp(str, keywords[i]) == 0) {
@@ -407,90 +352,6 @@ static char lexer_consume_char(Lexer *lexer, FILE *file) {
     return character;
 }
 
-static void check_exponent_part(Lexer *lexer, FILE *file, int characters_read) {
-    // Первый символ 'e' или 'E' уже прочитан
-    // Читаем следующий символ
-    char current_char = lexer_consume_char(lexer, file);
-    characters_read++;
-
-    // Проверить, есть ли знак '+' или '-'
-    if (current_char == '+' || current_char == '-') {
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-    }
-    // Проверить, что следующий символ является цифрой
-    if (!is_digit(current_char)) {
-        raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                    "Invalid exponent format");
-    }
-    // Читать цифры после экспоненты
-    while (is_digit(current_char)) {
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-    }
-    // Последний прочитанный символ не является цифрой, вернуть его обратно в
-    // поток
-    lexer_unconsume_char(lexer, file, current_char);
-    characters_read--;
-    // Установить тип токена в TOKEN_EXP
-    set_multi_token(lexer, TOKEN_EXP, file, characters_read);
-}
-
-static void check_float_part(Lexer *lexer, FILE *file, int characters_read) {
-    // Первый символ '.' уже прочитан
-    // Читаем следующий символ
-    char current_char = lexer_consume_char(lexer, file);
-    characters_read++;
-
-    // Проверить, что следующий символ является цифрой
-    if (!is_digit(current_char)) {
-        raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                    "Invalid float format");
-    }
-    // Читать цифры после десятичной точки
-    while (is_digit(current_char)) {
-        // Читаем следующий символ
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-        // Проверить, не начинается ли часть с экспонентой
-        if (current_char == 'e' || current_char == 'E') {
-            check_exponent_part(lexer, file, characters_read);
-            return;
-        }
-    }
-    // Последний прочитанный символ не является цифрой, вернуть его обратно в
-    // поток
-    lexer_unconsume_char(lexer, file, current_char);
-    characters_read--;
-    // Установить тип токена в TOKEN_FLOAT
-    set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
-}
-
-static void check_hex_part(Lexer *lexer, FILE *file, int characters_read) {
-    // Первый символ 'x' уже прочитан
-    // Читаем следующий символ
-    char current_char = lexer_consume_char(lexer, file);
-    characters_read++;
-
-    // Проверить, что следующий символ является шестнадцатеричной цифрой
-    if (!is_hex_digit(current_char)) {
-        raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                    "Invalid hexadecimal format");
-    }
-    // Читаем шестнадцатеричные цифры
-    // Мы знаем, что первый символ является шестнадцатеричной цифрой
-    while (is_hex_digit(current_char)) {
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-    }
-    // Последний прочитанный символ не является шестнадцатеричной цифрой,
-    // вернуть его обратно в поток
-    lexer_unconsume_char(lexer, file, current_char);
-    characters_read--;
-    // Установить тип токена в TOKEN_HEX
-    set_multi_token(lexer, TOKEN_HEX, file, characters_read);
-}
-
 static void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char) {
     // Вернуть последний прочитанный символ обратно в поток
     ungetc(current_char, file);
@@ -510,67 +371,6 @@ static void set_multi_token(Lexer *lexer, TokenType type, FILE *file,
     lexer->current_token->type = type;
     lexer->current_token->line = lexer->line;
     write_str(file, characters_read, &lexer->current_token->data);
-}
-
-static void read_number(Lexer *lexer, FILE *file, char current_char) {
-    // Мы знаем, что первый символ является цифрой
-    int characters_read = 1;
-    // Читать цифры, пока не встретится что-то другое
-    while (is_digit(current_char)) {
-        // Читаем следующий символ
-        current_char = lexer_consume_char(lexer, file);
-        characters_read++;
-        // Проверяем, не начинается ли часть с плавающей точкой или экспонентой
-        if (current_char == 'e' || current_char == 'E') {
-            check_exponent_part(lexer, file, characters_read);
-            return;
-        } else if (current_char == '.') {
-            check_float_part(lexer, file, characters_read);
-            return;
-        }
-    }
-    // Последний прочитанный символ не принадлежит числу, вернуть его обратно в
-    // поток
-    lexer_unconsume_char(lexer, file, current_char);
-    characters_read--;
-    // Установить тип токена в TOKEN_INT
-    set_multi_token(lexer, TOKEN_INT, file, characters_read);
-}
-
-static void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
-    // Первый символ '0', нужно проверить следующий символ
-    int characters_read = 1;
-    // Оказывается, 0456 это нормальное число во wren, выведет 456
-    // Поэтому 0 просто убираем и читаем дальше как обычное число
-    if (is_digit(peek_char(file))) {
-        read_number(lexer, file, current_char);
-        return;
-    }
-    // Во wren работает только 0x, а не 0X для hex
-    else if (peek_char(file) == 'x') {
-        // Обработка шестнадцатеричных чисел
-        // считываем 'x'
-        lexer_consume_char(lexer, file);
-        characters_read++;
-        check_hex_part(lexer, file, characters_read);
-    } else if (peek_char(file) == '.') {
-        // Обработка чисел с плавающей точкой
-        // считываем '.'
-        lexer_consume_char(lexer, file);
-        characters_read++;
-        check_float_part(lexer, file, characters_read);
-    }
-    // Во wren работает e и E для экспоненты
-    else if (peek_char(file) == 'e' || peek_char(file) == 'E') {
-        // Обработка чисел в экспоненциальной форме
-        // считываем 'e' или 'E'
-        lexer_consume_char(lexer, file);
-        characters_read++;
-        check_exponent_part(lexer, file, characters_read);
-    } else {
-        // Это просто '0'
-        set_single_token(lexer, TOKEN_INT, '0');
-    }
 }
 
 static int is_comment_start(char current_char, FILE *file) {
@@ -970,15 +770,146 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_single_token(lexer, TOKEN_DOT, current_char);
                 return *lexer->current_token;
             case STATE_NUMBER:
-                //! @Nikorya
-                //! Нужно решить переходы в состояние,
-                //! а не делать это внутри функции read_number
-                //! чтобы не нарушать логику автомата
-                read_number(lexer, file, current_char);
+                // Читать цифры, пока не встретится что-то другое
+                while (is_digit(current_char)) {
+                    // Читаем следующий символ
+                    current_char = lexer_consume_char(lexer, file);
+                    characters_read++;
+                }
+                if (current_char == '.') {
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_DECIMAL_POINT, current_char);
+                    break;
+                } else if (current_char == 'e' || current_char == 'E') {
+                    // Обработка чисел в экспоненциальной форме
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
+                    break;
+                }
+                // Последний прочитанный символ не принадлежит числу, вернуть его обратно в
+                // поток
+                lexer_unconsume_char(lexer, file, current_char);
+                // Установить тип токена в TOKEN_INT
+                set_multi_token(lexer, TOKEN_INT, file, characters_read);
+                // Вернуть текущий токен
                 return *lexer->current_token;
             case STATE_ZERO_START:
-                //! Переделать чтобы совпадало с логикой автомата
-                classify_number_token(lexer, file, current_char);
+                current_char = lexer_consume_char(lexer, file);
+                characters_read++;
+                if (current_char == 'x') {
+                    // Обработка шестнадцатеричных чисел
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_HEX_PREFIX, current_char);
+                    break;
+                } else if (current_char == '.') {
+                    // Обработка чисел с плавающей точкой
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_DECIMAL_POINT, current_char);
+                    break;
+                } else if (current_char == 'e' || current_char == 'E') {
+                    // Обработка чисел в экспоненциальной форме
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
+                    break;
+                } else if (is_digit(current_char)) {
+                    // Оказывается, 0456 это нормальное число во wren, выведет 456
+                    // Поэтому 0 просто убираем и читаем дальше как обычное число
+                    characters_read--;
+                    change_state(file, lexer, &state, STATE_NUMBER, current_char);
+                    break;
+                }
+                // Это просто '0'
+                set_single_token(lexer, TOKEN_INT, '0');
+
+                return *lexer->current_token;
+            case STATE_DECIMAL_POINT:
+                current_char = lexer_consume_char(lexer, file);
+                if (!is_digit(current_char)) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid float format");
+                }
+                characters_read++;
+                change_state(file, lexer, &state, STATE_FLOAT_NUMBER, current_char);
+                break;
+            case STATE_CHECK_EXPONENT:
+                current_char = lexer_consume_char(lexer, file);
+                if (current_char == '+' || current_char == '-') {
+                    
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_SIGN_EXP_NUMBER, current_char);
+                    break;
+                }
+                // Проверить, что следующий символ является цифрой
+                if (!is_digit(current_char)) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid exponent format");
+                }
+                change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
+                break;
+            case STATE_SIGN_EXP_NUMBER:
+                current_char = lexer_consume_char(lexer, file);
+                // Проверить, что следующий символ является цифрой
+                if (!is_digit(current_char)) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid exponent format");
+                }
+                change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
+                break;
+            case STATE_HEX_PREFIX:
+                current_char = lexer_consume_char(lexer, file);
+                // Проверить, что следующий символ является шестнадцатеричной цифрой
+                if (!is_hex_digit(current_char)) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid hexadecimal format");
+                }
+                characters_read++;
+                change_state(file, lexer, &state, STATE_HEX_NUMBER, current_char);
+                break;
+            case STATE_HEX_NUMBER:
+                current_char = lexer_consume_char(lexer, file);
+                // Читать шестнадцатеричные цифры
+                while (is_hex_digit(current_char)) {
+                    current_char = lexer_consume_char(lexer, file);
+                    characters_read++;
+                }
+                // Последний прочитанный символ не является шестнадцатеричной цифрой,
+                // вернуть его обратно в поток
+                lexer_unconsume_char(lexer, file, current_char);
+                // Установить тип токена в TOKEN_HEX
+                set_multi_token(lexer, TOKEN_HEX, file, characters_read);
+                return *lexer->current_token;
+            case STATE_FLOAT_NUMBER:
+                current_char = lexer_consume_char(lexer, file);
+                // Читать цифры после десятичной точки
+                while (is_digit(current_char)) {
+                    // Читаем следующий символ
+                    current_char = lexer_consume_char(lexer, file);
+                    characters_read++;
+                    // Проверить, не начинается ли часть с экспонентой
+                }
+                if (current_char == 'e' || current_char == 'E') {
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
+                    break;
+                }
+                // Последний прочитанный символ не является цифрой, вернуть его обратно в
+                // поток
+                lexer_unconsume_char(lexer, file, current_char);
+                // Установить тип токена в TOKEN_FLOAT
+                set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
+                return *lexer->current_token;
+            case STATE_EXP_NUMBER:
+                // Читать цифры после экспоненты
+                while (is_digit(current_char)) {
+                    // Читаем следующий символ
+                    current_char = lexer_consume_char(lexer, file);
+                    characters_read++;
+                }
+                // Последний прочитанный символ не является цифрой, вернуть его обратно в
+                // поток
+                lexer_unconsume_char(lexer, file, current_char);
+                // Установить тип токена в TOKEN_EXP
+                set_multi_token(lexer, TOKEN_EXP, file, characters_read);
                 return *lexer->current_token;
             case STATE_STRING:
                 //! Переделать чтобы совпадало с логикой автомата
