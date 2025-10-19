@@ -974,15 +974,17 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 }
             case STATE_WHITESPACE:
-                if (peek_char(file) == EOF) {
-                    current_char = lexer_consume_char(lexer, file);
-                    change_state(file, lexer, &state, STATE_START, current_char);
-                } else if (is_comment_start(file) == 0){
+                /* Белые знаки связаны с комментариями,
+                поэтому тут проверяем начало комментариев */
+                if (is_comment_start(file) == 0) {
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
                 } else if (is_comment_start(file) == 1)
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char); 
-                else if (!is_whitespace(peek_char(file))){
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
+                // Если следующий символ не белый знак, то переходим в стартовое состояние
+                // используется peek_char(file) вместо current_char,
+                // т.к. функции на определение комментариев смотрят следующие символы
+                else if (!is_whitespace(peek_char(file))) { 
                     change_state(file, lexer, &state, STATE_START, current_char);
                     lexer_consume_char(lexer, file);
                 }
@@ -993,7 +995,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     lexer_consume_char(lexer, file);
                 } else if (peek_char(file) == '*')
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
-                else{
+                else {
                     set_single_token(lexer, TOKEN_DIVISION, current_char);
                     return *lexer->current_token;
                 }
@@ -1001,25 +1003,24 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             case STATE_START_BLOCK_COMMENT:
                 current_char = lexer_consume_char(lexer, file);
                 count_block_comment++;
-                if (peek_char(file) == EOF  || peek_next_char(file) == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid block comment");
-                } else if (is_comment_start(file) == 1)
+                if (is_comment_start(file) == 1)
                     lexer_consume_char(lexer, file);
                 else if (is_end_block_comment(file)) {
                     change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
+                } else if (peek_char(file) == EOF) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Invalid block comment");
                 } else 
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_BODY_BLOCK_COMMENT:
-                if (current_char == EOF) {
+                if (peek_char(file) == EOF) {
                     raise_error(LEXER_ERROR, lexer->line, lexer->position,
                                 "Unterminated block comment");
-                } else if (current_char == '\n')
+                } else if (peek_char(file) == '\n')
                     lexer->line++;
-
-                if (is_comment_start(file) == 1) {
+                else if (is_comment_start(file) == 1) {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
                 } else if (is_end_block_comment(file)) {
@@ -1100,8 +1101,8 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_single_token(lexer, TOKEN_MULTIPLY, current_char);
                 return *lexer->current_token;
             case STATE_NOT_EQUAL:
-                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
                 lexer_consume_char(lexer, file);
+                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
                 return *lexer->current_token;
             case STATE_ASSIGN:
                 if (peek_char(file) == '=') {
