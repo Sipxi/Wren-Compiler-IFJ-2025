@@ -75,7 +75,7 @@ static bool is_letter(char character);
  * @param file Указатель на файл для проверки.
  * @return -1 если не комментарий, 0 если однострочный комментарий, 1 если многострочный комментарий
  */
-static int is_comment_start(FILE *file);
+static int is_comment_start(char current_char, FILE *file);
 
 /**
  * Проверяет, является ли символ цифрой (0-9).
@@ -104,7 +104,7 @@ static bool is_keyword(const char *str);
  * @param file Указатель на файл, содержащий исходный код.
  * @return true если был найден конец блокового комментария, иначе false.
  */
-static bool is_end_block_comment(FILE *file);
+static bool is_end_block_comment(char current_char, FILE *file);
 
 /**
  * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая
@@ -315,9 +315,9 @@ static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
 /* ===== Имплементация приватных функций лексера =====*/
 /* ====================================*/
 
-static bool is_end_block_comment(FILE *file) {
+static bool is_end_block_comment(char current_char, FILE *file) {
     // Проверить, является ли текущий символ концом блочного комментария
-    return peek_char(file) == '*' && peek_next_char(file) == '/';
+    return current_char == '*' && peek_char(file) == '/';
 }
 
 static bool is_letter(char character) {
@@ -573,10 +573,10 @@ static void classify_number_token(Lexer *lexer, FILE *file, char current_char) {
     }
 }
 
-static int is_comment_start(FILE *file) {
+static int is_comment_start(char current_char, FILE *file) {
     int result = -1;
-    if (peek_char(file) == '/') {
-        char next_char = peek_next_char(file);
+    if (current_char == '/') {
+        char next_char = peek_char(file);
         if (next_char == '/') 
             result = 0;
         else if (next_char == '*') 
@@ -824,89 +824,88 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 }
             case STATE_WHITESPACE:
-                if (peek_char(file) == EOF) {
-                    current_char = lexer_consume_char(lexer, file);
-                    change_state(file, lexer, &state, STATE_START, current_char);
-                } else if (is_comment_start(file) == 0){
+                /* Белые знаки связаны с комментариями,
+                поэтому тут проверяем начало комментариев */
+                if (is_comment_start(current_char, file) == 0) {
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
-                    lexer_consume_char(lexer, file);
-                } else if (is_comment_start(file) == 1)
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char); 
-                else if (!is_whitespace(peek_char(file))){
+                } else if (is_comment_start(current_char, file) == 1)
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
+                // Если символ не белый знак, то переходим в стартовое состояние
+                else if (!is_whitespace(current_char))
                     change_state(file, lexer, &state, STATE_START, current_char);
-                    lexer_consume_char(lexer, file);
-                }
                 break;
             case STATE_DIVISION:
-                if (peek_char(file) == '/') {
+                // Проверяем, является ли следующий символ началом комментария
+                if (peek_char(file) == '/')
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
-                    lexer_consume_char(lexer, file);
-                } else if (peek_char(file) == '*')
+                else if (peek_char(file) == '*') {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
-                else{
+                    lexer_consume_char(lexer, file);            
+                } else { // Это просто оператор деления
                     set_single_token(lexer, TOKEN_DIVISION, current_char);
                     return *lexer->current_token;
                 }
                 break;
             case STATE_START_BLOCK_COMMENT:
+                // так как начало комментария это всегда 2 символа, то должны один перепрыгнуть
                 current_char = lexer_consume_char(lexer, file);
-                count_block_comment++;
-                if (peek_char(file) == EOF  || peek_next_char(file) == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid block comment");
-                } else if (is_comment_start(file) == 1)
-                    lexer_consume_char(lexer, file);
-                else if (is_end_block_comment(file)) {
-                    change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
-                    lexer_consume_char(lexer, file);
-                } else 
-                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
+                count_block_comment++; // увеличиваем счетчик вложенных блок комментариев
+                change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_BODY_BLOCK_COMMENT:
-                if (current_char == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Unterminated block comment");
-                } else if (current_char == '\n')
+                if (current_char == '\n') // отслеживаем новые строки внутри комментария
                     lexer->line++;
-
-                if (is_comment_start(file) == 1) {
+                // Проверяем, является ли следующий символ началом комментария
+                else if (is_comment_start(current_char, file) == 1) {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (is_end_block_comment(file)) {
+                } else if (is_end_block_comment(current_char, file)) {
                     change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                }
+                // если ни конец файла, это ошибка
+                } else if (current_char == EOF) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Unterminated block comment");
+                } 
+                // иначе продолжаем оставаться в теле комментария
                 break;
             case STATE_END_BLOCK_COMMENT:
-                count_block_comment--;
+                // так как начало комментария это всегда 2 символа, то должны один перепрыгнуть
                 current_char = lexer_consume_char(lexer, file); 
+                count_block_comment--;
+                // если до этого вне комментария был EOL, то возвращаемся в EOL
                 if (count_block_comment == 0 && find_eol)
                     change_state(file, lexer, &state, STATE_EOL, current_char);
+                // иначе в пробельное состояние
                 else if (count_block_comment == 0)
                     change_state(file, lexer, &state, STATE_WHITESPACE, current_char);
+                // если все блоки не закрыты остаемся в теле комментария
                 else   
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_COMMENT:
-                if (peek_char(file) == '\n' || peek_char(file) == EOF)
+                // пока не достигнут конец строки или конец файла, продолжаем читать
+                if (current_char == '\n' || current_char == EOF)
                     change_state(file, lexer, &state, STATE_EOL, current_char);
                 break;
             case STATE_EOL:
+                // устанавливаем флаг что был найден EOL
                 find_eol = true;
+                // отслеживаем номер строки
                 if (current_char == '\n')
                     lexer->line++;
-                if (current_char == EOF) {
-                    lexer_unconsume_char(lexer, file, current_char);
-                    set_single_token(lexer, TOKEN_EOL, '\n');
-                    return *lexer->current_token;
-                } else if (peek_char(file) == '/' && peek_next_char(file) == '/') {
+                // отслеживаем комментарии после EOL
+                else if (current_char == '/' && peek_char(file) == '/') {
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (peek_char(file) == '/' && peek_next_char(file) == '*') {
+                } else if (current_char == '/' && peek_char(file) == '*') {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (!is_whitespace(peek_char(file)) && peek_char(file) != '\n') {
+                // если следующий символ не пробельный, то
+                // возвращаем токен EOL и оставляем символ для следующего токена
+                } else if (!is_whitespace(current_char)) {
                     set_single_token(lexer, TOKEN_EOL, '\n');
+                    lexer_unconsume_char(lexer, file, current_char);
                     return *lexer->current_token;
                 }
                 break;
@@ -995,8 +994,8 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_single_token(lexer, TOKEN_MULTIPLY, current_char);
                 return *lexer->current_token;
             case STATE_NOT_EQUAL:
-                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
                 lexer_consume_char(lexer, file);
+                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
                 return *lexer->current_token;
             case STATE_ASSIGN:
                 if (peek_char(file) == '=') {
