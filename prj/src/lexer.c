@@ -999,20 +999,11 @@ Token get_next_token(Lexer *lexer, FILE *file) {
             case STATE_START_BLOCK_COMMENT:
                 // так как начало комментария это всегда 2 символа, то должны один перепрыгнуть
                 current_char = lexer_consume_char(lexer, file);
-                count_block_comment++;
-                if (is_comment_start(current_char, file) == 1)
-                    break;
-                else if (is_end_block_comment(current_char, file)) {
-                    change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
-                    lexer_consume_char(lexer, file);
-                } else 
-                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
+                count_block_comment++; // увеличиваем счетчик вложенных блок комментариев
+                change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_BODY_BLOCK_COMMENT:
-                if (current_char == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Unterminated block comment");
-                } else if (current_char == '\n')
+                if (current_char == '\n')
                     lexer->line++;
                 else if (is_comment_start(current_char, file) == 1) {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
@@ -1020,7 +1011,10 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 } else if (is_end_block_comment(current_char, file)) {
                     change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                }
+                } else if (current_char == EOF) {
+                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
+                                "Unterminated block comment");
+                } 
                 break;
             case STATE_END_BLOCK_COMMENT:
                 count_block_comment--;
@@ -1033,25 +1027,26 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_COMMENT:
-                if (peek_char(file) == '\n' || peek_char(file) == EOF)
+                if (current_char == '\n' || current_char == EOF)
                     change_state(file, lexer, &state, STATE_EOL, current_char);
                 break;
             case STATE_EOL:
                 find_eol = true;
                 if (current_char == '\n')
                     lexer->line++;
-                if (current_char == EOF) {
+                else if (current_char == EOF) {
                     lexer_unconsume_char(lexer, file, current_char);
                     set_single_token(lexer, TOKEN_EOL, '\n');
                     return *lexer->current_token;
-                } else if (peek_char(file) == '/' && peek_next_char(file) == '/') {
+                } else if (current_char == '/' && peek_char(file) == '/') {
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (peek_char(file) == '/' && peek_next_char(file) == '*') {
+                } else if (current_char == '/' && peek_char(file) == '*') {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (!is_whitespace(peek_char(file)) && peek_char(file) != '\n') {
+                } else if (!is_whitespace(current_char) && current_char != '\n') {
                     set_single_token(lexer, TOKEN_EOL, '\n');
+                    lexer_unconsume_char(lexer, file, current_char);
                     return *lexer->current_token;
                 }
                 break;
