@@ -1003,48 +1003,57 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_BODY_BLOCK_COMMENT:
-                if (current_char == '\n')
+                if (current_char == '\n') // отслеживаем новые строки внутри комментария
                     lexer->line++;
+                // Проверяем, является ли следующий символ началом комментария
                 else if (is_comment_start(current_char, file) == 1) {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
                 } else if (is_end_block_comment(current_char, file)) {
                     change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
+                // если ни конец файла, это ошибка
                 } else if (current_char == EOF) {
                     raise_error(LEXER_ERROR, lexer->line, lexer->position,
                                 "Unterminated block comment");
                 } 
+                // иначе продолжаем оставаться в теле комментария
                 break;
             case STATE_END_BLOCK_COMMENT:
-                count_block_comment--;
+                // так как начало комментария это всегда 2 символа, то должны один перепрыгнуть
                 current_char = lexer_consume_char(lexer, file); 
+                count_block_comment--;
+                // если до этого вне комментария был EOL, то возвращаемся в EOL
                 if (count_block_comment == 0 && find_eol)
                     change_state(file, lexer, &state, STATE_EOL, current_char);
+                // иначе в пробельное состояние
                 else if (count_block_comment == 0)
                     change_state(file, lexer, &state, STATE_WHITESPACE, current_char);
+                // если все блоки не закрыты остаемся в теле комментария
                 else   
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_COMMENT:
+                // пока не достигнут конец строки или конец файла, продолжаем читать
                 if (current_char == '\n' || current_char == EOF)
                     change_state(file, lexer, &state, STATE_EOL, current_char);
                 break;
             case STATE_EOL:
+                // устанавливаем флаг что был найден EOL
                 find_eol = true;
+                // отслеживаем номер строки
                 if (current_char == '\n')
                     lexer->line++;
-                else if (current_char == EOF) {
-                    lexer_unconsume_char(lexer, file, current_char);
-                    set_single_token(lexer, TOKEN_EOL, '\n');
-                    return *lexer->current_token;
-                } else if (current_char == '/' && peek_char(file) == '/') {
+                // отслеживаем комментарии после EOL
+                else if (current_char == '/' && peek_char(file) == '/') {
                     change_state(file, lexer, &state, STATE_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
                 } else if (current_char == '/' && peek_char(file) == '*') {
                     change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
                     lexer_consume_char(lexer, file);
-                } else if (!is_whitespace(current_char) && current_char != '\n') {
+                // если следующий символ не пробельный, то
+                // возвращаем токен EOL и оставляем символ для следующего токена
+                } else if (!is_whitespace(current_char)) {
                     set_single_token(lexer, TOKEN_EOL, '\n');
                     lexer_unconsume_char(lexer, file, current_char);
                     return *lexer->current_token;
