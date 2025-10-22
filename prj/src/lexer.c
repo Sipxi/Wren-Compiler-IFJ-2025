@@ -624,14 +624,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 }
             case STATE_WHITESPACE:
-                /* Белые знаки связаны с комментариями,
-                поэтому тут проверяем начало комментариев */
-                if (is_comment_start(current_char, file) == 0) {
-                    change_state(file, lexer, &state, STATE_COMMENT, current_char);
-                } else if (is_comment_start(current_char, file) == 1)
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
-                // Если символ не белый знак, то переходим в стартовое состояние
-                else if (!is_whitespace(current_char))
+                if (!is_whitespace(current_char))
                     change_state(file, lexer, &state, STATE_START, current_char);
                 break;
             case STATE_DIVISION:
