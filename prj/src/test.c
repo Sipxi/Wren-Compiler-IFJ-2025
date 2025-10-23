@@ -35,7 +35,7 @@ int main() {
         fclose(file);
         return 1;
     }
-    while (lexer->current_token->type != TOKEN_EOF) {
+    do {
         get_next_token(lexer, file);
 
         printf("Token Type: %s, Data: ",
@@ -44,10 +44,11 @@ int main() {
         print_token_data(lexer->current_token->data);
 
         printf(", Line: %d\n", lexer->current_token->line);
-    }
-
+    } while (lexer->current_token->type != TOKEN_NULL);
     // Don't close stdin
-    fclose(file);
     lexer_free(lexer);
+    if (fclose(file) != 0) { // обработка ошибки закрытия файла
+        fprintf(stderr, "Error closing file.\n");
+    }
     return 0;
 }
