@@ -47,6 +47,7 @@ int main() {
     }
 
     // Don't close stdin
+    fclose(file);
     lexer_free(lexer);
     return 0;
 }
