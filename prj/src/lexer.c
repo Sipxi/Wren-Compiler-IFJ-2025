@@ -539,9 +539,9 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
 */
 Token get_next_token(Lexer *lexer, FILE *file) {
     // FSM реализация лексера
-    // Если файл уже на конце файла, возвращаем TOKEN_NULL
+    // Если файл уже на конце файла, возвращаем TOKEN_EOF
     if (lexer->current_token->data[0] == EOF) {
-        set_single_token(lexer, TOKEN_NULL, EOF);
+        set_single_token(lexer, TOKEN_EOF, EOF);
         return *lexer->current_token;
     }
     LexerFSMState state = STATE_START;
@@ -1002,7 +1002,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 if (find_eol)
                     set_single_token(lexer, TOKEN_EOL, EOF);
                 else 
-                    set_single_token(lexer, TOKEN_NULL, EOF);
+                    set_single_token(lexer, TOKEN_EOF, EOF);
                 return *lexer->current_token;
             default:
                 // Ошибка: неизвестное состояние
