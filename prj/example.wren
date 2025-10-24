@@ -1,1 +1,1 @@
-hello __abc = 5
+var popa = """adsadsa""""asd" abcd 
