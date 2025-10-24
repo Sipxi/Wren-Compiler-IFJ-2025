@@ -8,14 +8,14 @@ Token *token_init() {
     }
             
     // Выделить память для поля данных токена
-    // Начальное выделение для 1 символа + нулевой терминатор
-    //? @Sipxi Нужно ли добавлять память для нулевого терминатора?
-    //? @Sipxi Это строка, а не символ
+    // Начальное выделение для 1 символа + нулевой терминатор (минимум 2 байта)
     token->data = (char *)malloc(sizeof(char) + 1);
     if (token->data == NULL) {
         free(token);
         return NULL;
     }
+    // Инициализировать пустую строку
+    token->data[0] = '\0';
     // Инициализировать тип и номер строки значениями по умолчанию
     token->type = TOKEN_NULL;
     token->line = -1;
@@ -26,8 +26,9 @@ void token_free(Token *token) {
     if (token == NULL) {
         return;
     }
-
-    free(token->data);
+    if (token->data != NULL) {
+        free(token->data);
+    }
     free(token);
 }
 

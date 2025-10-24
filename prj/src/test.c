@@ -45,8 +45,10 @@ int main() {
 
         printf(", Line: %d\n", lexer->current_token->line);
     }
-
     // Don't close stdin
     lexer_free(lexer);
+    if (fclose(file) != 0) { // обработка ошибки закрытия файла
+        fprintf(stderr, "Error closing file.\n");
+    }
     return 0;
 }
