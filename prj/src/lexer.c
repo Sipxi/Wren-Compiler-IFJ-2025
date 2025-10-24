@@ -415,8 +415,7 @@ static void read_multiline_string(Lexer *lexer, FILE *file,
         char current = peek_char(file);
 
         if (current == EOF) {
-            raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                        "Unterminated multi-line string literal");
+            lexer_error(lexer, LEXER_ERROR, "Unterminated multi-line string literal");
         }
 
         // находим первые 2 скобки
@@ -474,8 +473,7 @@ static void read_regular_string(Lexer *lexer, FILE *file, int characters_read) {
 
         // Ошибка в случае
         if (peek_char(file) == EOF || peek_char(file) == '\n') {
-            raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                        "Unterminated string literal");
+            lexer_error(lexer, LEXER_ERROR, "Unterminated string literal");
         }
     }
     lexer_consume_char(lexer, file);
@@ -657,8 +655,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     lexer_consume_char(lexer, file);
                 // если ни конец файла, это ошибка
                 } else if (current_char == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Unterminated block comment");
+                    lexer_error(lexer, LEXER_ERROR, "Unterminated block comment");
                 } 
                 // иначе продолжаем оставаться в теле комментария
                 break;
@@ -827,8 +824,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Считытываем следующий символ после '.'
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid float format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
                 }
                 // Если следующий символ является цифрой, переходим в состояние
                 // чтения числа с плавающей точкой
@@ -846,8 +842,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 }
                 // Проверить, что следующий символ является цифрой
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid exponent format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
                 }
                 // Переходим в состояние чтения экспоненты
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
@@ -858,8 +853,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является цифрой
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid exponent format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
                 }
                 // Переходим в состояние чтения экспоненты
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
@@ -870,8 +864,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является шестнадцатеричной цифрой
                 if (!is_hex_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid hexadecimal format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid hexadecimal format");
                 }
                 change_state(file, lexer, &state, STATE_HEX_NUMBER, current_char);
                 break;

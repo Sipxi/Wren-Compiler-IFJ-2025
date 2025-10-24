@@ -1,5 +1,1 @@
-
- 
- /* hello */
-
- 
+var _global
