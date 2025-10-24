@@ -432,6 +432,11 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
 */
 Token get_next_token(Lexer *lexer, FILE *file) {
     // FSM реализация лексера
+    // Если файл уже на конце файла, возвращаем TOKEN_EOF
+    if (lexer->current_token->data[0] == EOF) {
+        set_single_token(lexer, TOKEN_EOF, EOF);
+        return *lexer->current_token;
+    }
     LexerFSMState state = STATE_START;
     bool find_eol = false;
     int count_block_comment = 0;
@@ -518,14 +523,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     break;
                 }
             case STATE_WHITESPACE:
-                /* Белые знаки связаны с комментариями,
-                поэтому тут проверяем начало комментариев */
-                if (is_comment_start(current_char, file) == 0) {
-                    change_state(file, lexer, &state, STATE_COMMENT, current_char);
-                } else if (is_comment_start(current_char, file) == 1)
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT, current_char);
-                // Если символ не белый знак, то переходим в стартовое состояние
-                else if (!is_whitespace(current_char))
+                if (!is_whitespace(current_char))
                     change_state(file, lexer, &state, STATE_START, current_char);
                 break;
             case STATE_DIVISION:
@@ -578,9 +576,14 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
                 break;
             case STATE_COMMENT:
-                // пока не достигнут конец строки или конец файла, продолжаем читать
-                if (current_char == '\n' || current_char == EOF)
+                // пока не достигнут конец строки
+                if (current_char == '\n')
                     change_state(file, lexer, &state, STATE_EOL, current_char);
+                // или конец файла
+                else if (current_char == EOF){
+                    change_state(file, lexer, &state, STATE_EOF, current_char);
+                    find_eol = true; // устанавливаем флаг что был найден EOL, так как файл закончился
+                }
                 break;
             case STATE_EOL:
                 // устанавливаем флаг что был найден EOL
@@ -995,7 +998,11 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 set_single_token(lexer, TOKEN_CLOSE_PAREN, current_char);
                 return *lexer->current_token;
             case STATE_EOF:
-                set_single_token(lexer, TOKEN_EOF, EOF);
+                // Если переход был из однострочного комментария
+                if (find_eol)
+                    set_single_token(lexer, TOKEN_EOL, EOF);
+                else 
+                    set_single_token(lexer, TOKEN_EOF, EOF);
                 return *lexer->current_token;
             default:
                 // Ошибка: неизвестное состояние
