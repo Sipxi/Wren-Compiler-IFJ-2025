@@ -3,6 +3,8 @@
         "*.html": "html",
         "token.h": "c",
         "lexer.h": "c",
-        "error.h": "c"
+        "error.h": "c",
+        "stdbool.h": "c",
+        "common.h": "c"
     }
 }
