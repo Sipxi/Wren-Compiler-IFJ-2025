@@ -556,8 +556,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     lexer_consume_char(lexer, file);
                 // если ни конец файла, это ошибка
                 } else if (current_char == EOF) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Unterminated block comment");
+                    lexer_error(lexer, LEXER_ERROR, "Unterminated block comment");
                 } 
                 // иначе продолжаем оставаться в теле комментария
                 break;
@@ -731,8 +730,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Считытываем следующий символ после '.'
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid float format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
                 }
                 // Если следующий символ является цифрой, переходим в состояние
                 // чтения числа с плавающей точкой
@@ -750,8 +748,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 }
                 // Проверить, что следующий символ является цифрой
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid exponent format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
                 }
                 // Переходим в состояние чтения экспоненты
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
@@ -762,8 +759,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является цифрой
                 if (!is_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid exponent format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
                 }
                 // Переходим в состояние чтения экспоненты
                 change_state(file, lexer, &state, STATE_EXP_NUMBER, current_char);
@@ -774,8 +770,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 current_char = lexer_consume_char(lexer, file);
                 // Проверить, что следующий символ является шестнадцатеричной цифрой
                 if (!is_hex_digit(current_char)) {
-                    raise_error(LEXER_ERROR, lexer->line, lexer->position,
-                                "Invalid hexadecimal format");
+                    lexer_error(lexer, LEXER_ERROR, "Invalid hexadecimal format");
                 }
                 change_state(file, lexer, &state, STATE_HEX_NUMBER, current_char);
                 break;
@@ -858,7 +853,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     state = STATE_SINGLE_STRING;
                     break;
                 }
-                else if(current_char=='"')
+                else 
                 {
                     characters_read++;
                     state = STATE_MULTIPLE_STRING;
@@ -877,6 +872,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     characters_read++;
                     continue;
                 }
+            
 
             case STATE_CLOSING_QUOT:
                 if(current_char == '"')
