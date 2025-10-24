@@ -13,16 +13,16 @@ void DLL_Error(void) {
 	printf("*ERROR* The program has performed an illegal operation.\n");
 }
 
-void DLL_Init( DLL_Instruction_Set *list ) {
+void DLL_Init( DLList *list ) {
 	list->first_element = NULL;
 	list->active_element = NULL;
 	list->last_element = NULL;
 	list->current_length = 0;
 }
 
-void DLL_Dispose( DLL_Instruction_Set *list ) {
-	InstructionNodePtr tmp = list->first_element; // Pomocná proměnná pro průchod seznamem
-	InstructionNodePtr next; // Pomocná proměnná pro uchování dalšího prvku
+void DLL_Dispose( DLList *list ) {
+	DLLElementPtr tmp = list->first_element; // Pomocná proměnná pro průchod seznamem
+	DLLElementPtr next; // Pomocná proměnná pro uchování dalšího prvku
 	// Procházíme seznam a uvolňujeme jednotlivé prvky pokud nedojdeme na konec
 	while (tmp != NULL) {
 		next = tmp->next_element;
@@ -36,12 +36,13 @@ void DLL_Dispose( DLL_Instruction_Set *list ) {
 	list->current_length = 0;
 }
 
-void DLL_InsertFirst( DLL_Instruction_Set *list, InstructionData data ) {
-	InstructionNodePtr newElement = (InstructionNodePtr) malloc(sizeof(struct InstructionNode));
+void DLL_InsertFirst( DLList *list, void *data ) {
+	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement));
 	if (newElement == NULL) {
 		DLL_Error();
 		return;
 	}
+
 	newElement->data = data; // Nastavení hodnoty nového prvku
 	newElement->prev_element = NULL; // Nový prvek bude první, nemá předchůdce
 	newElement->next_element = list->first_element; // Nový prvek bude ukazovat na bývalý první prvek
@@ -55,8 +56,8 @@ void DLL_InsertFirst( DLL_Instruction_Set *list, InstructionData data ) {
 	list->current_length++;
 }
 
-void DLL_InsertLast( DLL_Instruction_Set *list, InstructionData data ) {
-	InstructionNodePtr newElement = (InstructionNodePtr) malloc(sizeof(struct InstructionNode));
+void DLL_InsertLast( DLList *list, void *data ) {
+	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement));
 	if (newElement == NULL) {
 		DLL_Error();
 		return;
@@ -74,35 +75,35 @@ void DLL_InsertLast( DLL_Instruction_Set *list, InstructionData data ) {
 	list->current_length++;
 }
 
-void DLL_First( DLL_Instruction_Set *list ) {
+void DLL_First( DLList *list ) {
 	list->active_element = list->first_element;
 }
 
-void DLL_Last( DLL_Instruction_Set *list ) {
+void DLL_Last( DLList *list ) {
 	list->active_element = list->last_element;
 }
 
-void DLL_GetFirst( DLL_Instruction_Set *list, InstructionData *dataPtr ) {
+void DLL_GetFirst( DLList *list, void **dataPtr ) {
 	if (list->first_element != NULL)
 		*dataPtr = list->first_element->data;
 	else 
 		DLL_Error();
 }
 
-void DLL_GetLast( DLL_Instruction_Set *list, InstructionData *dataPtr ) {
+void DLL_GetLast( DLList *list, void **dataPtr ) {
 	if (list->last_element != NULL)
 		*dataPtr = list->last_element->data;
 	else 
 		DLL_Error();
 }
 
-void DLL_DeleteFirst( DLL_Instruction_Set *list ) {
+void DLL_DeleteFirst( DLList *list ) {
 	if (list->first_element == NULL) return; // Seznam je prázdný, nic neděláme
 	// Pokud byl první prvek aktivní, ztrácí se aktivita
 	if (list->active_element == list->first_element)
 		list->active_element = NULL;
 	
-	InstructionNodePtr tmp = list->first_element; // Pomocná proměnná pro uvolnění prvku
+	DLLElementPtr tmp = list->first_element; // Pomocná proměnná pro uvolnění prvku
 	list->first_element = tmp->next_element; // Posuneme ukazatel na první prvek na další prvek
 	// Pokud nový první prvek existuje, nastavíme jeho předchůdce na NULL
 	if (list->first_element != NULL) 
@@ -114,13 +115,13 @@ void DLL_DeleteFirst( DLL_Instruction_Set *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteLast( DLL_Instruction_Set *list ) {
+void DLL_DeleteLast( DLList *list ) {
 	if (list->last_element == NULL) return; // Seznam je prázdný, nic neděláme
 	// Pokud byl poslední prvek aktivní, ztrácí se aktivita
 	if (list->active_element == list->last_element)
 		list->active_element = NULL;
 	
-	InstructionNodePtr tmp = list->last_element; // Pomocná proměnná pro uvolnění prvku
+	DLLElementPtr tmp = list->last_element; // Pomocná proměnná pro uvolnění prvku
 	list->last_element = tmp->prev_element;
 	// Pokud nový poslední prvek existuje, nastavíme jeho následující prvek na NULL
 	if (list->last_element != NULL)
@@ -132,14 +133,14 @@ void DLL_DeleteLast( DLL_Instruction_Set *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteAfter( DLL_Instruction_Set *list ) {
-	InstructionNodePtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
+void DLL_DeleteAfter( DLList *list ) {
+	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	// Pokud není seznam aktivní nebo je aktivní prvek poslední, nic neděláme
 	if (active_element == NULL || active_element->next_element == NULL)
 		return;
 	
-	InstructionNodePtr afterActiveElememt = active_element->next_element; // Prvek za aktivním prvkem
+	DLLElementPtr afterActiveElememt = active_element->next_element; // Prvek za aktivním prvkem
 	active_element->next_element = afterActiveElememt->next_element; // Přeskočíme prvek za aktivním
 	// Pokud prvek za aktivním není poslední, nastavíme jeho předchůdce na aktivní prvek
 	if (active_element->next_element != NULL)
@@ -151,13 +152,13 @@ void DLL_DeleteAfter( DLL_Instruction_Set *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteBefore( DLL_Instruction_Set *list ) {
-	InstructionNodePtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
+void DLL_DeleteBefore( DLList *list ) {
+	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	if (active_element == NULL || active_element->prev_element == NULL)
 		return;
 	
-	InstructionNodePtr beforeActiveElememt = active_element->prev_element; // Prvek před aktivním prvkem
+	DLLElementPtr beforeActiveElememt = active_element->prev_element; // Prvek před aktivním prvkem
 	active_element->prev_element = beforeActiveElememt->prev_element; // Přeskočíme prvek před aktivním
 	// Pokud prvek před aktivním není první, nastavíme jeho následující prvek na aktivní prvek
 	if (active_element->prev_element != NULL)
@@ -169,12 +170,12 @@ void DLL_DeleteBefore( DLL_Instruction_Set *list ) {
 	list->current_length--;
 }
 
-void DLL_InsertAfter( DLL_Instruction_Set *list, InstructionData data ) {
-	InstructionNodePtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
+void DLL_InsertAfter( DLList *list, void *data ) {
+	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	if (active_element == NULL) return;
 
-	InstructionNodePtr newElement = (InstructionNodePtr) malloc(sizeof(struct InstructionNode)); // Ukazatel na nový prvek
+	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement)); // Ukazatel na nový prvek
 	if (newElement == NULL){
 		DLL_Error();
 		return;
@@ -193,12 +194,12 @@ void DLL_InsertAfter( DLL_Instruction_Set *list, InstructionData data ) {
 	list->current_length++;
 }
 
-void DLL_InsertBefore( DLL_Instruction_Set *list, InstructionData data ) {
-	InstructionNodePtr active_element= list->active_element;
+void DLL_InsertBefore( DLList *list, void *data ) {
+	DLLElementPtr active_element= list->active_element;
 	
 	if (active_element == NULL) return;
 
-	InstructionNodePtr newElement = (InstructionNodePtr) malloc(sizeof(struct InstructionNode));
+	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement));
 	if (newElement == NULL){
 		DLL_Error();
 		return;
@@ -215,7 +216,7 @@ void DLL_InsertBefore( DLL_Instruction_Set *list, InstructionData data ) {
 	list->current_length++;
 }
 
-void DLL_GetValue( DLL_Instruction_Set *list, InstructionData *dataPtr ) {
+void DLL_GetValue( DLList *list, void **dataPtr ) {
 	if (list->active_element == NULL){
 		DLL_Error();
 		return;
@@ -223,21 +224,21 @@ void DLL_GetValue( DLL_Instruction_Set *list, InstructionData *dataPtr ) {
 	*dataPtr = list->active_element->data;
 }
 
-void DLL_SetValue( DLL_Instruction_Set *list, InstructionData data ) {
+void DLL_SetValue( DLList *list, void *data ) {
 	if (list->active_element == NULL) return;
 	list->active_element->data = data;
 }
 
-void DLL_Next( DLL_Instruction_Set *list ) {
+void DLL_Next( DLList *list ) {
 	if (list->active_element == NULL) return;
 	list->active_element = list->active_element->next_element;
 }
 
-void DLL_Previous( DLL_Instruction_Set *list ) {
+void DLL_Previous( DLList *list ) {
 	if (list->active_element == NULL) return;
 	list->active_element = list->active_element->prev_element;
 }
 
-bool DLL_IsActive( DLL_Instruction_Set *list ) {
+bool DLL_IsActive( DLList *list ) {
 	return (list->active_element == NULL) ? false : true; 
 }
