@@ -23,7 +23,7 @@ void *Gen_InstructionData(InstructionData data){
     newData->arg1 = data.arg1;
     newData->arg2 = data.arg2;
     newData->result = data.result;
-    return (InstructionData *) newData;
+    return newData;
 }
 
 void DLL_Init( DLList *list ) {
