@@ -6,9 +6,7 @@
 // Veronika Turbaievska (273123)
 //
 //! Допишите ваши имена и номера
-// TODO: Memory leak fix
 // TODO: Комментарии к функциям
-// TODO: Рефактор читания символов в функции чтения токенов
 #include "lexer.h"
 
 #include <stdbool.h>

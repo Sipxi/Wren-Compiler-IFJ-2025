@@ -13,6 +13,19 @@ void DLL_Error(void) {
 	printf("*ERROR* The program has performed an illegal operation.\n");
 }
 
+void *Gen_InstructionData(InstructionData data){
+    InstructionData *newData = (InstructionData *) malloc (sizeof(InstructionData));
+    if (newData == NULL){
+        DLL_Error();
+        return NULL;
+    }
+    newData->op = data.op;
+    newData->arg1 = data.arg1;
+    newData->arg2 = data.arg2;
+    newData->result = data.result;
+    return (InstructionData *) newData;
+}
+
 void DLL_Init( DLList *list ) {
 	list->first_element = NULL;
 	list->active_element = NULL;
@@ -25,6 +38,7 @@ void DLL_Dispose( DLList *list ) {
 	DLLElementPtr next; // Pomocná proměnná pro uchování dalšího prvku
 	// Procházíme seznam a uvolňujeme jednotlivé prvky pokud nedojdeme na konec
 	while (tmp != NULL) {
+        free(tmp->data);
 		next = tmp->next_element;
 		free(tmp);
 		tmp = next;
@@ -111,6 +125,7 @@ void DLL_DeleteFirst( DLList *list ) {
 	// Pokud seznam byl jediný prvek, nastavíme také ukazatel na poslední prvek na NULL
 	else
 		list->last_element = NULL;
+    free(tmp->data);
 	free(tmp); // Uvolníme paměť původního prvního prvku
 	list->current_length--;
 }
@@ -129,6 +144,7 @@ void DLL_DeleteLast( DLList *list ) {
 	// Pokud seznam byl jediný prvek, nastavíme také ukazatel na první prvek na NULL
 	else 
 		list->first_element = NULL;
+    free(tmp->data);
 	free(tmp);
 	list->current_length--;
 }
@@ -148,6 +164,7 @@ void DLL_DeleteAfter( DLList *list ) {
 	// Pokud byl prvek za aktivním poslední, aktualizujeme ukazatel na poslední prvek
 	else
 		list->last_element = active_element;
+	free(afterActiveElememt->data);
 	free(afterActiveElememt);
 	list->current_length--;
 }
@@ -166,6 +183,7 @@ void DLL_DeleteBefore( DLList *list ) {
 	// Pokud byl prvek před aktivním prvním, aktualizujeme ukazatel na první prvek
 	else
 		list->first_element = active_element;
+	free(beforeActiveElememt->data);
 	free(beforeActiveElememt);
 	list->current_length--;
 }
@@ -215,6 +233,8 @@ void DLL_InsertBefore( DLList *list, void *data ) {
 	active_element->prev_element = newElement;
 	list->current_length++;
 }
+
+
 
 void DLL_GetValue( DLList *list, void **dataPtr ) {
 	if (list->active_element == NULL){
