@@ -50,7 +50,7 @@ int main() {
     }
     symtable_print(&table);
 
-    printf("Проверка вставление существующего символа...\n");
+    printf("Проверка вставки существующего символа...\n");
     SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
     symtable_insert(&table, "func1", &data); // Перезапись существующего
 
