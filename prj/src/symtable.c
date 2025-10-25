@@ -173,7 +173,9 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     while (entry->status == SLOT_OCCUPIED) {
         if (strcmp(entry->key, key) == 0) {
             // Ключ уже существует, обновляем данные
+            free(entry->data);
             entry->data = malloc(sizeof(SymbolData));
+            
             if (entry->data == NULL) {
                 free(entry->key);  // Освобождаем ключ при ошибке
                 return false;      // Ошибка выделения памяти для данных
