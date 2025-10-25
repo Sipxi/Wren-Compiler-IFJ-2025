@@ -214,6 +214,8 @@ void symtable_delete(Symtable* table, const char* key) {
         // Освобождение памяти для ключа и данных
         free(entry->key);
         free(entry->data);
+        entry->key = NULL;
+        entry->data = NULL;
     }
 }
 
