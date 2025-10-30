@@ -1,6 +1,5 @@
+#include "symtable.h"
 #include <stdio.h>
-#include "lexer.h"
-
 /*
 Игровая площадка для тестирования чего угодно
 Пожалуйста, не удаляйте этот файл, он нам еще пригодится
@@ -22,33 +21,40 @@ void print_token_data(const char *data) {
 }
 
 int main() {
-    // Use stdin for input (supports redirection like: ./test < input.wren)
-    FILE *file = fopen("example.wren", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return 1;
-    }
+    Symtable table;
+    symtable_init(&table);
+    symtable_print(&table);
 
-    Lexer *lexer = lexer_init();
-    if (lexer == NULL) {
-        fprintf(stderr, "Error initializing lexer.\n");
-        fclose(file);
-        return 1;
-    }
-    while (lexer->current_token->type != TOKEN_EOF) {
-        get_next_token(lexer, file);
+    printf("Вставка символов...\n");
+    SymbolData data1 = {KIND_VAR, TYPE_INT, true, NULL};
+    symtable_insert(&table, "var1", &data1);
+    SymbolData data2 = {KIND_FUNC, TYPE_INT, false, NULL};
+    symtable_insert(&table, "func1", &data2);
 
-        printf("Token Type: %s, Data: ",
-               token_type_to_string(lexer->current_token->type));
-        
-        print_token_data(lexer->current_token->data);
 
-        printf(", Line: %d\n", lexer->current_token->line);
+
+    symtable_print(&table);
+
+    printf("Удаление символа 'var1'...\n");
+    symtable_delete(&table, "var1");
+    symtable_print(&table);
+
+    printf("Проверка переполнения таблицы...\n");
+    for (int i = 0; i < 5; i++) {
+        char key[16];
+        snprintf(key, sizeof(key), "var%d", i);
+        SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
+        if (!symtable_insert(&table, key, &data)) {
+            printf("Ошибка вставки символа '%s'\n", key);
+        }
     }
-    // Don't close stdin
-    lexer_free(lexer);
-    if (fclose(file) != 0) { // обработка ошибки закрытия файла
-        fprintf(stderr, "Error closing file.\n");
-    }
+    symtable_print(&table);
+
+    printf("Проверка вставки существующего символа...\n");
+    SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
+    symtable_insert(&table, "func1", &data); // Перезапись существующего
+
+    symtable_print(&table);
+    symtable_free(&table);
     return 0;
 }
