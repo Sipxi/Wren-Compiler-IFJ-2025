@@ -1,14 +1,3 @@
-//
-/*
-
-/* sadmsdflkasjdkf jasljkdf hajlskdfhj lakshdf jkahdkjlf a*/
-
-*/               //
-// /////////////////////////////////////////////////
-/**/
-
-
-
-
-
-
+var popa = """adsa
+    d 
+    sa""""asd" abcd 
