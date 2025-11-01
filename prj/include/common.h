@@ -10,6 +10,11 @@
 
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
+
+/* ======================================*/
+/* ===== Структуры =====*/
+/* ======================================*/
 
 typedef struct {
   char *op;
@@ -20,8 +25,8 @@ typedef struct {
 
 typedef struct DLLElement {
 	void *data;
-	DLLElementPtr prev_element;
-	DLLElementPtr next_element;
+	struct DLLElement *prev_element;
+	struct DLLElement *next_element;
 } *DLLElementPtr;
 
 typedef struct{
@@ -31,6 +36,11 @@ typedef struct{
   int current_length;
 } DLList;
 
+
+// ======================================*/
+// ===== Публичные функции =====*/
+// ======================================*/
+
 /**
  * Создает указатель на структуру InstructionData для добавления в двусвязный список.
  * 
@@ -39,6 +49,9 @@ typedef struct{
  */
 void *Gen_InstructionData(InstructionData data);
 
+// ======================================*/
+// ===== Публичные функции для работы с DLL =====*/
+// ======================================*/
 /**
  * Provede inicializaci seznamu list před jeho prvním použitím (tzn. žádná
  * z následujících funkcí nebude volána nad neinicializovaným seznamem).
@@ -180,7 +193,7 @@ void DLL_InsertBefore(DLList* list, void *data);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
-void DLL_GetValue(DLList* list, void **data);
+void DLL_GetValue(DLList* list, void **dataPtr);
 
 /**
  * Přepíše obsah aktivního prvku seznamu list.

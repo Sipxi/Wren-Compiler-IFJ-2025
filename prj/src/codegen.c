@@ -4,6 +4,7 @@
 // Dmytro Kravchenko (273125)
 //
 #include "codegen.h"
+#include <stdlib.h>
 
 void convert_Instructions_To_TZB(DLList* instruction_list) {
     DLL_First(instruction_list);
@@ -11,10 +12,10 @@ void convert_Instructions_To_TZB(DLList* instruction_list) {
     // Проходим по всем элементам списка и преобразуем InstructionData в TZB_Data
     while (!DLL_IsActive(instruction_list)) {
         active_element = instruction_list->active_element;
-        TZB_Data *newData = (TZB_Data*) malloc (sizeof(TZB_Data));
+        TZB_Data *newData = (TZB_Data*) malloc(sizeof(TZB_Data));
         if (newData == NULL){
             DLL_Error();
-            return NULL;
+            return;
         }
         newData->data = *((InstructionData *) active_element->data);
         free(active_element->data);

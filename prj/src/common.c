@@ -14,7 +14,7 @@ void DLL_Error(void) {
 }
 
 void *Gen_InstructionData(InstructionData data){
-    InstructionData *newData = (InstructionData *) malloc (sizeof(InstructionData));
+    InstructionData *newData = (InstructionData *) malloc(sizeof(InstructionData));
     if (newData == NULL){
         DLL_Error();
         return NULL;
@@ -25,6 +25,33 @@ void *Gen_InstructionData(InstructionData data){
     newData->result = data.result;
     return newData;
 }
+
+
+/* ======================================*/
+/* ===== Реализация публичных функций для работы с DLL =====*/
+/* ======================================*/
+
+// ! ПРИМЕР РАБОТЫ С DLL ЧЕРЕЗ VOID POINTERS
+/*
+	DLList list;
+    int* input_1 = (int *)malloc(sizeof(int));
+    int* input_2 = (int *)malloc(sizeof(int));
+    *input_1 = 1;
+    *input_2 = 2; 
+    int* print_val;
+
+    DLL_Init(&list);
+    DLL_InsertFirst(&list, (void *)input_1);
+    DLL_First(&list);
+    DLL_InsertAfter(&list, (void *) input_2);
+    
+    DLL_DeleteLast(&list);
+    DLL_GetLast(&list, (void **)&print_val);
+
+    printf("Last value: %d\n", *print_val);
+
+    DLL_Dispose(&list); // Не нужно после освобождать input_1 и input_2
+*/
 
 void DLL_Init( DLList *list ) {
 	list->first_element = NULL;
