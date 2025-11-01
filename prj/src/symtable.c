@@ -23,7 +23,6 @@
  * Использует symtable_rehash для перераспределения записей
  *
  * @param table Указатель на таблицу символов для изменения размера.
- * @param new_capacity Новый размер таблицы символов.
  */
 static bool symtable_resize(Symtable* table);
 
@@ -134,7 +133,7 @@ size_t get_hash(const char* key, size_t capacity) {
 }
 
 TableEntry* symtable_lookup(Symtable* table, const char* key) {
-    size_t hash_index =
+	size_t hash_index =
         get_hash(key, table->capacity);  // Вычисляем хеш-индекс для ключа
     size_t original_index = hash_index;  // Сохраняем оригинальный индекс для
                                          // обнаружения полного обхода
