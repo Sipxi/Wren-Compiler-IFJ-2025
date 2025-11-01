@@ -26,9 +26,9 @@ int main() {
     symtable_print(&table);
 
     printf("Вставка символов...\n");
-    SymbolData data1 = {KIND_VAR, TYPE_INT, true, NULL};
+    SymbolData data1 = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
     symtable_insert(&table, "var1", &data1);
-    SymbolData data2 = {KIND_FUNC, TYPE_INT, false, NULL};
+    SymbolData data2 = {KIND_FUNC, TYPE_INT, false, NULL, true, -1};
     symtable_insert(&table, "func1", &data2);
 
 
@@ -43,7 +43,7 @@ int main() {
     for (int i = 0; i < 5; i++) {
         char key[16];
         snprintf(key, sizeof(key), "var%d", i);
-        SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
+        SymbolData data = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
         if (!symtable_insert(&table, key, &data)) {
             printf("Ошибка вставки символа '%s'\n", key);
         }
@@ -51,7 +51,7 @@ int main() {
     symtable_print(&table);
 
     printf("Проверка вставки существующего символа...\n");
-    SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
+    SymbolData data = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
     symtable_insert(&table, "func1", &data); // Перезапись существующего
 
     symtable_print(&table);
