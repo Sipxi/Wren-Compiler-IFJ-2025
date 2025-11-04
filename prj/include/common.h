@@ -61,7 +61,7 @@ void *Gen_InstructionData(InstructionData data);
  *
  * @param list Ukazatel na strukturu dvousměrně vázaného seznamu
  */
-void DLL_Init(DLList* list);
+void DLL_Init(DLList *list);
 
 /**
  * Zruší všechny prvky seznamu list a uvede seznam do stavu, v jakém se nacházel
@@ -70,7 +70,7 @@ void DLL_Init(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_Dispose(DLList* list);
+void DLL_Dispose(DLList *list);
 
 /**
  * Vloží nový prvek na začátek seznamu list.
@@ -80,7 +80,7 @@ void DLL_Dispose(DLList* list);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param data Hodnota k vložení na začátek seznamu
  */
-void DLL_InsertFirst(DLList* list, void *data);
+void DLL_InsertFirst(DLList *list, void *data);
 
 /**
  * Vloží nový prvek na konec seznamu list (symetrická operace k DLL_InsertFirst).
@@ -90,7 +90,7 @@ void DLL_InsertFirst(DLList* list, void *data);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param data Hodnota k vložení na konec seznamu
  */
-void DLL_InsertLast(DLList* list, void *data);
+void DLL_InsertLast(DLList *list, void *data);
 
 /**
  * Nastaví první prvek seznamu list jako aktivní.
@@ -99,7 +99,7 @@ void DLL_InsertLast(DLList* list, void *data);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_First(DLList* list);
+void DLL_First(DLList *list);
 
 /**
  * Nastaví poslední prvek seznamu list jako aktivní.
@@ -108,7 +108,7 @@ void DLL_First(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_Last(DLList* list);
+void DLL_Last(DLList *list);
 
 /**
  * Prostřednictvím parametru dataPtr vrátí hodnotu prvního prvku seznamu list.
@@ -117,7 +117,7 @@ void DLL_Last(DLList* list);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
-void DLL_GetFirst(DLList* list, void **data);
+void DLL_GetFirst(DLList *list, void **data);
 
 /**
  * Prostřednictvím parametru dataPtr vrátí hodnotu posledního prvku seznamu list.
@@ -126,7 +126,7 @@ void DLL_GetFirst(DLList* list, void **data);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
-void DLL_GetLast(DLList* list, void **data);
+void DLL_GetLast(DLList *list, void **data);
 
 /**
  * Zruší první prvek seznamu list.
@@ -135,7 +135,7 @@ void DLL_GetLast(DLList* list, void **data);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_DeleteFirst(DLList* list);
+void DLL_DeleteFirst(DLList *list);
 
 /**
  * Zruší poslední prvek seznamu list.
@@ -144,7 +144,7 @@ void DLL_DeleteFirst(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_DeleteLast(DLList* list);
+void DLL_DeleteLast(DLList *list);
 
 /**
  * Zruší prvek seznamu list za aktivním prvkem.
@@ -153,7 +153,7 @@ void DLL_DeleteLast(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_DeleteAfter(DLList* list);
+void DLL_DeleteAfter(DLList *list);
 
 /**
  * Zruší prvek před aktivním prvkem seznamu list .
@@ -162,7 +162,7 @@ void DLL_DeleteAfter(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_DeleteBefore(DLList* list);
+void DLL_DeleteBefore(DLList *list);
 
 /**
  * Vloží prvek za aktivní prvek seznamu list.
@@ -173,7 +173,7 @@ void DLL_DeleteBefore(DLList* list);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param data Hodnota k vložení do seznamu za právě aktivní prvek
  */
-void DLL_InsertAfter(DLList* list, void *data);
+void DLL_InsertAfter(DLList *list, void *data);
 
 /**
  * Vloží prvek před aktivní prvek seznamu list.
@@ -184,7 +184,7 @@ void DLL_InsertAfter(DLList* list, void *data);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param data Hodnota k vložení do seznamu před právě aktivní prvek
  */
-void DLL_InsertBefore(DLList* list, void *data);
+void DLL_InsertBefore(DLList *list, void *data);
 
 /**
  * Prostřednictvím parametru dataPtr vrátí hodnotu aktivního prvku seznamu list.
@@ -193,7 +193,7 @@ void DLL_InsertBefore(DLList* list, void *data);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
-void DLL_GetValue(DLList* list, void **dataPtr);
+void DLL_GetValue(DLList *list, void **dataPtr);
 
 /**
  * Přepíše obsah aktivního prvku seznamu list.
@@ -202,7 +202,7 @@ void DLL_GetValue(DLList* list, void **dataPtr);
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  * @param data Nová hodnota právě aktivního prvku
  */
-void DLL_SetValue(DLList* list, void *data);
+void DLL_SetValue(DLList *list, void *data);
 
 /**
  * Posune aktivitu na následující prvek seznamu list.
@@ -211,7 +211,7 @@ void DLL_SetValue(DLList* list, void *data);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_Next(DLList* list);
+void DLL_Next(DLList *list);
 
 /**
  * Posune aktivitu na předchozí prvek seznamu list.
@@ -220,7 +220,7 @@ void DLL_Next(DLList* list);
  *
  * @param list Ukazatel na inicializovanou strukturu dvousměrně vázaného seznamu
  */
-void DLL_Previous(DLList* list);
+void DLL_Previous(DLList *list);
 
 /**
  * Je-li seznam list aktivní, vrací nenulovou hodnotu, jinak vrací 0.
@@ -230,6 +230,6 @@ void DLL_Previous(DLList* list);
  *
  * @returns Nenulovou hodnotu v případě aktivity prvku seznamu, jinak nulu
  */
-bool DLL_IsActive(DLList* list);
+bool DLL_IsActive(DLList *list);
 
 #endif

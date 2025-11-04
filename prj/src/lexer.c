@@ -450,12 +450,9 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_IDENTIFIER,
                                  current_char);
                     break;
-                } else if (is_whitespace(current_char)) {
-                    change_state(file, lexer, &state, STATE_START,
-                                    current_char);
-                    lexer_consume_char(lexer, file);
+                } else if (is_whitespace(current_char)) 
                     break;
-                } else if (current_char == '_') {
+                else if (current_char == '_') {
                     characters_read++;
                     change_state(file, lexer, &state, STATE_ONE_UNDERSCORE,
                                  current_char);

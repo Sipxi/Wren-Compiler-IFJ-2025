@@ -53,14 +53,14 @@ void *Gen_InstructionData(InstructionData data){
     DLL_Dispose(&list); // Не нужно после освобождать input_1 и input_2
 */
 
-void DLL_Init( DLList *list ) {
+void DLL_Init(DLList *list){
 	list->first_element = NULL;
 	list->active_element = NULL;
 	list->last_element = NULL;
 	list->current_length = 0;
 }
 
-void DLL_Dispose( DLList *list ) {
+void DLL_Dispose(DLList *list){
 	DLLElementPtr tmp = list->first_element; // Pomocná proměnná pro průchod seznamem
 	DLLElementPtr next; // Pomocná proměnná pro uchování dalšího prvku
 	// Procházíme seznam a uvolňujeme jednotlivé prvky pokud nedojdeme na konec
@@ -71,13 +71,10 @@ void DLL_Dispose( DLList *list ) {
 		tmp = next;
 	}
 	// Inicializujeme seznam do prazdního stavu
-	list->first_element = NULL;
-	list->active_element = NULL;
-	list->last_element = NULL;
-	list->current_length = 0;
+	DLL_Init(list);
 }
 
-void DLL_InsertFirst( DLList *list, void *data ) {
+void DLL_InsertFirst(DLList *list, void *data){
 	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement));
 	if (newElement == NULL) {
 		DLL_Error();
@@ -97,7 +94,7 @@ void DLL_InsertFirst( DLList *list, void *data ) {
 	list->current_length++;
 }
 
-void DLL_InsertLast( DLList *list, void *data ) {
+void DLL_InsertLast(DLList *list, void *data){
 	DLLElementPtr newElement = (DLLElementPtr) malloc(sizeof(struct DLLElement));
 	if (newElement == NULL) {
 		DLL_Error();
@@ -116,29 +113,29 @@ void DLL_InsertLast( DLList *list, void *data ) {
 	list->current_length++;
 }
 
-void DLL_First( DLList *list ) {
+void DLL_First(DLList *list){
 	list->active_element = list->first_element;
 }
 
-void DLL_Last( DLList *list ) {
+void DLL_Last(DLList *list){
 	list->active_element = list->last_element;
 }
 
-void DLL_GetFirst( DLList *list, void **dataPtr ) {
+void DLL_GetFirst(DLList *list, void **dataPtr){
 	if (list->first_element != NULL)
 		*dataPtr = list->first_element->data;
 	else 
 		DLL_Error();
 }
 
-void DLL_GetLast( DLList *list, void **dataPtr ) {
+void DLL_GetLast(DLList *list, void **dataPtr){
 	if (list->last_element != NULL)
 		*dataPtr = list->last_element->data;
 	else 
 		DLL_Error();
 }
 
-void DLL_DeleteFirst( DLList *list ) {
+void DLL_DeleteFirst(DLList *list){
 	if (list->first_element == NULL) return; // Seznam je prázdný, nic neděláme
 	// Pokud byl první prvek aktivní, ztrácí se aktivita
 	if (list->active_element == list->first_element)
@@ -157,7 +154,7 @@ void DLL_DeleteFirst( DLList *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteLast( DLList *list ) {
+void DLL_DeleteLast(DLList *list){
 	if (list->last_element == NULL) return; // Seznam je prázdný, nic neděláme
 	// Pokud byl poslední prvek aktivní, ztrácí se aktivita
 	if (list->active_element == list->last_element)
@@ -176,7 +173,7 @@ void DLL_DeleteLast( DLList *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteAfter( DLList *list ) {
+void DLL_DeleteAfter(DLList *list){
 	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	// Pokud není seznam aktivní nebo je aktivní prvek poslední, nic neděláme
@@ -196,7 +193,7 @@ void DLL_DeleteAfter( DLList *list ) {
 	list->current_length--;
 }
 
-void DLL_DeleteBefore( DLList *list ) {
+void DLL_DeleteBefore(DLList *list){
 	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	if (active_element == NULL || active_element->prev_element == NULL)
@@ -215,7 +212,7 @@ void DLL_DeleteBefore( DLList *list ) {
 	list->current_length--;
 }
 
-void DLL_InsertAfter( DLList *list, void *data ) {
+void DLL_InsertAfter(DLList *list, void *data){
 	DLLElementPtr active_element= list->active_element; // Pomocná proměnná pro zkrácení zápisu
 
 	if (active_element == NULL) return;
@@ -239,7 +236,7 @@ void DLL_InsertAfter( DLList *list, void *data ) {
 	list->current_length++;
 }
 
-void DLL_InsertBefore( DLList *list, void *data ) {
+void DLL_InsertBefore(DLList *list, void *data){
 	DLLElementPtr active_element= list->active_element;
 	
 	if (active_element == NULL) return;
@@ -263,7 +260,7 @@ void DLL_InsertBefore( DLList *list, void *data ) {
 
 
 
-void DLL_GetValue( DLList *list, void **dataPtr ) {
+void DLL_GetValue(DLList *list, void **dataPtr){
 	if (list->active_element == NULL){
 		DLL_Error();
 		return;
@@ -271,21 +268,21 @@ void DLL_GetValue( DLList *list, void **dataPtr ) {
 	*dataPtr = list->active_element->data;
 }
 
-void DLL_SetValue( DLList *list, void *data ) {
+void DLL_SetValue(DLList *list, void *data){
 	if (list->active_element == NULL) return;
 	list->active_element->data = data;
 }
 
-void DLL_Next( DLList *list ) {
+void DLL_Next(DLList *list){
 	if (list->active_element == NULL) return;
 	list->active_element = list->active_element->next_element;
 }
 
-void DLL_Previous( DLList *list ) {
+void DLL_Previous(DLList *list){
 	if (list->active_element == NULL) return;
 	list->active_element = list->active_element->prev_element;
 }
 
-bool DLL_IsActive( DLList *list ) {
+bool DLL_IsActive(DLList *list){
 	return (list->active_element == NULL) ? false : true; 
 }
