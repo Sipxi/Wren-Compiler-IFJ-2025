@@ -10,32 +10,42 @@
 #include "common.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include <symtable.h>
+#include "tac.h"
 
-typedef struct {
-    bool is_live;
-    int next_use_line; // -1 = 'none'
-} LivenessInfo;
+#include <stdio.h>
 
-typedef struct {
-    // ----------------
-    // 3AK Код
-    // ----------------
-    InstructionData data;
+typedef enum {
+    GF,
+    LF,
+    TF,
+    INT,
+    FLOAT,
+    STRING,
+    BOOL,
+    NIL,
+} FrameType;
 
-    // ----------------
-    // TZB / Liveness (заполняется в 1-м проходе)
-    // ----------------
-    LivenessInfo info_arg1;
-    LivenessInfo info_arg2;
-    LivenessInfo info_result; // Статус 'result' до его перезаписи
 
-} TZB_Data;
 
-/**
- * Преобразует двусвязный список инструкций 3AK в двусвязный список инструкций TZB,
- * добавляя информацию о "жизни" (Liveness) для каждого операнда.
- * 
- * @param instruction_list указатель на двусвязный список инструкций 3AK
- */
-void convert_Instructions_To_TZB(DLList* instruction_list);
+void gen_init();
+// --- Функции управления фреймами ---
+void gen_create_frame();
+void gen_push_frame();
+void gen_pop_frame();
+void gen_param(Quadruple *instr);
+
+// --- Инструкции работы с данными (пример) ---
+void gen_operand(FrameType frame, Operand *op);
+void gen_defvar(FrameType frame, Operand *var);
+void gen_add(Operand *dest, Operand *src1, Operand *src2); // 3-адресная версия
+void gen_move(FrameType frame_dest, Operand *dest, FrameType frame_src, Operand *src);
+
+// --- Инструкции управления потоком (пример) ---
+void gen_return();
+void gen_call(char* label_name);
+void gen_label(char* label_name);
+void gen_jump(char* label_name);
+void gen_jumpifeq(char* label_name, Operand op1, Operand op2);
+
 #endif // CODEGEN_H

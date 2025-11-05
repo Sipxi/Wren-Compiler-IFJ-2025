@@ -27,9 +27,15 @@ void test_symtable() {
     symtable_print(&table);
 
     printf("Вставка символов...\n");
-    SymbolData data1 = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
+    Symtable local_table;
+    symtable_init(&local_table);
+    Symtable local_local_table;
+    symtable_init(&local_local_table);
+    SymbolData data_local = {KIND_FUNC, TYPE_INT, true, &local_local_table};
+    symtable_insert(&local_table, "local_var", &data_local);
+    SymbolData data1 = {KIND_VAR, TYPE_INT, true, &local_table};
     symtable_insert(&table, "var1", &data1);
-    SymbolData data2 = {KIND_FUNC, TYPE_INT, false, NULL, true, -1};
+    SymbolData data2 = {KIND_FUNC, TYPE_INT, false, NULL};
     symtable_insert(&table, "func1", &data2);
 
 
@@ -44,7 +50,7 @@ void test_symtable() {
     for (int i = 0; i < 5; i++) {
         char key[16];
         snprintf(key, sizeof(key), "var%d", i);
-        SymbolData data = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
+        SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
         if (!symtable_insert(&table, key, &data)) {
             printf("Ошибка вставки символа '%s'\n", key);
         }
@@ -52,7 +58,7 @@ void test_symtable() {
     symtable_print(&table);
 
     printf("Проверка вставки существующего символа...\n");
-    SymbolData data = {KIND_VAR, TYPE_INT, true, NULL, true, -1};
+    SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
     symtable_insert(&table, "func1", &data); // Перезапись существующего
 
     symtable_print(&table);
@@ -92,6 +98,8 @@ int test_lexer(){
     return 0;
 }
 int main() {
-    int restult = test_lexer();
-    return restult;
+    int result = 0;
+    test_symtable();
+    // int result = test_lexer();
+    return result;
 }

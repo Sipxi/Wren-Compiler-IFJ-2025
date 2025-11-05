@@ -108,6 +108,8 @@ bool symtable_init(Symtable* table) {
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
+    table->nesting_level = -1;
+    table->parent_scope = NULL;
     return true;
 }
 
@@ -214,6 +216,8 @@ void symtable_delete(Symtable* table, const char* key) {
         table->count--;                // Уменьшаем количество записей
         // Освобождение памяти для ключа и данных
         free(entry->key);
+        if (entry->data->local_table != NULL)
+            symtable_free(entry->data->local_table);
         free(entry->data);
         entry->key = NULL;
         entry->data = NULL;
@@ -225,6 +229,8 @@ void symtable_free(Symtable* table) {
         TableEntry* entry = &table->entries[i];
         if (entry->status == SLOT_OCCUPIED) {
             free(entry->key);   // Освобождаем память для ключа
+            if (entry->data->local_table != NULL)
+                symtable_free(entry->data->local_table); // Рекурсивно освобождаем локальную таблицу
             free(entry->data);  // Освобождаем память для данных символа
         }
     }
@@ -232,6 +238,8 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
+    table->nesting_level = -1;
+    table->parent_scope = NULL;
 }
 
 /* ===================================================*/

@@ -16,12 +16,6 @@
 /* ===== Структуры =====*/
 /* ======================================*/
 
-typedef struct {
-  char *op;
-  char *arg1;
-  char *arg2;
-  char *result;
-} InstructionData;
 
 typedef struct DLLElement {
 	void *data;
@@ -41,13 +35,6 @@ typedef struct{
 // ===== Публичные функции =====*/
 // ======================================*/
 
-/**
- * Создает указатель на структуру InstructionData для добавления в двусвязный список.
- * 
- * @param data данные для инициализации InstructionData 
- * @return указатель на созданную структуру InstructionData
- */
-void *Gen_InstructionData(InstructionData data);
 
 // ======================================*/
 // ===== Публичные функции для работы с DLL =====*/
