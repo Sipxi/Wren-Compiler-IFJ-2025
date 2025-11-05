@@ -35,16 +35,37 @@ int main() {
         fclose(file);
         return 1;
     }
-    while (lexer->current_token->type != TOKEN_EOF) {
-        get_next_token(lexer, file);
+    // while (lexer->current_token->type != TOKEN_EOF) {
+    //     get_next_token(lexer, file);
 
-        printf("Token Type: %s, Data: ",
-               token_type_to_string(lexer->current_token->type));
+    //     printf("Token Type: %s, Data: ",
+    //            token_type_to_string(lexer->current_token->type));
         
-        print_token_data(lexer->current_token->data);
+    //     print_token_data(lexer->current_token->data);
 
-        printf(", Line: %d\n", lexer->current_token->line);
-    }
+    //     printf(", Line: %d\n", lexer->current_token->line);
+    // }
+
+    peek_token(lexer, file);
+    printf("Token Type: %s, Data: ",
+                token_type_to_string(lexer->current_token->type));
+        
+    print_token_data(lexer->current_token->data);
+
+    printf(", Line: %d\n", lexer->current_token->line);
+
+    get_token(lexer, file);
+    printf("Token Type: %s, Data: ",
+                token_type_to_string(lexer->current_token->type));
+    print_token_data(lexer->current_token->data);
+    printf(", Line: %d\n", lexer->current_token->line);
+
+    get_next_token(lexer, file);
+    printf("Token Type: %s, Data: ",
+                token_type_to_string(lexer->current_token->type));
+    print_token_data(lexer->current_token->data);
+    printf(", Line: %d\n", lexer->current_token->line);
+
     // Don't close stdin
     lexer_free(lexer);
     if (fclose(file) != 0) { // обработка ошибки закрытия файла

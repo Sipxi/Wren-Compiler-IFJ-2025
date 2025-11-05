@@ -1,3 +1,1 @@
-var popa = """adsa
-    d 
-    sa""""asd" abcd 
+var popa = 9
