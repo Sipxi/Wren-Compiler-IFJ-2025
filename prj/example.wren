@@ -1,1 +1,1 @@
-var popa = 9
+import ifj25

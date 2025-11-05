@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "lexer.h"
+#include "parser.h"
 
 /*
 Игровая площадка для тестирования чего угодно
@@ -23,18 +24,18 @@ void print_token_data(const char *data) {
 
 int main() {
     // Use stdin for input (supports redirection like: ./test < input.wren)
-    FILE *file = fopen("example.wren", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return 1;
-    }
+    // FILE *file = fopen("example.wren", "r");
+    // if (file == NULL) {
+    //     fprintf(stderr, "Error opening file.\n");
+    //     return 1;
+    // }
 
-    Lexer *lexer = lexer_init();
-    if (lexer == NULL) {
-        fprintf(stderr, "Error initializing lexer.\n");
-        fclose(file);
-        return 1;
-    }
+    // Lexer *lexer = lexer_init();
+    // if (lexer == NULL) {
+    //     fprintf(stderr, "Error initializing lexer.\n");
+    //     fclose(file);
+    //     return 1;
+    // }
     // while (lexer->current_token->type != TOKEN_EOF) {
     //     get_next_token(lexer, file);
 
@@ -46,30 +47,33 @@ int main() {
     //     printf(", Line: %d\n", lexer->current_token->line);
     // }
 
-    peek_token(lexer, file);
-    printf("Token Type: %s, Data: ",
-                token_type_to_string(lexer->current_token->type));
+    // peek_token(lexer, file);
+    // printf("Token Type: %s, Data: ",
+    //             token_type_to_string(lexer->current_token->type));
         
-    print_token_data(lexer->current_token->data);
+    // print_token_data(lexer->current_token->data);
 
-    printf(", Line: %d\n", lexer->current_token->line);
+    // printf(", Line: %d\n", lexer->current_token->line);
 
-    get_token(lexer, file);
-    printf("Token Type: %s, Data: ",
-                token_type_to_string(lexer->current_token->type));
-    print_token_data(lexer->current_token->data);
-    printf(", Line: %d\n", lexer->current_token->line);
+    // get_token(lexer, file);
+    // printf("Token Type: %s, Data: ",
+    //             token_type_to_string(lexer->current_token->type));
+    // print_token_data(lexer->current_token->data);
+    // printf(", Line: %d\n", lexer->current_token->line);
 
-    get_next_token(lexer, file);
-    printf("Token Type: %s, Data: ",
-                token_type_to_string(lexer->current_token->type));
-    print_token_data(lexer->current_token->data);
-    printf(", Line: %d\n", lexer->current_token->line);
+    // get_next_token(lexer, file);
+    // printf("Token Type: %s, Data: ",
+    //             token_type_to_string(lexer->current_token->type));
+    // print_token_data(lexer->current_token->data);
+    // printf(", Line: %d\n", lexer->current_token->line);
 
-    // Don't close stdin
-    lexer_free(lexer);
-    if (fclose(file) != 0) { // обработка ошибки закрытия файла
-        fprintf(stderr, "Error closing file.\n");
-    }
+    parser_run();
+
+
+    // // Don't close stdin
+    // lexer_free(lexer);
+    // if (fclose(file) != 0) { // обработка ошибки закрытия файла
+    //     fprintf(stderr, "Error closing file.\n");
+    // }
     return 0;
 }
