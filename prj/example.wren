@@ -1,1 +1,4 @@
-import ifj25
+import "ifj25" for Ifj
+class Program {
+    
+}

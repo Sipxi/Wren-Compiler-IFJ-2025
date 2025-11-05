@@ -10,6 +10,6 @@ typedef struct {
 } Parser;
 
 void parser_run();
-void parser_prolog();
+void parser_prolog(Lexer *lexer, FILE *file);
 
 #endif // PARSER_H

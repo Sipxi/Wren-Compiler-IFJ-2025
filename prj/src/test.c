@@ -68,13 +68,14 @@ int main() {
     // print_token_data(lexer->current_token->data);
     // printf(", Line: %d\n", lexer->current_token->line);
 
-    parser_run();
-
-
+    
+    
     // // Don't close stdin
     // lexer_free(lexer);
     // if (fclose(file) != 0) { // обработка ошибки закрытия файла
     //     fprintf(stderr, "Error closing file.\n");
     // }
+    parser_run();
+    
     return 0;
 }
