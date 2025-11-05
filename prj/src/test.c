@@ -1,3 +1,4 @@
+#include "symtable.h"
 #include <stdio.h>
 #include "lexer.h"
 #include "parser.h"
