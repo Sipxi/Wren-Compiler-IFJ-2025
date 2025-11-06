@@ -3,12 +3,10 @@
  * Автор: Serhij Čepil (253038)
  */
 
-#ifndef TAC_H
-#define TAC_H
+#ifndef TAC_EXAMPLE
+#define TAC_EXAMPLE
 
 #include "symtable.h"
-#include "ast.h"
-#include "common.h"
 
 
 /* ======================================*/
@@ -126,14 +124,10 @@ typedef struct{
 /* ===== Прототипы функций =====*/
 /* ======================================*/
 
-void generate_tac(AstNode *ast_node, DLList *tac_list, Symtable *global_table);
+// DLList *generate_tac(AstNode *ast_node, Symtable *global_table);
 
-void free_tac(DLList *tac_list);
+// void free_tac(DLList *tac_list);
 
-/**
- * @brief Печатает содержимое списка 3AC в читаемом виде.
- * * @param tac_list Заполненный список инструкций.
- */
-void print_tac_list(DLList *tac_list);
+// Operand *tac_gen_recursive(AstNode *node, DLList *tac_list, Symtable *symtable);
 
 #endif // TAC_H

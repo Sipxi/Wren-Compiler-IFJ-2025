@@ -9,6 +9,7 @@
         "stdio.h": "c",
         "stdlib.h": "c",
         "symtable.h": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "codegen.h": "c"
     }
 }

@@ -274,7 +274,9 @@ static const char* kind_to_string(SymbolKind kind) {
  */
 static const char* type_to_string(DataType type) {
     switch (type) {
-        case TYPE_INT:    return "Integer";
+        case TYPE_NUM:    return "Number";
+        case TYPE_STR:    return "String";
+        case TYPE_NIL:    return "Nil";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
     return "UNKNOWN_TYPE";

@@ -12,7 +12,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include "error.h"
+#include "error_codes.h"
 
 /* ======================================*/
 /* ===== FSM (Finite State Machine) =====*/

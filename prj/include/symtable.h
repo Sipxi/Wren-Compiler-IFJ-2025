@@ -53,7 +53,9 @@
 
 // Типы данных
 typedef enum{
-    TYPE_INT,
+    TYPE_NUM,
+    TYPE_STR,
+    TYPE_NIL
 
     //TODO Добавить другие типы данных по мере необходимости
 } DataType;
@@ -94,6 +96,7 @@ typedef struct{
 
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
+
 
 // Запись в таблице символов
 typedef struct{
