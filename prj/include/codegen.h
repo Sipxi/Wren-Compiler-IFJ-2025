@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <symtable.h>
+#include <string.h>
 #include "tac.h"
 
 #include <stdio.h>

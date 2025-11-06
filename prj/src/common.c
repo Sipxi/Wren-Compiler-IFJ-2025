@@ -13,19 +13,6 @@ void DLL_Error(void) {
 	printf("*ERROR* The program has performed an illegal operation.\n");
 }
 
-// void *Gen_InstructionData(InstructionData data){
-//     InstructionData *newData = (InstructionData *) malloc(sizeof(InstructionData));
-//     if (newData == NULL){
-//         DLL_Error();
-//         return NULL;
-//     }
-//     newData->op = data.op;
-//     newData->arg1 = data.arg1;
-//     newData->arg2 = data.arg2;
-//     newData->result = data.result;
-//     return newData;
-// }
-
 
 /* ======================================*/
 /* ===== Реализация публичных функций для работы с DLL =====*/
