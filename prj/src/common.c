@@ -4,6 +4,31 @@
  */
 #include "common.h"
 #include <stdlib.h>
+#include <string.h>
+
+
+char* my_strdup(const char* s) {
+    if (s == NULL) {
+        return NULL;
+    }
+
+    // Получаем длину строки
+    size_t len = strlen(s);
+
+    // Выделяем память: (длина + 1) (для символа '\0')
+    char* new_s = (char*)malloc(len + 1);
+    if (new_s == NULL) {
+        // Ошибка: не удалось выделить память
+        return NULL;
+    }
+
+    // Копируем данные из старой строки в новую
+    memcpy(new_s, s, len + 1);  // memcpy быстрее, чем strcpy,
+                                // т.к. мы уже знаем длину
+
+    return new_s;
+}
+
 
 // Функция ошибки (как требуется в common.h)
 void DLL_Error() {

@@ -5,6 +5,7 @@
         "lexer.h": "c",
         "error.h": "c",
         "codegen.h": "c",
-        "symtable.h": "c"
+        "symtable.h": "c",
+        "stdlib.h": "c"
     }
 }
