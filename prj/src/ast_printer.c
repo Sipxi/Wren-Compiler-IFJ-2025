@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "ast_printer.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -57,7 +58,7 @@ static void ast_print_recursive(AstNode* node, int indent_level) {
 }
 
 
-static void ast_print_debug(AstNode* node)
+void ast_print_debug(AstNode* node)
 {
     printf("--- [ AST DEBUG PRINT ] ---\n");
     ast_print_recursive(node, 0);
