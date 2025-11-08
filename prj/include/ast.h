@@ -287,7 +287,6 @@ void ast_print_debug(AstNode* node);
 /* ===== 2. ПАРСЕР-ПОМОЩНИКИ (API) =====*/
 /* ======================================*/
 
-// (ИМЯ ИЗМЕНЕНО на ast_new_id_node)
 AstNode* ast_new_id_node(NodeType type, int line, const char* id);
 
 AstNode* ast_new_num_node(double value, int line);
@@ -296,6 +295,5 @@ AstNode* ast_new_string_node(const char* value, int line);
 
 AstNode* ast_new_null_node(int line);
 
-// (НОВОЕ ОБЪЯВЛЕНИЕ)
 AstNode* ast_new_bin_op(NodeType type, int line, AstNode* left, AstNode* right);
 #endif

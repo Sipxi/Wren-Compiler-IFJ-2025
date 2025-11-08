@@ -104,74 +104,109 @@ void ast_node_free_recursive(AstNode* node)
     free(node);
 }
 
-
-/* ======================================*/
-/* ===== 2. ПАРСЕР-ПОМОЩНИКИ (API) =====*/
-/* ======================================*/
+// --- Вспомогательные функции для AST (Парсер-API) ---
+// Эти функции "прячут" грязную работу по созданию
+// узлов с данными. Парсеру не нужно помнить,
+// когда вызывать my_strdup, а когда нет.
 
 /**
- * @brief Создает узел, хранящий 'identifier' (копируя его).
- * (ИМЯ ИЗМЕНЕНО на ast_new_id_node)
+ * @brief (Помощник) Создает узел, хранящий 'identifier' (копируя его).
+ *
+ * Используется для: NODE_ID, NODE_VAR_DEF, NODE_PARAM,
+ * NODE_FUNCTION_DEF, NODE_TYPE_NAME и т.д.
+ * @param type Тип узла.
+ * @param line Номер строки.
+ * @param id Строка (имя), которую нужно скопировать.
+ * @param entry Это поле здесь лишнее, убираем его.
+ * @return Указатель на новый узел.
  */
 AstNode* ast_new_id_node(NodeType type, int line, const char* id) {
+    // 1. Создаем "пустой" узел (calloc обнуляет data_type и table_entry)
     AstNode* node = ast_node_create(type, line);
-    if (node == NULL) return NULL;
-    
-    // my_strdup() должен быть определен вверху твоего ast.c
-    node->data.identifier = my_strdup(id); 
+    if (node == NULL) return NULL; // Ошибка в ast_node_create
+
+    // 2. Копируем строку
+    node->data.identifier = my_strdup(id);
     if (node->data.identifier == NULL && id != NULL) {
-        free(node);
-        return NULL; 
-    }
-    return node;
-}
-
-/**
- * @brief Создает узел-литерал (число).
- * (Убедись, что эта функция тоже есть в твоем ast.c)
- */
-AstNode* ast_new_num_node(double value, int line) {
-    AstNode* node = ast_node_create(NODE_LITERAL_NUM, line);
-    if (node == NULL) return NULL;
-    
-    node->data.literal_num = value; 
-    return node;
-}
-
-/**
- * @brief Создает узел-литерал (строка) (копируя ее).
- * (Убедись, что эта функция тоже есть в твоем ast.c)
- */
-AstNode* ast_new_string_node(const char* value, int line) {
-    AstNode* node = ast_node_create(NODE_LITERAL_STRING, line);
-    if (node == NULL) return NULL;
-    
-    node->data.literal_string = my_strdup(value); 
-    if (node->data.literal_string == NULL && value != NULL) {
-        free(node);
+        free(node); // Ошибка в my_strdup, очищаем узел
         return NULL;
     }
+    
+    // 3. Семантические поля (data_type, table_entry) остаются NULL.
     return node;
 }
 
 /**
- * @brief Создает узел-литерал (null).
- * (Убедись, что эта функция тоже есть в твоем ast.c)
+ * @brief (Помощник) Создает узел-литерал (число).
+ * @param value Числовое значение.
+ * @param line Номер строки.
+ * @return Указатель на новый узел.
+ */
+AstNode* ast_new_num_node(double value, int line) {
+    // 1. Создаем "пустой" узел
+    AstNode* node = ast_node_create(NODE_LITERAL_NUM, line);
+    if (node == NULL) return NULL;
+
+    // 2. Кладем *значение* (не указатель!) прямо в union.
+    node->data.literal_num = value;
+    
+    // 3. Семантические поля остаются NULL.
+    return node;
+}
+
+/**
+ * @brief (Помощник) Создает узел-литерал (строка) (копируя ее).
+ * @param value Строка, которую нужно скопировать.
+ * @param line Номер строки.
+ * @return Указатель на новый узел.
+ */
+AstNode* ast_new_string_node(const char* value, int line) {
+    // 1. Создаем "пустой" узел
+    AstNode* node = ast_node_create(NODE_LITERAL_STRING, line);
+    if (node == NULL) return NULL;
+
+    // 2. Копируем строку
+    node->data.literal_string = my_strdup(value);
+    if (node->data.literal_string == NULL && value != NULL) {
+        free(node); // Ошибка в my_strdup
+        return NULL;
+    }
+    
+    // 3. Семантические поля остаются NULL.
+    return node;
+}
+
+/**
+ * @brief (Помощник) Создает узел-литерал (null).
+ * @param line Номер строки.
+ * @return Указатель на новый узел.
  */
 AstNode* ast_new_null_node(int line) {
+    // 1. Создаем "пустой" узел
     AstNode* node = ast_node_create(NODE_LITERAL_NULL, line);
+    
+    // 2. Семантические поля остаются NULL.
     return node;
 }
 
+
 /**
- * @brief (НОВАЯ ФУНКЦИЯ) Создает узел бинарной операции.
- * Это "ярлык" для 'create' + 2x 'add_child'.
+ * @brief (Помощник) Создает бинарную операцию (ярлык).
+ * @param type Тип узла (NODE_OP_PLUS, NODE_OP_GT и т.д.).
+ * @param line Номер строки.
+ * @param left Левый дочерний узел.
+ * @param right Правый дочерний узел.
+ * @return Указатель на новый узел.
  */
 AstNode* ast_new_bin_op(NodeType type, int line, AstNode* left, AstNode* right) {
+    // 1. Создаем узел-оператор
     AstNode* node = ast_node_create(type, line);
     if (node == NULL) return NULL;
-    
+
+    // 2. Добавляем левого и правого ребенка
     ast_node_add_child(node, left);
     ast_node_add_child(node, right);
+
+    // 3. Семантические поля остаются NULL.
     return node;
 }
