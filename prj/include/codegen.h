@@ -34,7 +34,7 @@ void gen_init();
 void gen_create_frame();
 void gen_push_frame();
 void gen_pop_frame();
-void gen_param(Quadruple *instr);
+void gen_param(TacInstruction *instr);
 
 // --- Инструкции работы с данными (пример) ---
 void gen_operand(FrameType frame, Operand *op);

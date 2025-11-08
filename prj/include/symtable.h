@@ -93,7 +93,7 @@ typedef struct{
     bool is_defined; // Флаг, указывающий, определен ли символ (для функций)
 
     struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
-
+    struct Symtable *current_table; // Указатель на таблицу символов, в которой был объявлен символ
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
 
@@ -126,7 +126,7 @@ typedef struct Symtable{
  * 
  * @return true если инициализация успешна, false в случае ошибки выделения памяти.
  */
-bool symtable_init(Symtable *table);
+bool symtable_init(Symtable *table, int nesting_level, Symtable* parent_scope);
 
 /**
  * Вычисляет хеш-значение для заданного ключа.

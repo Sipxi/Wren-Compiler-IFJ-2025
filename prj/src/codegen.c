@@ -44,7 +44,18 @@ void gen_return(){
     gen_pop_frame();
 }
 
-void gen_operand(FrameType frame, Operand *op){
+void gen_operand(Operand *op){
+    FrameType frame;
+    if (op->type == OPERAND_TYPE_SYMBOL) {
+        if (op->data.symbol_entry->data->is_defined)
+            if (op->data.symbol_entry->data->local_table->nesting_level == 0)
+            frame = GF;
+        else
+            frame = LF;
+    } else {
+        // Обработка других типов операндов по мере необходимости
+        return;
+    }
     switch (frame){
     case TF:
         fprintf(stdout, "TF@");
@@ -73,7 +84,7 @@ void gen_operand(FrameType frame, Operand *op){
     default:
         break;
     }
-    fprintf(stdout, "%s", op->value.entry->key);
+    fprintf(stdout, "%s", op->data.symbol_entry->key);
 
 }
 
@@ -83,36 +94,36 @@ void gen_defvar(FrameType frame, Operand *var){
     fprintf(stdout, "\n");
 }
 
-void gen_move(FrameType frame_dest, Operand *dest,
-    FrameType frame_src, Operand *src){
+void gen_move(Operand *dest, Operand *src){
     fprintf(stdout, "MOVE ");
-    gen_operand(frame_dest, dest);
+    gen_operand(dest->frame, dest);
     fprintf(stdout, ", ");
-    gen_operand(frame_src, src);
+    gen_operand(src->frame, src);
     fprintf(stdout, "\n");
 
 }
 
-// void gen_param(Quadruple *instr){
-//     gen_create_frame();
-//     while (instr->op != OP_PARAM) {
-//         gen_defvar(instr->arg1);
-//         gen_move(TF, instr->arg1, LF, instr->arg2);
-        
-//     }
-// }
+void gen_param(TacInstruction *instr){
+    gen_create_frame();
+    while (instr->operation_code != OP_PARAM) {
+        gen_defvar(TF, instr->arg1);
+        gen_move(instr->arg1, instr->arg2);
+        DLL_Next(instr);
+    }
+    }
+}
 
-int generate_code(InstructionList *instructions, Symtable *table) {
+int generate_code(DLList *instructions, Symtable *table) {
     gen_init();
     DLL_First(instructions);
     while (instructions->active_element != NULL) {
-        Quadruple *instr = (Quadruple *)instructions->active_element->data;
-        switch (instr->op) {
+        TacInstruction *instr = (TacInstruction *)instructions->active_element->data;
+        switch (instr->operation_code) {
         case OP_LABEL:
-            gen_label(instr->result->value.label_name);
+            gen_label(instr->result->data.label_name);
             break;
         case OP_JUMP:
-            gen_jump(instr->result->value.label_name);
+            gen_jump(instr->result->data.label_name);
             break;
         case OP_RETURN:
             gen_return();

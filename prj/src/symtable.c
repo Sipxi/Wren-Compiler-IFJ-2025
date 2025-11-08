@@ -101,15 +101,15 @@ static bool symtable_resize(Symtable* table) {
 /* ===== Реализация публичных функций =====*/
 /* ======================================*/
 
-bool symtable_init(Symtable* table) {
+bool symtable_init(Symtable* table, int nesting_level, Symtable *parent_scope) {
     table->entries = calloc(INITIAL_CAPACITY, sizeof(TableEntry));
     if (table->entries == NULL) {
         return false;  // Ошибка выделения памяти
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
-    table->nesting_level = -1;
-    table->parent_scope = NULL;
+    table->nesting_level = nesting_level;
+    table->parent_scope = parent_scope;
     return true;
 }
 
@@ -204,6 +204,7 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     }
     memcpy(entry->data, data, sizeof(SymbolData));  // Копируем данные
     entry->status = SLOT_OCCUPIED;  // Обновляем статус слота
+    entry->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
     table->count++;                 // Увеличиваем количество записей
 
     return true;
@@ -238,7 +239,6 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
-    table->nesting_level = -1;
     table->parent_scope = NULL;
 }
 
