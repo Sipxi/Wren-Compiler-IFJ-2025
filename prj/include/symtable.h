@@ -53,7 +53,9 @@
 
 // Типы данных
 typedef enum{
-    TYPE_INT,
+    TYPE_NUM,
+    TYPE_STR,
+    TYPE_NIL
 
     //TODO Добавить другие типы данных по мере необходимости
 } DataType;
@@ -94,6 +96,7 @@ typedef struct{
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
 
+
 // Запись в таблице символов
 typedef struct{
     char *key;              // Ключ символа (имя)
@@ -104,7 +107,6 @@ typedef struct{
 // Таблица символов
 typedef struct Symtable{
     TableEntry* entries;   // Массив записей таблицы символов
-    //? Нужен ли size_t или int для размеров?
     size_t count;           // Текущее количество записей в таблице
     size_t capacity;       // Вместимость таблицы, т.е. максимальное количество записей
 } Symtable;

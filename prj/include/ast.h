@@ -11,6 +11,10 @@
 
 #include "symtable.h"
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> sipxi/tac
 typedef enum {
     // * --- 1. Структурные Узлы (Program structure) ---
     /** * Корень всего дерева.
@@ -177,8 +181,13 @@ typedef struct AstNode {
     int line_number; // Номер строки для сообщений об ошибках
 
     //* --- 2. Структура Дерева (Заполняется в Pass 1) ---
+<<<<<<< HEAD
     AstNode* child;
     AstNode* sibling;
+=======
+    struct AstNode* child;
+    struct AstNode* sibling;
+>>>>>>> sipxi/tac
 
     //* --- 3. Данные Узла (Заполняется в Pass 1) ---
     // Данные, специфичные для узла (в основном для листьев)
@@ -247,7 +256,11 @@ typedef struct AstNode {
 /**
  * @brief Создает новый узел AST.
  * Данные (union) и семантические поля инициализируются в NULL/0.
+<<<<<<< HEAD
  * @param type Тип узла (NodeTypgit coe).
+=======
+ * @param type Тип узла (NodeType).
+>>>>>>> sipxi/tac
  * @param line_number Номер строки для отладки.
  * @return Указатель на новый узел.
  */
