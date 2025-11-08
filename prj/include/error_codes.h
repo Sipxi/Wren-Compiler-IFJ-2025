@@ -1,6 +1,16 @@
 #ifndef ERROR_CODES_H
 #define ERROR_CODES_H
 
+/*===== ANSI Коды для цветного вывода в терминал =====*/
+// Можно использовать для "красивого" вывода ошибок
+//? Оставить или убрать из финальной версии?
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+#define ANSI_STYLE_BOLD    "\x1b[1m"
+#define ANSI_STYLE_DIM     "\x1b[2m"
+
+
 /*===== Коды ошибок =====*/
 typedef enum {
     LEXER_ERROR = 1,
