@@ -38,8 +38,10 @@ typedef enum{
     OP_MULTIPLY, // Умножение например: MULTIPLY arg1 arg2
     OP_DIVIDE, // Деление например: DIVIDE arg1 arg2
 
+    
     /* Операции конкатенации строк */
     OP_CONCAT, // Конкатенация строк например: CONCAT arg1 arg2
+    OP_MULTIPLY_STRING, // Умножение строки например: MULTIPLY_STRING arg1 arg2
     
     /* Операции сравнения */
     OP_LESS, // Меньше например: OP_LESS arg1 arg2

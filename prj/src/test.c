@@ -105,16 +105,16 @@ int main() {
     // 2. Создаем AST и заполняем Symtable
     AstNode *ast_root = create_test_ast(&global_table);
 
-    // printf("\n--- Symbol Table (Simulated Pass 2) ---\n");
+    printf("\n--- Symbol Table (Simulated Pass 2) ---\n");
     symtable_print(&global_table);  // (Если у тебя есть эта функция)
 
-    // // 3. === ЗАПУСКАЕМ ТВОЙ ГЕНЕРАТОР ===
-    // printf("\n2. Calling generate_tac()...\n");
-    // generate_tac(ast_root, &tac_list, &global_table);
-    // printf("   ...generate_tac() finished.\n");
+    // 3. === ЗАПУСКАЕМ ТВОЙ ГЕНЕРАТОР ===
+    printf("\n2. Calling generate_tac()...\n");
+    generate_tac(ast_root, &tac_list, &global_table);
+    printf("   ...generate_tac() finished.\n");
 
-    // // 4. Печатаем результат
-    // print_tac_list(&tac_list);
+    // 4. Печатаем результат
+    print_tac_list(&tac_list);
 
     // 5. Очистка
     printf("\n3. Cleaning up resources...\n");
