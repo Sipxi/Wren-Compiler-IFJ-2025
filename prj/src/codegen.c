@@ -20,18 +20,16 @@ void gen_create_frame(){
 void gen_pop_frame(){
     fprintf(stdout, "POPFRAME\n");
 }
-
-void gen_label(char* label_name){
-    char *prefix = "fun$";
+void gen_label(char* label_name) { 
+    fprintf(stdout, "$%s:\n", label_name);
+}
+void gen_function(char* label_name){
     if (strcmp(label_name, "main") == 0) {
         fprintf(stdout, "$$main:\n");
         gen_create_frame();
-        gen_push_frame();
-    } else if (strncmp(label_name, prefix, strlen(prefix)) == 0) {
-        fprintf(stdout, "$%s:\n", label_name);
-        gen_push_frame();
-    } else 
-        fprintf(stdout, "$%s:\n", label_name);
+    } else
+        gen_label(label_name);
+    gen_push_frame();
 }
 void gen_jump(char* label_name){
     fprintf(stdout, "JUMP $%s\n", label_name);
@@ -44,6 +42,10 @@ void gen_return(){
     gen_pop_frame();
 }
 
+void gen_jumpifeq(char* label_name, Operand *op1, Operand *op2){
+    fprintf(stdout, "JUMPIFEQ $%s GF@tmp bool@false", label_name);
+    fprintf(stdout, "\n");
+}
 void gen_operand(Operand *op){
     FrameType frame;
     if (op->type == OPERAND_TYPE_SYMBOL) {
@@ -119,11 +121,18 @@ int generate_code(DLList *instructions, Symtable *table) {
     while (instructions->active_element != NULL) {
         TacInstruction *instr = (TacInstruction *)instructions->active_element->data;
         switch (instr->operation_code) {
+        case OP_JUMP:
+            gen_jump(instr->result->data.label_name);
+            break;
+        case OP_JUMP_IF_FALSE:
+            gen_jumpifeq(instr->arg1->data.label_name);
+            break;
         case OP_LABEL:
             gen_label(instr->result->data.label_name);
             break;
-        case OP_JUMP:
-            gen_jump(instr->result->data.label_name);
+        case OP_FUNCTION_BEGIN:
+            // Обработка начала функции
+            gen_function();
             break;
         case OP_RETURN:
             gen_return();

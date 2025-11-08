@@ -2,6 +2,7 @@ import "ifj25" for Ifj
 class Program {
     // funkce bez parametru
     static getAnswer() {
+        __a = 10;
         return 42  // prikaz navratu z funkce
     }
 
