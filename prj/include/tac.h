@@ -56,6 +56,7 @@ typedef enum{
 
     /* Присваивание */
     OP_ASSIGN, // Присваивание например: ASSIGN arg1 result
+    OP_DECLARE, // Объявление переменной например: DECLARE result
 
     /* Операции работы с функциями */
     OP_CALL, // Вызов функции например: CALL arg1 (где arg1 - имя функции)
