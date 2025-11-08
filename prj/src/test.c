@@ -197,7 +197,7 @@ void test_3AC() {
     // 2. Создаем AST и заполняем Symtable
     AstNode *ast_root = create_test_ast(&global_table);
 
-    // printf("\n--- Symbol Table (Simulated Pass 2) ---\n");
+    printf("\n--- Symbol Table (Simulated Pass 2) ---\n");
     symtable_print(&global_table);  // (Если у тебя есть эта функция)
 
     // 3. === ЗАПУСКАЕМ ТВОЙ ГЕНЕРАТОР ===

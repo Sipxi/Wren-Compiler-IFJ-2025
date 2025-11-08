@@ -39,6 +39,7 @@ const char* op_code_to_string[] = {
     [OP_FUNCTION_END] = "FUNC_END",
     [OP_CONCAT] = "CONCAT",
     [OP_IS] = "IS",
+    [OP_DECLARE] = "DECLARE",
 };
 
 /*=======================================*/

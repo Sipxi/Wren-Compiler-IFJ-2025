@@ -566,16 +566,16 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
             // Это будет 'result' (LHS - левая часть)
             Operand *lhs_op = create_symbol_operand(var_entry);
 
-            // Создаем операнд-константу для 'nil'
-            TacConstant null_const;
-            null_const.type = TYPE_NIL;
-            // (в .value ничего писать не надо, т.к. это nil)
+            // // Создаем операнд-константу для 'nil'
+            // TacConstant null_const;
+            // null_const.type = TYPE_NIL;
+            // // (в .value ничего писать не надо, т.к. это nil)
 
-            //    Это будет 'arg1' (RHS - правая часть)
-            Operand *rhs_op = create_constant_operand(null_const);
-            // OP_ASSIGN, result=id, arg1=nil, arg2=NULL
+            // //    Это будет 'arg1' (RHS - правая часть)
+            // Operand *rhs_op = create_constant_operand(null_const);
+            // // OP_ASSIGN, result=id, arg1=nil, arg2=NULL
 
-            generate_instruction(tac_list, OP_ASSIGN, lhs_op, rhs_op, NULL);
+            generate_instruction(tac_list, OP_DECLARE, lhs_op, NULL, NULL);
 
             return NULL;  // 'var' - это стейтмент, он не возвращает значения
         }
@@ -716,11 +716,40 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
             return result_op;
         }
 
+        
+        case NODE_OP_MUL:{
+            // Получаем детей
+            AstNode *left_node = node->child;
+            AstNode *right_node = node->child->sibling;
+
+            // Рекурсивно генерируем код
+            Operand *left_op = tac_gen_recursive(left_node, tac_list, symtable);
+            Operand *right_op =
+                tac_gen_recursive(right_node, tac_list, symtable);
+            // Создаем временный операнд для результата
+            Operand *result_op = create_temp_operand();
+
+            // Определяем код операции
+            TacOperationCode op_code;
+            if (node->data_type == TYPE_STR) {
+                op_code = OP_MULTIPLY_STRING;
+
+            } else {
+                op_code = OP_MULTIPLY;
+            }
+
+            // Генерируем инструкцию TAC
+            generate_instruction(tac_list, op_code, result_op, left_op,
+                                 right_op);
+
+            // Возвращаем результат ($tN)
+            return result_op;
+        }
+
         /* ===== Обработка узлов операций ===== */
         // Эти узлы возвращают результат выражения в виде временного операнда
         // Так как они все похожи, мы обрабатываем их в одном кейсе
         case NODE_OP_MINUS:
-        case NODE_OP_MUL:
         case NODE_OP_DIV:
         case NODE_OP_LT:
         case NODE_OP_GT:
