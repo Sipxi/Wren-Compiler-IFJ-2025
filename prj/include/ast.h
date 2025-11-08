@@ -247,7 +247,7 @@ typedef struct AstNode {
 /**
  * @brief Создает новый узел AST.
  * Данные (union) и семантические поля инициализируются в NULL/0.
- * @param type Тип узла (NodeType).
+ * @param type Тип узла (NodeTypgit coe).
  * @param line_number Номер строки для отладки.
  * @return Указатель на новый узел.
  */
