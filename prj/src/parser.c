@@ -2,7 +2,169 @@
 #include <stdio.h>
 #include <string.h>
 
+void operations_function(Lexer *lexer, FILE *file) {
+    switch (peek_token(lexer, file).type) {
+    case TOKEN_IDENTIFIER:
+        get_token(lexer, file); // consume identifier
+        if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
+            get_token(lexer, file); // consume '='
+            if (peek_token(lexer, file).type == TOKEN_INT ||
+                peek_token(lexer, file).type == TOKEN_FLOAT ||
+                peek_token(lexer, file).type == TOKEN_STRING) {
+                get_token(lexer, file); // consume value
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after assignment.\n");
+                    return;
+                }
+                get_token(lexer, file); // consume EOL
+            } else {
+                printf("Expected a value after '=' in assignment.\n");
+                return;
+            }
+        } else {
+            printf("Expected '=' after identifier in assignment.\n");
+            return;
+        }
+        break;
+    case TOKEN_KEYWORD:
+        if (strcmp(lexer->current_token->data, "return") == 0) {
+            get_token(lexer, file); // consume 'return' keyword
+            //! гроб
+            break;
+        }
+        if (strcmp(lexer->current_token->data, "if") == 0) {
+            get_token(lexer, file); // consume 'if' keyword
+            if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
+                printf("Expected '(' after 'if' keyword.\n");
+                return;
+            }
+            get_token(lexer, file); // consume '('
+            //! Здесь можно добавить обработку условия if
+            if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+                printf("Expected ')' after 'if' condition.\n");
+                return;
+            }
+            get_token(lexer, file); // consume ')'
+            function_block(lexer, file);
+            if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
+                strcmp(lexer->current_token->data, "else") != 0) {
+                printf("Expected 'else' keyword after 'if' block.\n");
+            } else {
+                get_token(lexer, file); // consume 'else' keyword
+                function_block(lexer, file);
+            }
+            break;
+        }
+            
+    case TOKEN_EOL:
+        get_token(lexer, file); // consume EOL
+        break;
+    case TOKEN_CLOSE_BRACE:
+        return; // end of function body
+    default:
+        return;
+    }
+}
 
+void function_block(Lexer *lexer, FILE *file) {
+    if (peek_token(lexer, file).type != TOKEN_OPEN_BRACE) {
+        printf("Expected '{' to open function body.\n");
+        return;
+    }
+    get_token(lexer, file); // consume '{'
+
+    if (peek_token(lexer, file).type != TOKEN_EOL) {
+        printf("Expected end of line after '{' in function body.\n");
+        return;
+    }
+    get_token(lexer, file); // consume EOL
+
+    // Здесь можно добавить обработку тела функции
+    operations_function(lexer, file);
+    if (peek_token(lexer, file).type == TOKEN_EOL) {
+        get_token(lexer, file); // consume EOL
+    }
+    
+    if (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
+        printf("Expected '}' to close function body.\n");
+        return;
+    }
+    get_token(lexer, file); // consume '}'
+}
+
+void parameters_function(Lexer *lexer, FILE *file) {
+    // Здесь можно добавить обработку параметров функции
+    if (peek_token(lexer, file).type == TOKEN_IDENTIFIER) {
+        get_token(lexer, file); // consume parameter identifier
+        while (peek_token(lexer, file).type == TOKEN_COMMA) {
+            get_token(lexer, file); // consume ','
+            if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
+                printf("Expected parameter identifier after ','.\n");
+                return;
+            }
+            get_token(lexer, file); // consume parameter identifier
+        }
+    }
+}
+
+void tail_function(Lexer *lexer, FILE *file) {
+    if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
+        get_token(lexer, file); // consume '('
+        // Здесь можно добавить обработку параметров функции
+        parameters_function(lexer, file);
+
+        if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+            printf("Expected ')' after function parameters.\n");
+            return;
+        }
+        get_token(lexer, file); // consume ')'
+    }
+
+    function_block(lexer, file);
+}
+
+void name_function(Lexer *lexer, FILE *file) {
+    get_token(lexer, file); // consume 'static' keyword
+    if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
+        printf("Expected function name identifier after 'function' keyword.\n");
+        return;
+    }
+    get_token(lexer, file); // consume function name
+}
+
+void parser_function_definition(Lexer *lexer, FILE *file) {
+    name_function(lexer, file);
+
+    tail_function(lexer, file);
+
+    if (peek_token(lexer, file).type != TOKEN_EOL) {
+        printf("Expected end of line after function definition.\n");
+        return;
+    }
+}
+
+void parser_function_list(Lexer *lexer, FILE *file) {
+    switch (peek_token(lexer, file).type) {
+    case TOKEN_CLOSE_BRACE:
+        return; // Базовый случай: конец списка функций
+    case TOKEN_KEYWORD:
+        if (strcmp(lexer->current_token->data, "static") == 0) {
+            // Обработка статической функции
+            parser_function_definition(lexer, file);
+            return;
+        }
+        printf("Expected static or }\n");
+        return;
+    case TOKEN_EOL:
+        get_token(lexer, file); // пропустить пустые строки
+        parser_function_list(lexer, file);
+        break;
+    default:
+        printf("Unexpected token in function list: %s\n",
+               lexer->current_token->data);
+        return;
+    }
+}
 
 
 void parser_prolog(Lexer *lexer, FILE *file) {
@@ -67,11 +229,11 @@ void parser_kostra(Lexer *lexer, FILE *file) {
     get_token(lexer, file);
 
 
-    // если следующий токен не закрывающая фигурная скобка, то будет список с функциями
+    // Парсим список функций внутри класса
 
 
     if (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
-        printf("Expected '}' to close class body.\n");
+        parser_function_list(lexer, file);
     }
     get_token(lexer, file);
 }
