@@ -1,4 +1,4 @@
-/** @file ast.c
+/** @file ast_example.c
  * @brief Пример использования AST
  *
  * ! Этот файл был полностью написан GEMINI,
