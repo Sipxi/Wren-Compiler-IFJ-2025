@@ -21,7 +21,7 @@
 #ifndef TAC_PRINTER_H
 #define TAC_PRINTER_H
 
-#include "common.h" 
+#include "dll.h" 
 
 /**
  * @brief Печатает содержимое списка 3AC в читаемом виде.

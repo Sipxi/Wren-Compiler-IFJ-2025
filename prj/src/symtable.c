@@ -3,6 +3,7 @@
  * Автор: Serhij Čepil (253038)
  */
 #include "symtable.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,28 +39,10 @@ static bool check_load_factor(Symtable* table) {
            LOAD_FACTOR_THRESHOLD;
 }
 
-/**
- * Копирует строку, выделяя для неё память.
- *
- * Сделано из-за того, что С99 не гарантирует наличие strdup в string.h
- *? Нужно ли это?
- *
- * @param s Исходная строка для копирования.
- * @return Указатель на новую строку-копию, или NULL в случае ошибки
- */
-static char* my_strdup(const char* s);
 
 /* ======================================*/
 /* ===== Реализация приватных функций =====*/
 /* ======================================*/
-
-static char* my_strdup(const char* s) {
-    size_t len = strlen(s);
-    char* copy = malloc(len + 1);
-    if (!copy) return NULL;
-    memcpy(copy, s, len + 1);  // +1 для нулевого терминатора
-    return copy;
-}
 
 static void symtable_insert_rehash(Symtable* table, TableEntry* entry) {
     size_t hash_index = get_hash(entry->key, table->capacity);
@@ -191,7 +174,7 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     }
 
     // Вставляем новую запись
-    entry->key = my_strdup(key);  // Копируем ключ
+    entry->key = strdup_c99(key);  // Копируем ключ
     if (entry->key == NULL) {
         return false;  // Ошибка выделения памяти для ключа
     }
@@ -269,6 +252,7 @@ static const char* type_to_string(DataType type) {
         case TYPE_NUM:    return "Number";
         case TYPE_STR:    return "String";
         case TYPE_NIL:    return "Nil";
+        case TYPE_FLOAT:  return "Float";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
     return "UNKNOWN_TYPE";

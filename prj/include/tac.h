@@ -11,7 +11,7 @@
 
 #include "symtable.h"
 #include "ast.h"
-#include "common.h"
+#include "dll.h"
 #include "error_codes.h"
 
 

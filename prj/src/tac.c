@@ -16,6 +16,7 @@
  */
 
 #include "tac.h"
+#include "utils.h"
 
 #include <string.h>
 /* ======================================*/
@@ -181,7 +182,7 @@ static Operand *create_constant_operand(TacConstant constant) {
         // constant.value.str_value - это указатель на строку в AST.
         // Мы не можем его просто присвоить, т.к. AST будет
         // очищен и указатель станет "висячим".
-        op->data.constant.value.str_value = my_strdup(constant.value.str_value);
+        op->data.constant.value.str_value = strdup_c99(constant.value.str_value);
 
         if (op->data.constant.value.str_value == NULL) {
             // Ошибка памяти при копировании строки
@@ -241,9 +242,9 @@ static Operand *create_label_operand(const char *label_name) {
     op->data.label_name = malloc(strlen(label_name) + 1);
     if (!op->data.label_name) {
         raise_tac_error("Memory allocation failed for label operand", -1,
-                        INTERNAL_ERROR);
-        return NULL;
-    }
+            INTERNAL_ERROR);
+            return NULL;
+        }
     // Копируем строку
     strcpy(op->data.label_name, label_name);
     return op;
@@ -277,7 +278,7 @@ static char *create_unique_label(const char *prefix) {
     // strdup() = это malloc() + strcpy()
     // Мы должны вернуть строку из кучи, т.к. 'buffer' умрет
     // сразу после выхода из этой функции.
-    return my_strdup(buffer);
+    return strdup_c99(buffer);
 }
 
 static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,

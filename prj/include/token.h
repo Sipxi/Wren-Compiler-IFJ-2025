@@ -79,4 +79,4 @@ void token_free(Token *token);
  */
 char *token_type_to_string(TokenType type);
 
-#endif
+#endif // TOKEN_H

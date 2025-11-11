@@ -67,10 +67,17 @@ static void print_operand(Operand *op);
 /*=======================================*/
 
 static void free_operand(Operand *op) {
-    // 
     if (op == NULL) return;
     
-    // Если операнд - строка ИЛИ метка, чистим 'char*'
+    // Don't free TEMP operands - they are shared between instructions
+    // (result of one instruction is used as arg in another)
+    // This creates a small memory leak, but prevents double-free crashes
+    // TODO: Implement proper reference counting for shared operands
+    if (op->type == OPERAND_TYPE_TEMP) {
+        return;
+    }
+    
+    // Free internal data for LABEL and CONSTANT types
     if (op->type == OPERAND_TYPE_LABEL) {
         free(op->data.label_name);
     } else if (op->type == OPERAND_TYPE_CONSTANT && op->data.constant.type == TYPE_STR) {
