@@ -1,8 +1,10 @@
+// @file dll.c
+//
 // Реализация структур и функций, которые нужные нескольким модулям
 //
-// Авторы: 
-// Serhij Čepil (253038)
-// Dmytro Kravchenko (273125)
+// Author: 
+//      Serhij Čepil (253038)
+//      Dmytro Kravchenko (273125)
 //! Допишите ваши имена и номера
 
 #include "dll.h"

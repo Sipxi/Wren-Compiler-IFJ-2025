@@ -1,7 +1,7 @@
 /**
- * @file tac_printer.c
+ * @file printer.c
  * 
- * @brief Реализация печати и очистки 3AC.
+ * @brief Реализация печати
  * 
  * Author:
  *     - Serhij Čepil (253038)
@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "tac_printer.h"
+#include "printer.h"
 #include "tac.h" // Нужен для TacInstruction, Operand, и т.д.
 
 /*=======================================*/

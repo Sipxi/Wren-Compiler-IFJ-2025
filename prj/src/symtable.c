@@ -1,6 +1,10 @@
-/* symtable.c
- * Файл реализации для таблицы символов
- * Автор: Serhij Čepil (253038)
+/** 
+ * @file symtable.c
+ * 
+ * @brief Файл реализации для таблицы символов
+ *
+ * Author:
+ *      - Serhij Čepil (253038)
  */
 #include "symtable.h"
 #include "utils.h"
