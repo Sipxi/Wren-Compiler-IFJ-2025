@@ -18,7 +18,7 @@
 
 // Массив строк для имен операций
 const char* op_code_to_string[] = {
-    [OP_JUMP] = "JUMP",
+    [OP_JUMP] = "OP_JUMP",
     [OP_JUMP_IF_FALSE] = "JUMP_IF_FALSE",
     [OP_ADD] = "ADD",
     [OP_SUBTRACT] = "SUB",
@@ -153,7 +153,7 @@ void print_tac_list(DLList *tac_list) {
 
         if (instr->operation_code == OP_LABEL) {
             // Метки печатаем отдельно для красоты
-            printf("\n%s:\n", instr->arg1->data.label_name);
+            printf("\n%s: <------ метка для прыжков \n", instr->arg1->data.label_name);
             DLL_Next(tac_list);
             continue;
         }
