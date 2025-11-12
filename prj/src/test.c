@@ -14,13 +14,6 @@
 #include <stdlib.h>
 #include <string.h> 
 
-
-/*=======================================*/
-/*===== ПРОТОТИПЫ ФУНКЦИЙ ===============*/
-/*=======================================*/
-
-
-
 /*=======================================*/
 /*===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========*/
 /*=======================================*/
@@ -44,7 +37,7 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
     if (!symtable_insert(table, name, data)) {
         fprintf(stderr, "Failed to insert '%s' into symtable.\n", name);
         free(data); // symtable не завладел 'data', чистим
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // !!! ИСПРАВЛЕН БАГ: НЕЛЬЗЯ ДЕЛАТЬ free(data) ЗДЕСЬ !!!
@@ -303,14 +296,14 @@ int test_lexer() {
     FILE *file = fopen("example.wren", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
-        return 1;
+        return EXIT_FAILURE;
     }
 
     Lexer *lexer = lexer_init();
     if (lexer == NULL) {
         fprintf(stderr, "Error initializing lexer.\n");
         fclose(file);
-        return 1;
+        return EXIT_FAILURE;
     }
     while (lexer->current_token->type != TOKEN_EOF) {
         get_next_token(lexer, file);
@@ -324,10 +317,10 @@ int test_lexer() {
     }
     // Don't close stdin
     lexer_free(lexer);
-    if (fclose(file) != 0) { // обработка ошибки закрытия файла
+    if (fclose(file) != EXIT_SUCCESS) { // обработка ошибки закрытия файла
         fprintf(stderr, "Error closing file.\n");
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
 
 void test_tac_generator() {
@@ -377,5 +370,5 @@ int main() {
 
     test_tac_generator();
 
-    return 0;
+    return EXIT_SUCCESS;
 }
