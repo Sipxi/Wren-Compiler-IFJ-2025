@@ -40,7 +40,7 @@ typedef enum{
 
     
     /* Операции конкатенации строк */
-    OP_CONCAT, // Конкатенация строк например: CONCAT arg1 arg2
+    OP_CONCAT, // Конкатенация строк например:  
     OP_MULTIPLY_STRING, // Умножение строки например: MULTIPLY_STRING arg1 arg2
     
     /* Операции сравнения */

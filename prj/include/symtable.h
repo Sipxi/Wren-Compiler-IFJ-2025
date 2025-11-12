@@ -55,7 +55,8 @@
 typedef enum{
     TYPE_NUM,
     TYPE_STR,
-    TYPE_NIL
+    TYPE_NIL,
+    TYPE_FLOAT,
 
     //TODO Добавить другие типы данных по мере необходимости
 } DataType;
@@ -64,6 +65,7 @@ typedef enum{
 typedef enum{
     KIND_VAR,
     KIND_FUNC,
+    KIND_BLOCK,
 
     //TODO Добавить другие виды символов по мере необходимости
 } SymbolKind;

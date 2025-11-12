@@ -204,7 +204,6 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     }
     memcpy(entry->data, data, sizeof(SymbolData));  // Копируем данные
     entry->status = SLOT_OCCUPIED;  // Обновляем статус слота
-    entry->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
     table->count++;                 // Увеличиваем количество записей
 
     return true;

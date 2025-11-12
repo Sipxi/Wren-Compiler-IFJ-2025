@@ -20,11 +20,11 @@ typedef enum {
     GF,
     LF,
     TF,
-    INT,
-    FLOAT,
-    STRING,
-    BOOL,
-    NIL,
+    INT_FRAME,
+    FLOAT_FRAME,
+    STRING_FRAME,
+    BOOL_FRAME,
+    NIL_FRAME,
 } FrameType;
 
 
@@ -37,16 +37,15 @@ void gen_pop_frame();
 void gen_param(TacInstruction *instr);
 
 // --- Инструкции работы с данными (пример) ---
-void gen_operand(FrameType frame, Operand *op);
-void gen_defvar(FrameType frame, Operand *var);
-void gen_add(Operand *dest, Operand *src1, Operand *src2); // 3-адресная версия
-void gen_move(FrameType frame_dest, Operand *dest, FrameType frame_src, Operand *src);
+void gen_operand(Operand *op);
+void gen_defvar(Operand *var);
+void gen_move(Operand *dest, Operand *src);
 
 // --- Инструкции управления потоком (пример) ---
 void gen_return();
 void gen_call(char* label_name);
 void gen_label(char* label_name);
 void gen_jump(char* label_name);
-void gen_jumpifeq(char* label_name, Operand op1, Operand op2);
+void gen_jumpifeq(char* label_name);
 
 #endif // CODEGEN_H
