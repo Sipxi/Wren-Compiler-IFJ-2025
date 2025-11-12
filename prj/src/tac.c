@@ -155,57 +155,10 @@ static void tac_gen_children_list(AstNode *node, DLList *tac_list,
 static void generate_instruction(DLList *list, TacOperationCode op,
                                  Operand *res, Operand *arg1, Operand *arg2);
 
-/**
- * @brief Создает операнд-константу.
- * @attention Если константа - это TYPE_STR, эта функция
- * создает копию строки в куче. Эта копия будет
- * освобождена, когда 'free_tac_instruction' будет
- * чистить 'Operand'.
- *
- * @param constant Структура TacConstant (может быть из AST).
- * @return Указатель на новый Operand (выделен в куче).
- */
-static Operand *create_constant_operand(TacConstant);
 
 /* ======================================*/
 /* ===== Имплементация приватных функций =====*/
 /* ======================================*/
-
-static Operand *create_constant_operand(TacConstant constant) {
-    // Выделяем память под сам операнд
-    Operand *op = (Operand*)malloc(sizeof(Operand));
-    if (op == NULL) {
-        // Ошибка памяти
-        raise_tac_error("Memory allocation failed for constant operand", -1,
-                        INTERNAL_ERROR);
-        return NULL;
-    }
-
-    op->type = OPERAND_TYPE_CONSTANT;
-
-    // Копируем всю структуру constant
-    op->data.constant = constant;
-
-    // Если это строка, нам нужно скопировать ее содержимое в новую память.
-    if (constant.type == TYPE_STR) {
-        // constant.value.str_value - это указатель на строку в AST.
-        // Мы не можем его просто присвоить, т.к. AST будет
-        // очищен и указатель станет "висячим".
-        op->data.constant.value.str_value = strdup_c99(constant.value.str_value);
-
-        if (op->data.constant.value.str_value == NULL) {
-            // Ошибка памяти при копировании строки
-            free(op);
-            raise_tac_error("Memory allocation failed for constant string", -1,
-                            INTERNAL_ERROR);
-            return NULL;
-        }
-    }
-
-    // Для TYPE_NUM и TYPE_NIL ничего больше делать не надо,
-    // т.к. int_value или float_value уже скопировались
-    return op;
-}
 
 static void tac_gen_children_list(AstNode *node, DLList *tac_list,
                                   Symtable *symtable) {
@@ -908,6 +861,43 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
 /* ======================================*/
 /* ===== Имплементация публичных функций =====*/
 /* ======================================*/
+
+Operand *create_constant_operand(TacConstant constant) {
+    // Выделяем память под сам операнд
+    Operand *op = (Operand*)malloc(sizeof(Operand));
+    if (op == NULL) {
+        // Ошибка памяти
+        raise_tac_error("Memory allocation failed for constant operand", -1,
+                        INTERNAL_ERROR);
+        return NULL;
+    }
+
+    op->type = OPERAND_TYPE_CONSTANT;
+
+    // Копируем всю структуру constant
+    op->data.constant = constant;
+
+    // Если это строка, нам нужно скопировать ее содержимое в новую память.
+    if (constant.type == TYPE_STR) {
+        // constant.value.str_value - это указатель на строку в AST.
+        // Мы не можем его просто присвоить, т.к. AST будет
+        // очищен и указатель станет "висячим".
+        op->data.constant.value.str_value = strdup_c99(constant.value.str_value);
+
+        if (op->data.constant.value.str_value == NULL) {
+            // Ошибка памяти при копировании строки
+            free(op);
+            raise_tac_error("Memory allocation failed for constant string", -1,
+                            INTERNAL_ERROR);
+            return NULL;
+        }
+    }
+
+    // Для TYPE_NUM и TYPE_NIL ничего больше делать не надо,
+    // т.к. int_value или float_value уже скопировались
+    return op;
+}
+
 
 void generate_tac(AstNode *ast_root, DLList *tac_list, Symtable *global_table) {
     // Сбрасываем счетчики на случай повторного вызова
