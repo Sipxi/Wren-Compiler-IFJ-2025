@@ -789,7 +789,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 case NODE_OP_GTE: op_code = OP_GREATER_EQUAL; break;
                 case NODE_OP_EQ: op_code = OP_EQUAL; break;
                 case NODE_OP_NEQ: op_code = OP_NOT_EQUAL; break;
-                default: raise_tac_error("Unexpected node type", -1, 99); return NULL;  // Сюда не должно попасть
+                default: raise_tac_error("Unexpected node type", -1, INTERNAL_ERROR); return NULL;  // Сюда не должно попасть
             }
 
             // Генерируем инструкцию TAC
