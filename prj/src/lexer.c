@@ -1,18 +1,20 @@
-// Имплементация функций лексера для токенизации исходного кода
-//
-// Авторы:
-// Serhij Čepil (253038)
-// Dmytro Kravchenko (273125)
-// Veronika Turbaievska (273123)
-//
+/**
+ * @file lexer.c
+ * 
+ * @brief Реализация лексического анализатора.
+ * Author:
+ *     - Serhij Čepil (253038)
+ *     - Dmytro Kravchenko (273125)
+ *     - Veronika Turbaievska (273123)
+ */
+ 
 //! Допишите ваши имена и номера
-// TODO: Комментарии к функциям
 #include "lexer.h"
+#include "error_codes.h"
 
 #include <stdbool.h>
 #include <string.h>
 
-#include "error_codes.h"
 
 /* ======================================*/
 /* ===== FSM (Finite State Machine) =====*/

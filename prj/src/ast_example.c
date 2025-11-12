@@ -1,4 +1,4 @@
-/** @file ast.c
+/** @file ast_example.c
  * @brief Пример использования AST
  *
  * ! Этот файл был полностью написан GEMINI,
@@ -11,16 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ast.h"
-
-// Вспомогательная функция для my_strdup
-static char* my_strdup(const char* s) {
-    if (s == NULL) return NULL;
-    size_t len = strlen(s);
-    char* new_s = (char*)malloc(len + 1);
-    if (new_s == NULL) return NULL; 
-    memcpy(new_s, s, len + 1); 
-    return new_s;
-}
+#include "utils.h"
 
 AstNode* ast_node_create(NodeType type, int line_number) {
     // calloc сразу обнуляет всю память (ставит NULL, 0.0, и т.д.)
@@ -103,7 +94,7 @@ void ast_node_add_child(AstNode* parent, AstNode* new_child) {
 // Создает узел и сразу копирует 'identifier'
 AstNode* ast_new_id_node(NodeType type, int line, const char* id, TableEntry* entry) {
     AstNode* node = ast_node_create(type, line);
-    node->data.identifier = my_strdup(id);
+    node->data.identifier = strdup_c99(id);
     node->table_entry = entry; // Сразу линкуем (симуляция семантики)
     return node;
 }

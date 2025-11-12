@@ -1,7 +1,7 @@
 /** 
- * @file tac_printer.h
+ * @file printer.h
  *
- * @brief Заголовочный файл для функций печати и очистки трехадресного кода (3AC).
+ * @brief Заголовочный файл для функций печати и отладки любых структур данных.
  * 
  * TODO и вопрос по рефакторингу: @Bulcer @legon112 @Nikorya
  * Может для удобства сделать единый заголовочный файл для вывода логов/отладочной информации?
@@ -18,10 +18,10 @@
  * Author:
  *     - Serhij Čepil (253038)
  */
-#ifndef TAC_PRINTER_H
-#define TAC_PRINTER_H
+#ifndef PRINTER_H
+#define PRINTER_H
 
-#include "common.h" 
+#include "dll.h" 
 
 /**
  * @brief Печатает содержимое списка 3AC в читаемом виде.
@@ -32,10 +32,10 @@ void print_tac_list(DLList* tac_list);
 
 /**
  * @brief Функция для DLL_Dispose для очистки памяти из-под TacInstruction.
- * (Вызывается из common.c / dll_list.c)
+ * (Вызывается из dll.c)
  * 
  * @param data Указатель на TacInstruction для освобождения.
  */
 void free_tac_instruction(void* data);
 
-#endif  // TAC_PRINTER_H
+#endif  // PRINTER_H

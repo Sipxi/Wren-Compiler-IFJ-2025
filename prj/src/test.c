@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "ast.h"          // Твой ast.h
-#include "common.h"       // Твой DLL
+#include "dll.h"       // Твой DLL
 #include "symtable.h"     // Твоя хеш-таблица
 #include "tac.h"          // Твой tac.h
 #include "tac_printer.h"  // Мой принтер
@@ -122,8 +122,13 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
 
     if (!symtable_insert(table, name, data)) {
         fprintf(stderr, "Failed to insert '%s' into symtable.\n", name);
-        exit(1);
+        free(data);  // Free before exit
+        exit(EXIT_FAILURE);
     }
+    
+    // symtable_insert makes its own copy, so we need to free the original
+    free(data);
+    
     return symtable_lookup(table, name);
 }
 
