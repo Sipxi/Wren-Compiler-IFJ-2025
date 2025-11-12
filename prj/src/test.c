@@ -47,53 +47,85 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
 
 /**
  * @brief Строит фейковый AST для кода:
- * (Версия для "return null;")
+ * (Тест для временных переменных $tN)
  *
  * static main() {
- * return null;
+ * var a
+ * a = (10 + 20) * (30 + 40)
  * }
  */
 static AstNode *create_test_ast(Symtable *global_table) {
     printf("1. Building Fake AST and Symtable...\n");
 
     // --- 1. (СИМУЛЯЦИЯ Pass 2) ---
-    // Нам все еще нужно занести 'main' в symtable,
-    // чтобы AST мог на нее сослаться.
     TableEntry *func_main = define_symbol(global_table, "main", KIND_FUNC);
+    TableEntry *var_a = define_symbol(global_table, "a", KIND_VAR);
 
     // --- 2. Строим 'main()' ---
-
-    // (Pass 1) Создаем узел 'main'
+    // (Pass 1) Узел 'main'
     AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
-    // (Pass 2) "Линкуем" 'main'
+    // (Pass 2) Линкуем
     main_def->table_entry = func_main;
     {
         // (Pass 1) Тело функции (блок)
         AstNode *main_block = ast_node_create(NODE_BLOCK, 1);
 
-        // --- return null; ---
-        // (Pass 1) Создаем узел 'return'
-        AstNode *return_stmt = ast_node_create(NODE_RETURN, 2);
+        // --- var a ---
+        // (Pass 1) Узел 'var a'
+        AstNode* def_a = ast_new_id_node(NODE_VAR_DEF, 2, "a");
+        // (Pass 2) Линкуем
+        def_a->table_entry = var_a;
+        ast_node_add_child(main_block, def_a);
 
-
-        // Собираем 'return null;'
-        // ast_node_add_child(return_stmt, null_node);
+        // --- a = (10 + 20) * (30 + 40) ---
         
-        // Добавляем стейтмент 'return null;' в блок
-        ast_node_add_child(main_block, return_stmt);
+        // (Pass 1) Стейтмент '='
+        AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 3);
+        
+        // (Pass 1) LHS (Левая часть): 'a'
+        AstNode* a_id = ast_new_id_node(NODE_ID, 3, "a");
+        // (Pass 2) Линкуем 'a'
+        a_id->table_entry = var_a; 
+
+        
+        // (Pass 1) RHS (Правая часть): (...) * (...)
+        
+        // (10 + 20)
+        AstNode* plus_1 = ast_new_bin_op(NODE_OP_PLUS, 3,
+            ast_new_num_node(10.0, 3),
+            ast_new_num_node(20.0, 3)
+        );
+        
+        // (30 + 40)
+        AstNode* plus_2 = ast_new_bin_op(NODE_OP_PLUS, 3,
+            ast_new_num_node(30.0, 3),
+            ast_new_num_node(40.0, 3)
+        );
+        
+        // (plus_1) * (plus_2)
+        AstNode* op_mul = ast_new_bin_op(NODE_OP_MUL, 3,
+            plus_1,
+            plus_2
+        );
+        
+        // Собираем 'a = ...'
+        ast_node_add_child(assign_a, a_id);   // Добавляем 'a' (LHS)
+        ast_node_add_child(assign_a, op_mul); // Добавляем '*' (RHS)
+        
+        // Добавляем стейтмент 'a = ...' в блок
+        ast_node_add_child(main_block, assign_a);
+
 
         // --- Собираем функцию main ---
-        // (Pass 1) Добавляем пустой список параметров
         ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 1));
-        // Добавляем тело
         ast_node_add_child(main_def, main_block);
     }
 
     // --- 3. Собираем программу ---
     AstNode *program = ast_node_create(NODE_PROGRAM, 0);
-    ast_node_add_child(program, main_def); // Добавляем 'main'
+    ast_node_add_child(program, main_def);
 
-    printf("   ...AST Built (with 'return null' test).\n");
+    printf("   ...AST Built (with temp var ($tN) test).\n");
     return program;
 }
 

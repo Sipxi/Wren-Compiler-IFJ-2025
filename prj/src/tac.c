@@ -112,11 +112,16 @@ static Operand *create_symbol_operand(TableEntry *entry);
 static Operand *create_operand(OperandType type);
 
 /**
- * Создает новый временный операнд. Например, $t1, $t2 и т.д.
+ * @brief Создаёт новый временный операнд. Например, $t1, $t2 и т.д.
  *
+ * @param tac_list Список TAC инструкций, в который будет добавлена инструкция
+ * 
+ * @note Глобальный счетчик временных переменных увеличивается при каждом вызове.
+ * @note Создает инструкцию DECLARE для новой временной переменной.
+ *  
  * @return Указатель на созданный временный операнд.
  */
-static Operand *create_temp_operand();
+static Operand *create_temp_operand(DLList *tac_list);
 
 /**
  * Создает операнд для метки с заданным именем.
@@ -254,10 +259,14 @@ static Operand *create_label_operand(const char *label_name) {
     return op;
 }
 
-static Operand *create_temp_operand() {
+static Operand *create_temp_operand(DLList *tac_list) {
     Operand *op = create_operand(OPERAND_TYPE_TEMP);
     // Присваиваем уникальный ID
     op->data.temp_id = global_temp_counter++;
+    generate_instruction(tac_list, OP_DECLARE, op, NULL, NULL);
+
+    
+    
     return op;
 }
 
@@ -703,7 +712,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 tac_gen_recursive(right_node, tac_list, symtable);
 
             // Создаем временный результат
-            Operand *result_op = create_temp_operand();
+            Operand *result_op = create_temp_operand(tac_list);
 
             // Смотрим на тип, который нам дала семантика (Pass 2)
             TacOperationCode op_code;
@@ -713,6 +722,8 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 // (Если это TYPE_NUM или что-то еще, считаем, что это ADD)
                 op_code = OP_ADD;
             }
+
+            
 
             // Генерируем инструкцию (то же самое)
             generate_instruction(tac_list, op_code, result_op, left_op,
@@ -731,7 +742,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
             Operand *right_op =
                 tac_gen_recursive(right_node, tac_list, symtable);
             // Создаем временный операнд для результата
-            Operand *result_op = create_temp_operand();
+            Operand *result_op = create_temp_operand(tac_list);
 
             // Определяем код операции
             TacOperationCode op_code;
@@ -771,7 +782,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 tac_gen_recursive(right_node, tac_list, symtable);
 
             // Создаем временный операнд для результата
-            Operand *result_op = create_temp_operand();
+            Operand *result_op = create_temp_operand(tac_list);
 
             // Определяем код операции
             TacOperationCode op_code;
@@ -816,7 +827,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
             Operand *type_op = tac_gen_recursive(type_node, tac_list, symtable);
 
             Operand *result_op =
-                create_temp_operand();  // Результат проверки типа $t1
+                create_temp_operand(tac_list);  // Результат проверки типа $t1
 
             // Генерируем инструкцию
             // OP_IS, $t1, $t0, "Num"
