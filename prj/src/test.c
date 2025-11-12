@@ -19,16 +19,6 @@
 /*===== ПРОТОТИПЫ ФУНКЦИЙ ===============*/
 /*=======================================*/
 
- // === Прототипы функций из ast_example.c ===
- // Эти функции реализованы в ast_example.c пока не готов полноценный AST
-
-AstNode *ast_node_create(NodeType type, int line_number);
-void ast_node_add_child(AstNode *parent, AstNode *new_child);
-void ast_node_free_recursive(AstNode *node);
-AstNode *ast_new_id_node(NodeType type, int line, const char *id,
-    TableEntry *entry);
-AstNode *ast_new_num_node(double value, int line);
-AstNode *ast_new_bin_op(NodeType type, int line, AstNode *left, AstNode *right);
 
 
 /*=======================================*/
@@ -62,8 +52,14 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
     return symtable_lookup(table, name);
 }
 
+// =================================================================
+//
+// НОВАЯ ФУНКЦИЯ create_test_ast
+//
+// =================================================================
 /**
  * @brief Строит фейковый AST для кода:
+ * (Использует НОВОЕ API из ast.c)
  *
  * static func(p1, p2) {
  * return p1 + p2
@@ -85,7 +81,7 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
 static AstNode *create_test_ast(Symtable *global_table) {
     printf("1. Building Fake AST and Symtable...\n");
 
-    // --- 1. Симуляция семантики: заполняем Symtable ---
+    // --- 1. Сначала заполняем Symtable (Симуляция Pass 2) ---
     TableEntry *func_main = define_symbol(global_table, "main", KIND_FUNC);
     TableEntry *func_func = define_symbol(global_table, "func", KIND_FUNC);
     TableEntry *var_a = define_symbol(global_table, "a", KIND_VAR);
@@ -93,74 +89,99 @@ static AstNode *create_test_ast(Symtable *global_table) {
     TableEntry *param_p1 = define_symbol(global_table, "p1", KIND_VAR);
     TableEntry *param_p2 = define_symbol(global_table, "p2", KIND_VAR);
 
-    // --- 2. Строим функцию 'func(p1, p2)' ---
-    AstNode *func_def =
-        ast_new_id_node(NODE_FUNCTION_DEF, 2, "func", func_func);
+    // --- 2. Строим функцию 'func(p1, p2)' (Симуляция Pass 1 + Pass 2) ---
+    
+    // (Pass 1) Создаем узел 'func', используя НОВЫЙ ast.c API
+    AstNode *func_def = ast_new_id_node(NODE_FUNCTION_DEF, 2, "func");
+    // (Pass 2) ВРУЧНУЮ "линкуем" symtable
+    func_def->table_entry = func_func;
+    
     {
-        // Список параметров
+        // (Pass 1) Список параметров
         AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 2);
-        ast_node_add_child(param_list,
-            ast_new_id_node(NODE_PARAM, 2, "p1", param_p1));
-        ast_node_add_child(param_list,
-            ast_new_id_node(NODE_PARAM, 2, "p2", param_p2));
+        
+        // (Pass 1) Узел 'p1'
+        AstNode* p1_node = ast_new_id_node(NODE_PARAM, 2, "p1");
+        // (Pass 2) Линкуем 'p1'
+        p1_node->table_entry = param_p1;
+        
+        // (Pass 1) Узел 'p2'
+        AstNode* p2_node = ast_new_id_node(NODE_PARAM, 2, "p2");
+        // (Pass 2) Линкуем 'p2'
+        p2_node->table_entry = param_p2;
 
-        // --- ИЗМЕНЕНИЕ ЗДЕСЬ ---
+        ast_node_add_child(param_list, p1_node);
+        ast_node_add_child(param_list, p2_node);
+        
         // Тело функции: { return p1 + p2; }
         AstNode *func_body = ast_node_create(NODE_BLOCK, 3);
-
+        
         // Выражение: p1 + p2
-        AstNode *op_plus = ast_new_bin_op(
-            NODE_OP_PLUS, 3,
-            ast_new_id_node(NODE_ID, 3, "p1", param_p1),
-            ast_new_id_node(NODE_ID, 3, "p2", param_p2)
-        );
+        AstNode* p1_id = ast_new_id_node(NODE_ID, 3, "p1");
+        p1_id->table_entry = param_p1; // (Pass 2)
+        
+        AstNode* p2_id = ast_new_id_node(NODE_ID, 3, "p2");
+        p2_id->table_entry = param_p2; // (Pass 2)
 
+        AstNode *op_plus = ast_new_bin_op(NODE_OP_PLUS, 3, p1_id, p2_id);
+        
         // Стейтмент: return ...
         AstNode *return_stmt = ast_node_create(NODE_RETURN, 3);
-        ast_node_add_child(return_stmt, op_plus); // Добавляем 'p1 + p2' как ребенка
-
-        // Добавляем 'return ...' в тело
+        ast_node_add_child(return_stmt, op_plus);
         ast_node_add_child(func_body, return_stmt);
-        // --- КОНЕЦ ИЗМЕНЕНИЯ ---
 
         // Собираем функцию
-        ast_node_add_child(func_def, param_list); // Добавляем параметры
-        ast_node_add_child(func_def, func_body);  // Добавляем ТЕЛО
+        ast_node_add_child(func_def, param_list);
+        ast_node_add_child(func_def, func_body);
     }
 
     // --- 3. Строим функцию 'main()' ---
-    AstNode *main_def =
-        ast_new_id_node(NODE_FUNCTION_DEF, 6, "main", func_main);
+    AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 6, "main");
+    main_def->table_entry = func_main; // (Pass 2)
     {
-        // 3a. Тело функции (блок)
         AstNode *main_block = ast_node_create(NODE_BLOCK, 6);
 
         // var a
-        ast_node_add_child(main_block,
-            ast_new_id_node(NODE_VAR_DEF, 7, "a", var_a));
+        AstNode* def_a = ast_new_id_node(NODE_VAR_DEF, 7, "a");
+        def_a->table_entry = var_a; // (Pass 2)
+        ast_node_add_child(main_block, def_a);
+
         // var b
-        ast_node_add_child(main_block,
-            ast_new_id_node(NODE_VAR_DEF, 8, "b", var_b));
+        AstNode* def_b = ast_new_id_node(NODE_VAR_DEF, 8, "b");
+        def_b->table_entry = var_b; // (Pass 2)
+        ast_node_add_child(main_block, def_b);
 
         // a = 10
         AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 9);
-        ast_node_add_child(assign_a, ast_new_id_node(NODE_ID, 9, "a", var_a));
+        AstNode* a_id_1 = ast_new_id_node(NODE_ID, 9, "a");
+        a_id_1->table_entry = var_a; // (Pass 2)
+        ast_node_add_child(assign_a, a_id_1);
         ast_node_add_child(assign_a, ast_new_num_node(10.0, 9));
         ast_node_add_child(main_block, assign_a);
 
         // b = 20
         AstNode *assign_b = ast_node_create(NODE_ASSIGNMENT, 10);
-        ast_node_add_child(assign_b, ast_new_id_node(NODE_ID, 10, "b", var_b));
+        AstNode* b_id_1 = ast_new_id_node(NODE_ID, 10, "b");
+        b_id_1->table_entry = var_b; // (Pass 2)
+        ast_node_add_child(assign_b, b_id_1);
         ast_node_add_child(assign_b, ast_new_num_node(20.0, 10));
         ast_node_add_child(main_block, assign_b);
 
         // func(a, b)
         AstNode *call_stmt = ast_node_create(NODE_CALL_STATEMENT, 11);
-        ast_node_add_child(call_stmt, ast_new_id_node(NODE_ID, 11, "func", func_func));
-        // Список аргументов
+        AstNode* func_id = ast_new_id_node(NODE_ID, 11, "func");
+        func_id->table_entry = func_func; // (Pass 2)
+        ast_node_add_child(call_stmt, func_id);
+
         AstNode *arg_list = ast_node_create(NODE_ARGUMENT_LIST, 11);
-        ast_node_add_child(arg_list, ast_new_id_node(NODE_ID, 11, "a", var_a));
-        ast_node_add_child(arg_list, ast_new_id_node(NODE_ID, 11, "b", var_b));
+        AstNode* a_id_2 = ast_new_id_node(NODE_ID, 11, "a");
+        a_id_2->table_entry = var_a; // (Pass 2)
+        ast_node_add_child(arg_list, a_id_2);
+        
+        AstNode* b_id_2 = ast_new_id_node(NODE_ID, 11, "b");
+        b_id_2->table_entry = var_b; // (Pass 2)
+        ast_node_add_child(arg_list, b_id_2);
+        
         ast_node_add_child(call_stmt, arg_list);
         ast_node_add_child(main_block, call_stmt);
 
@@ -168,21 +189,27 @@ static AstNode *create_test_ast(Symtable *global_table) {
         AstNode *if_stmt = ast_node_create(NODE_IF, 12);
         {
             // Условие: a > b
-            AstNode *cond_gt = ast_new_bin_op(
-                NODE_OP_GT, 12, ast_new_id_node(NODE_ID, 12, "a", var_a),
-                ast_new_id_node(NODE_ID, 12, "b", var_b));
-
+            AstNode* a_id_3 = ast_new_id_node(NODE_ID, 12, "a");
+            a_id_3->table_entry = var_a; // (Pass 2)
+            AstNode* b_id_3 = ast_new_id_node(NODE_ID, 12, "b");
+            b_id_3->table_entry = var_b; // (Pass 2)
+            AstNode *cond_gt = ast_new_bin_op(NODE_OP_GT, 12, a_id_3, b_id_3);
+            
             // then-блок: { a = 20 }
             AstNode *then_block = ast_node_create(NODE_BLOCK, 13);
             AstNode *assign_a_20 = ast_node_create(NODE_ASSIGNMENT, 13);
-            ast_node_add_child(assign_a_20, ast_new_id_node(NODE_ID, 13, "a", var_a));
+            AstNode* a_id_4 = ast_new_id_node(NODE_ID, 13, "a");
+            a_id_4->table_entry = var_a; // (Pass 2)
+            ast_node_add_child(assign_a_20, a_id_4);
             ast_node_add_child(assign_a_20, ast_new_num_node(20.0, 13));
             ast_node_add_child(then_block, assign_a_20);
 
             // else-блок: { b = 30 }
             AstNode *else_block = ast_node_create(NODE_BLOCK, 15);
             AstNode *assign_b_30 = ast_node_create(NODE_ASSIGNMENT, 15);
-            ast_node_add_child(assign_b_30, ast_new_id_node(NODE_ID, 15, "b", var_b));
+            AstNode* b_id_4 = ast_new_id_node(NODE_ID, 15, "b");
+            b_id_4->table_entry = var_b; // (Pass 2)
+            ast_node_add_child(assign_b_30, b_id_4);
             ast_node_add_child(assign_b_30, ast_new_num_node(30.0, 15));
             ast_node_add_child(else_block, assign_b_30);
 
@@ -193,7 +220,7 @@ static AstNode *create_test_ast(Symtable *global_table) {
         }
         ast_node_add_child(main_block, if_stmt);
 
-        // 3b. Собираем функцию main
+        // Собираем функцию main
         ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 6)); // Пустой список
         ast_node_add_child(main_def, main_block); // Тело
     }
@@ -203,10 +230,9 @@ static AstNode *create_test_ast(Symtable *global_table) {
     ast_node_add_child(program, func_def); // Добавляем 'func'
     ast_node_add_child(program, main_def); // Добавляем 'main'
 
-    printf("   ...AST Built.\n");
+    printf("   ...AST Built (using new API).\n");
     return program;
 }
-
 
 /**
  * @brief Печатает данные токена, экранируя специальные символы.

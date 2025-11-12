@@ -650,7 +650,7 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
             TableEntry *func_entry = func_name_node->table_entry;
             if (func_entry == NULL) {
                 // Ошибка
-                return NULL;
+                return NULL;    
             }
 
             // Генерируем инструкцию вызова функции
