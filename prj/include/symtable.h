@@ -56,6 +56,7 @@ typedef enum{
     TYPE_NUM,
     TYPE_STR,
     TYPE_NIL,
+    TYPE_NULL,
     TYPE_FLOAT,
 
     //TODO Добавить другие типы данных по мере необходимости

@@ -597,12 +597,10 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 ret_op = tac_gen_recursive(return_expr, tac_list, symtable);
             } else {
                 // Пустой операнд для 'return;' без выражения
-                TacConstant nil_const;
-                nil_const.type = TYPE_NIL;
-                ret_op = create_constant_operand(nil_const);
+                ret_op = NULL;
             }
 
-            // Генерируем инструкцию возврата
+            // Генерируем инструкцию возврата   
             // Она будет либо результатом выражения, либо nil.
             generate_instruction(tac_list, OP_RETURN, ret_op, NULL, NULL);
             return NULL;  // Оператор return не возвращает значения
