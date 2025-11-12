@@ -108,7 +108,6 @@ void ast_node_free_recursive(AstNode *node)
  * @param type Тип узла.
  * @param line Номер строки.
  * @param id Строка (имя), которую нужно скопировать.
- * @param entry Это поле здесь лишнее, убираем его.
  * @return Указатель на новый узел.
  */
 AstNode *ast_new_id_node(NodeType type, int line, const char *id) {
