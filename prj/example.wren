@@ -1,12 +1,15 @@
 import "ifj25" for Ifj
 class Program {
-    static unicorn {
-        // __a je globalni promenna. Pokud neni zatim definovana, implicitne je hodnota null.
-        // null se v podmince chova jako false.
-        if () {
-            return
-        } else {
+    static getAnswer(arg) {
+        if () {   // podmineny prikaz, operator porovnani typu
+            return 
+            var d
+        } else {  // else sekce je v zakladnim zadani povinna
             return
         }
+    }
+
+    static foo() {
+        return
     }
 }
