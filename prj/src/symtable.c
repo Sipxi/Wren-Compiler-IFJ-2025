@@ -96,7 +96,7 @@ bool symtable_init(Symtable* table, int nesting_level, Symtable *parent_scope) {
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
     table->nesting_level = nesting_level;
-    table->parent_scope = parent_scope;
+    // table->parent_scope = parent_scope;
     return true;
 }
 
@@ -225,7 +225,7 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
-    table->parent_scope = NULL;
+    // table->parent_scope = NULL;
 }
 
 /* ===================================================*/

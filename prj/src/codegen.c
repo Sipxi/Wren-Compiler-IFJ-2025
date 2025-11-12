@@ -8,8 +8,14 @@
 
 // * Поговорив с Gemini я понял, что мне не нужно реализовывать tzb потому-что я не работаю с регистрами
 
+
 void gen_init(){
-    fprintf(stdout, ".IFJcode25\nJUMP $$main\n\n");
+    fprintf(stdout, ".IFJcode25\n");
+    fprintf(stdout, "DEFVAR GF@tmp\n");
+    fprintf(stdout, "DEFVAR GF@tmp_type_1\n");
+    fprintf(stdout, "DEFVAR GF@tmp_type_2\n");
+    
+    fprintf(stdout, "JUMP $$main\n\n");
 }
 void gen_push_frame(){
     fprintf(stdout, "PUSHFRAME\n");
@@ -44,8 +50,14 @@ void gen_return(){
     gen_pop_frame();
 }
 
-void gen_jumpifeq(char* label_name){
-    fprintf(stdout, "JUMPIFEQ $%s GF@tmp bool@false", label_name);
+void gen_jumpifeq(TacInstruction *instr){
+    // Если результат в GF@tmp
+    // fprintf(stdout, "JUMPIFEQ $%s GF@tmp bool@false", label_name);
+    // !Пока делаем из резулата
+    fprintf(stdout, "JUMPIFEQ $%s ", instr->arg2->data.label_name);
+    gen_operand(instr->arg1);
+    fprintf(stdout, " bool@false\n");
+
     fprintf(stdout, "\n");
 }
 void gen_operand(Operand *op){
@@ -82,41 +94,90 @@ void gen_operand(Operand *op){
     }
 
 }
-void gen_arithmetic(TacInstruction *instr){
-    switch (instr->operation_code) {
-        case OP_ADD:
-            fprintf(stdout, "ADD ");
-            break;
-        case OP_SUBTRACT:
-            fprintf(stdout, "SUB ");
-            break;
-        case OP_MULTIPLY:
-            fprintf(stdout, "MUL ");
-            break;
-        case OP_DIVIDE:
-            if ((instr->arg2->type == OPERAND_TYPE_CONSTANT &&
-                instr->arg2->data.constant.type == TYPE_NUM &&
-                instr->arg2->data.constant.value.int_value == 0) ||
-                (instr->arg2->type == OPERAND_TYPE_CONSTANT &&
-                instr->arg2->data.constant.type == TYPE_FLOAT &&
-                instr->arg2->data.constant.value.float_value == 0.0) ||
-                (instr->arg2->type == OPERAND_TYPE_SYMBOL && 
-                instr->arg2->data.symbol_entry->data->)) {
-                // Генерируем код для обработки деления на ноль
-                fprintf(stdout, "EXIT int@9\n"); // Завершаем программу с кодом ошибки 9
-            }
-            fprintf(stdout, "DIV ");
-            break;
-        // Добавьте другие арифметические операции по мере необходимости
-        default:
-            break;
-    }
+void gen_tac(TacInstruction *instr){
     gen_operand(instr->result);
     fprintf(stdout, " ");
     gen_operand(instr->arg1);
     fprintf(stdout, " ");
     gen_operand(instr->arg2);
     fprintf(stdout, "\n");
+}
+
+void gen_type_check(TacInstruction *instr) {
+    fprintf(stdout, "TYPE GF@tmp_type_1 ");
+    gen_operand(instr->arg1);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "TYPE GF@tmp_type_2 ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, "\n");
+}
+void gen_divide(TacInstruction *instr){
+    gen_type_check(instr);
+    char *label_div = create_unique_label("$DIV");
+    char *label_idiv = create_unique_label("$IDIV");
+    char *label_end = create_unique_label("$END_DIV");
+    // Проверка типов
+    fprintf(stdout, "JUMPIFNEQ $EXIT53 GF@tmp_type_1 GF@tmp_type_2\n");
+
+    // разделение на деление float и int 
+    fprintf(stdout, "JUMPIFEQ $%s GF@tmp_type_1 string@float", label_div);
+    fprintf(stdout, "JUMPIFEQ $%s GF@tmp_type_1 string@int", label_idiv);
+    // если не float и не int то ошибка
+    gen_jump("$EXIT53");
+
+    // деление float
+    gen_label(label_div);
+    //деление на ноль
+    fprintf(stdout, "JUMPIFEQ $EXIT57 ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, " float@0.0\n");
+    //деление
+    fprintf(stdout, "DIV ");
+    // прыжок в конец
+    fprintf(stdout, "JUMP %s\n", label_end);
+
+    // деление int
+    gen_label(label_idiv);
+    //деление на ноль
+    fprintf(stdout, "JUMPIFEQ $EXIT57 ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, " int@0\n");
+    //деление
+    fprintf(stdout, "IDIV ");
+    gen_tac(instr);
+
+    gen_label(label_end);
+
+}
+void gen_arithmetic(TacInstruction *instr){
+    gen_type_check(instr);
+    // Проверка типов
+    fprintf(stdout, "JUMPIFNEQ $EXIT53 GF@tmp_type_1 GF@tmp_type_2\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT53 GF@tmp_type_1 string@nil\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT53 GF@tmp_type_1 string@bool\n");
+
+    switch (instr->operation_code) {
+        case OP_ADD:
+            fprintf(stdout, "JUMPIFEQ $EXIT53 GF@tmp_type_1 string@string\n");
+            fprintf(stdout, "ADD ");
+            break;
+        case OP_SUBTRACT:
+            fprintf(stdout, "JUMPIFEQ $EXIT53 GF@tmp_type_1 string@string\n");
+            fprintf(stdout, "SUB ");
+            break;
+        case OP_MULTIPLY:
+            fprintf(stdout, "JUMPIFEQ $EXIT53 GF@tmp_type_1 string@string\n");
+            fprintf(stdout, "MUL ");
+            break;
+        case OP_CONCAT:
+            fprintf(stdout, "JUMPIFNEQ $EXIT53 GF@tmp_type_1 string@string\n");
+            fprintf(stdout, "CONCAT ");
+            break;
+        // Добавьте другие арифметические операции по мере необходимости
+        default:
+            break;
+    }
+    gen_tac(instr);
 }
 
 void gen_defvar(Operand *var){
@@ -142,7 +203,21 @@ void gen_param(TacInstruction *instr){
         DLL_Next(instr);
     }
 }
+gen_end(){
+    for (int i = 50; i < 59; i++) {
+        printf(stdout, "LABEL $Exit%i\n", i);
+        printf(stdout, "EXIT int@%i\n", i); 
+        printf(stdout, "JUMP $End\n");
+    }
+    printf(stdout, "LABEL $Exit60\n");
+    printf(stdout, "EXIT int@60\n"); 
+    printf(stdout, "JUMP $End\n");
 
+    printf(stdout, "LABEL $Exit0\n");
+    printf(stdout, "EXIT int@0\n"); 
+
+    printf(stdout, "LABEL $End\n");
+}
 int generate_code(DLList *instructions, Symtable *table) {
     gen_init();
     DLL_First(instructions);
@@ -150,10 +225,10 @@ int generate_code(DLList *instructions, Symtable *table) {
         TacInstruction *instr = (TacInstruction *)instructions->active_element->data;
         switch (instr->operation_code) {
         case OP_JUMP:
-            gen_jump(instr->result->data.label_name);
+            gen_jump(instr->arg1->data.label_name);
             break;
         case OP_JUMP_IF_FALSE:
-            gen_jumpifeq(instr->arg1->data.label_name);
+            gen_jumpifeq(instr);
             break;
         case OP_LABEL:
             gen_label(instr->result->data.label_name);
@@ -161,8 +236,11 @@ int generate_code(DLList *instructions, Symtable *table) {
         case OP_ADD:
         case OP_SUBTRACT:
         case OP_MULTIPLY:
-        case OP_DIVIDE:
+        case OP_CONCAT:
             gen_arithmetic(instr);
+            break;
+        case OP_DIVIDE:
+            gen_divide(instr);
             break;
         case OP_FUNCTION_BEGIN:
             // Обработка начала функции
@@ -179,5 +257,6 @@ int generate_code(DLList *instructions, Symtable *table) {
         }
         DLL_Next(instructions);
     }
+    gen_end();
     return 0;
 }

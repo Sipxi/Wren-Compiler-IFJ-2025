@@ -7,7 +7,7 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "common.h"
+#include "dll.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <symtable.h>
