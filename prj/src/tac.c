@@ -311,12 +311,21 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
 
         case NODE_PROGRAM:
         case NODE_BLOCK:
-        case NODE_PARAM_LIST:
+        case NODE_PARAM_LIST: {
+        
+            // Сохраняем текущее значение глобального счетчика временных
+            int temp = global_temp_counter;
+            global_temp_counter = 0;
+
             // Обработка корневого узла блока
             // Просто обрабатываем всех детей
             tac_gen_children_list(node, tac_list, symtable);
+            // Восстанавливаем глобальный счетчик временных
+            global_temp_counter = temp;
+            
             // Не возвращает значения
             return NULL;
+        }
 
         /* ===== Обработка узлов функций ===== */
 
