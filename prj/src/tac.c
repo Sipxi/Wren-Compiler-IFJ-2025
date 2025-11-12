@@ -1,5 +1,6 @@
 /**
  * @file tac.c
+ * 
  * @brief Имплементация генерации трехадресного кода (TAC)
  *
  * Author:
@@ -12,6 +13,9 @@
  * 
  * TODO Очистка памяти
  * TODO Проверить на утечки памяти
+ * TODO temp_counter должен сбрасываться, нельзя чтобы было $t1 в одной функции и $t1000 в другой
+ * TODO label_counter тоже самое
+ * 
  * 
  */
 
@@ -648,14 +652,15 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
                 // Ошибка
                 return NULL;
             }
-            if (arg_list_node != NULL) {
-                // Генерируем код для списка аргументов
-                tac_gen_recursive(arg_list_node, tac_list, symtable);
-            }
 
             // Генерируем инструкцию вызова функции
             Operand *func_op = create_symbol_operand(func_entry);
             generate_instruction(tac_list, OP_CALL, NULL, func_op, NULL);
+
+            if (arg_list_node != NULL) {
+                // Генерируем код для списка аргументов
+                tac_gen_recursive(arg_list_node, tac_list, symtable);
+            }
 
             return NULL;
         }
