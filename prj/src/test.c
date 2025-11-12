@@ -47,8 +47,8 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
         exit(1);
     }
 
-    // !!! ИСПРАВЛЕН БАГ: НЕЛЬЗЯ ДЕЛАТЬ free(data) ЗДЕСЬ !!!
-
+    // Free data after successful insertion, since symtable makes its own copy
+    free(data);
     return symtable_lookup(table, name);
 }
 
