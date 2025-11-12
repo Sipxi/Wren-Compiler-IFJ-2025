@@ -34,3 +34,19 @@ static int get_precedence(Token *token) {
             return 0; // Не оператор
     }
 }
+
+static bool is_term(Token* token) {
+    switch (token->type) {
+        case TOKEN_IDENTIFIER:
+        case TOKEN_GLOBAL_IDENTIFIER:
+        case TOKEN_INT:
+        case TOKEN_FLOAT:
+        case TOKEN_EXP:
+        case TOKEN_HEX:
+        case TOKEN_STRING:
+        case TOKEN_NULL:
+            return true;
+        default:
+            return false;
+    }
+}
