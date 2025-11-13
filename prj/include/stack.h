@@ -1,6 +1,7 @@
 #ifndef _STACK_H_
 #define _STACK_H_
 
+#include "token.h"
 #include <stdio.h>
 #include <stdbool.h>
 
@@ -9,7 +10,7 @@
  * hodnot zásobníku.
  * Při implementaci hodnotu MAX_STACK vůbec nepoužívejte.
  */
-#define MAX_STACK 1000
+#define MAX_STACK 1000000
 
 /**
  * Při implementaci operací nad ADT zásobník předpokládejte, že velikost tohoto
@@ -35,7 +36,7 @@ extern bool solved;
 /** ADT zásobník implementovaný v dynamickém poli. */
 typedef struct {
 	/** Pole pro uložení hodnot. */
-	char *array;
+	Token **array;
 	/** Index prvku na vrcholu zásobníku. */
 	int topIndex;
 } Stack;
@@ -46,11 +47,11 @@ void Stack_Init( Stack * );
 
 bool Stack_IsEmpty( const Stack * );
 
-void Stack_Top( const Stack *, char * );
+Token* Stack_Top(const Stack *stack);
 
-void Stack_Pop( Stack * );
+Token* Stack_Pop(Stack *stack);  
 
-void Stack_Push( Stack *, char );
+void Stack_Push(Stack *stack, Token *token);
 
 void Stack_Dispose( Stack * );
 

@@ -4,4 +4,6 @@
 #include "lexer.h"
 #include <stdbool.h>
 
+bool parser_expression(Lexer *lexer, FILE *file);
+
 #endif 

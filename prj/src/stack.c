@@ -41,21 +41,20 @@ void Stack_Error( int error_code ) {
  *
  * @param stack Ukazatel na strukturu zásobníku
  */
-void Stack_Init( Stack *stack ) {
-	// Kontrola, zda je zásobník prázdný
-	if (stack == NULL) {
-		Stack_Error(SERR_INIT);
-		return;
-	}
-	// Alokace paměti pro pole zásobníku
-	stack->array = malloc(sizeof(char) * STACK_SIZE);
-	// Kontrola, zda se alokace provedlaa úspěšně
-	if (stack->array == NULL) {
-		Stack_Error(SERR_INIT);
-		return;
-	}
-	// Inicializace indexu vrcholu zásobníku
-	stack->topIndex = -1;
+void Stack_Init(Stack *stack) {
+    if (stack == NULL) {
+        Stack_Error(SERR_INIT);
+        return;
+    }
+
+    // Аллоцируем массив указателей на Token
+    stack->array = malloc(sizeof(Token *) * STACK_SIZE);
+    if (stack->array == NULL) {
+        Stack_Error(SERR_INIT);
+        return;
+    }
+
+    stack->topIndex = -1;
 }
 
 /**
@@ -84,14 +83,13 @@ bool Stack_IsEmpty( const Stack *stack ) {
  * @param stack Ukazatel na inicializovanou strukturu zásobníku
  * @param dataPtr Ukazatel na cílovou proměnnou
  */
-void Stack_Top( const Stack *stack, char *dataPtr ) {
-	// Kontrola, zda je zásobník prázdný
-	if (Stack_IsEmpty(stack)) {
-		Stack_Error(SERR_TOP);
-		return;
-	}
-	// Přiřazení hodnoty z vrcholu zásobníku do ukazatele dataPtr
-	*dataPtr = stack->array[stack->topIndex];
+Token *Stack_Top(const Stack *stack) {
+    if (Stack_IsEmpty(stack)) {
+        Stack_Error(SERR_TOP);
+        return NULL;
+    }
+
+    return stack->array[stack->topIndex];
 }
 
 
@@ -107,11 +105,14 @@ void Stack_Top( const Stack *stack, char *dataPtr ) {
  *
  * @param stack Ukazatel na inicializovanou strukturu zásobníku
  */
-void Stack_Pop( Stack *stack ) {
-	if (Stack_IsEmpty(stack)) {
-		return;
-	}
-	stack->topIndex = stack->topIndex - 1;
+Token *Stack_Pop(Stack *stack) {
+    if (Stack_IsEmpty(stack)) {
+        return NULL;
+    }
+
+    Token *top = stack->array[stack->topIndex];
+    stack->topIndex--;
+    return top;
 }
 
 
@@ -125,9 +126,14 @@ void Stack_Pop( Stack *stack ) {
  * @param stack Ukazatel na inicializovanou strukturu zásobníku
  * @param data Znak k vložení
  */
-void Stack_Push( Stack *stack, char data ) {
-	stack->topIndex = stack->topIndex + 1;
-	stack->array[stack->topIndex] = data;
+void Stack_Push(Stack *stack, Token *token) {
+    if (stack->topIndex >= STACK_SIZE - 1) {
+        Stack_Error(SERR_PUSH);
+        return;
+    }
+
+    stack->topIndex++;
+    stack->array[stack->topIndex] = token;
 }
 
 
@@ -137,10 +143,9 @@ void Stack_Push( Stack *stack, char data ) {
  *
  * @param stack Ukazatel na inicializovanou strukturu zásobníku
  */
-void Stack_Dispose( Stack *stack ) {
-	// Uvolnění paměti alokované pro pole zásobníku
-	free(stack->array);
-	stack->array = NULL;
-	stack->topIndex = -1;
+void Stack_Dispose(Stack *stack) {
+    free(stack->array);
+    stack->array = NULL;
+    stack->topIndex = -1;
 }
 

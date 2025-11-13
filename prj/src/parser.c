@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "expression.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -54,7 +55,12 @@ void operations_function(Lexer *lexer, FILE *file) {
     case TOKEN_KEYWORD:
         if (strcmp(lexer->current_token->data, "return") == 0) {
             get_token(lexer, file); // consume 'return' keyword
-            //! гроб
+            if (parser_expression(lexer, file)) {
+                // Успешно разобрали выражение
+            } else {
+                printf("Invalid expression after 'return' keyword.\n");
+                return;
+            };
             break;
         }
         if (strcmp(lexer->current_token->data, "if") == 0) {
