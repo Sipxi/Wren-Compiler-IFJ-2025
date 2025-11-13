@@ -1,3 +1,5 @@
+gcc -Wall -Wextra -std=c99 -pedantic -g -Wno-unused-function -Iinclude -c src/tac.c -o obj/tac.o
+gcc obj/ast.o obj/dll.o obj/lexer.o obj/optimizer.o obj/printer.o obj/symtable.o obj/tac.o obj/token.o obj/utils.o obj/test.o -o test_playground
 ./test_playground
 === IFJ-2025 Test Suite ===
 
@@ -20,15 +22,15 @@ DECLARE            | a               | ____            | ____
 DECLARE            | b               | ____            | ____
 DECLARE            | c               | ____            | ____
 DECLARE            | $t0             | ____            | ____
-ASSIGN             | $t0             | -2.82119e-37    | ____
+ASSIGN             | $t0             | 30              | ____
 ASSIGN             | a               | $t0             | ____
 DECLARE            | $t1             | ____            | ____
-ASSIGN             | $t1             | inf             | ____
+ASSIGN             | $t1             | 3               | ____
 DECLARE            | $t2             | ____            | ____
 MUL                | $t2             | $t1             | 3
 ASSIGN             | b               | $t2             | ____
 DECLARE            | $t3             | ____            | ____
-ASSIGN             | $t3             | 0               | ____
+ASSIGN             | $t3             | 20              | ____
 DECLARE            | $t4             | ____            | ____
 ADD                | $t4             | a               | $t3
 ASSIGN             | c               | $t4             | ____

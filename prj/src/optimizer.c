@@ -70,27 +70,28 @@ void constant_folding(DLList *tac_list) {
         TacConstant arg2_const = instr->arg2->data.constant;
 
         // Поддерживаем только числовые константы для арифметики
-        //? А что с float? Добавить поддержку?
+        //? У нас всё float? Или есть где-то int?
         if (arg1_const.type != TYPE_NUM || arg2_const.type != TYPE_NUM) {
             DLL_Next(tac_list);
             continue;
         }
         
-        int result_value;
+        //! ПОКА ЧТО ВСЕГДА float, ПОЧЕМУ-ТО
+        float result_value;
         // Вычисляем результат в зависимости от операции
         switch (instr->operation_code) {
             case OP_ADD:
-                result_value = arg1_const.value.int_value + arg2_const.value.int_value;
+                result_value = arg1_const.value.float_value + arg2_const.value.float_value;
                 break;
             case OP_SUBTRACT:
-                result_value = arg1_const.value.int_value - arg2_const.value.int_value;
+                result_value = arg1_const.value.float_value - arg2_const.value.float_value;
                 break;
             case OP_MULTIPLY:
-                result_value = arg1_const.value.int_value * arg2_const.value.int_value;
+                result_value = arg1_const.value.float_value * arg2_const.value.float_value;
                 break;
             case OP_DIVIDE:
                 // Проверка деления на ноль
-                if (arg2_const.value.int_value == 0) {
+                if (arg2_const.value.float_value == 0) {
                     DLL_Next(tac_list);
                     // Пропускаем оптимизацию
                     //? Нужно ли логировать ошибку?
@@ -107,7 +108,7 @@ void constant_folding(DLList *tac_list) {
         // Создаем новую константу для результата
         TacConstant result_const;
         result_const.type = TYPE_NUM;
-        result_const.value.int_value = result_value;
+        result_const.value.float_value = result_value;
 
         // Освобождаем старые операнды
         free_operand(instr->arg1);
