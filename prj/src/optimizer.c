@@ -9,12 +9,12 @@
  */
 
 #include "optimizer.h"
-#include "tac.h"
 #include "symtable.h"
 
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+#include <stdlib.h>
 
 
  /* ======================================*/
@@ -45,7 +45,7 @@ bool optimization_performed;
   *
   * @param tac_list Список TAC инструкций для оптимизации.
   */
-void constant_folding(DLList *tac_list);
+void constant_folding(TACDLList *tac_list);
 
 /**
  * @brief Удаляет недостижимый код из списка TAC инструкций.
@@ -59,7 +59,7 @@ void constant_folding(DLList *tac_list);
  *
  * @param tac_list Список TAC инструкций для оптимизации.
  */
-void unreachable_code(DLList *tac_list);
+void unreachable_code(TACDLList *tac_list);
 
 
 /* ======================================*/
@@ -270,21 +270,21 @@ bool are_args_constant(TacInstruction *instr) {
 /* ===== Имплементация техник оптимизации =====*/
 /* ======================================*/
 
-void constant_folding(DLList *tac_list) {
-    DLL_First(tac_list);
+void constant_folding(TACDLList *tac_list) {
+    TACDLL_First(tac_list);
 
-    while (DLL_IsActive(tac_list)) {
+    while (TACDLL_IsActive(tac_list)) {
         TacInstruction *instr;
-        DLL_GetValue(tac_list, (void **)&instr);
+        TACDLL_GetValue(tac_list, &instr);
 
         // Проверяем, является ли операция арифметической
         if (!can_be_folded(instr->operation_code)) {
-            DLL_Next(tac_list);
+            TACDLL_Next(tac_list);
             continue;
         }
         // Проверяем, что оба аргумента - константы
         if (!are_args_constant(instr)) {
-            DLL_Next(tac_list);
+            TACDLL_Next(tac_list);
             continue;
         }
 
@@ -365,44 +365,44 @@ void constant_folding(DLList *tac_list) {
         }
 
         // Переходим к следующей инструкции
-        DLL_Next(tac_list);
+        TACDLL_Next(tac_list);
 
 
     }
 }
 
-void unreachable_code(DLList *tac_list) {
-    DLL_First(tac_list);
+void unreachable_code(TACDLList *tac_list) {
+    TACDLL_First(tac_list);
 
-    while (DLL_IsActive(tac_list)) {
+    while (TACDLL_IsActive(tac_list)) {
         TacInstruction *instr;
-        DLL_GetValue(tac_list, (void **)&instr);
+        TACDLL_GetValue(tac_list, &instr);
 
         // Если инструкция - безусловный переход или возврат из функции
         if (instr->operation_code == OP_JUMP ||
             instr->operation_code == OP_RETURN) {
             // После этой инструкции все следующие до метки - недостижимый код
-            DLL_Next(tac_list);
-            while (DLL_IsActive(tac_list)) {
+            TACDLL_Next(tac_list);
+            while (TACDLL_IsActive(tac_list)) {
                 TacInstruction *next_instr;
-                DLL_GetValue(tac_list, (void **)&next_instr);
+                TACDLL_GetValue(tac_list, &next_instr);
                 // Если достигнута метка, прекращаем удаление
                 if (next_instr->operation_code == OP_LABEL ||
                     next_instr->operation_code == OP_FUNCTION_END) {
                     break;
                 }
                 // Удаляем недостижимую инструкцию
-                DLL_Previous(tac_list);
-                DLL_DeleteAfter(tac_list);
+                TACDLL_Previous(tac_list);
+                TACDLL_DeleteAfter(tac_list);
 
                 //* Помечаем, что была выполнена оптимизация
                 optimization_performed = true;
 
-                DLL_Next(tac_list);
+                TACDLL_Next(tac_list);
             }
 
         }
-        DLL_Next(tac_list);
+        TACDLL_Next(tac_list);
     }
 }
 
@@ -412,7 +412,7 @@ void unreachable_code(DLList *tac_list) {
 /* ===== Имплементация публичных функций =====*/
 /* ======================================*/
 
-void optimize_tac(DLList *tac_list) {
+void optimize_tac(TACDLList *tac_list) {
     optimization_performed = true;
 
     while (optimization_performed) {
@@ -422,8 +422,6 @@ void optimize_tac(DLList *tac_list) {
         constant_folding(tac_list);
         // Вызов оптимизации Unreachable Code
         unreachable_code(tac_list);
-        // Вызов оптимизации Peephole Jump NOP
-        peephole_jump_nop(tac_list);
 
     }
 }   

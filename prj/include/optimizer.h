@@ -12,7 +12,7 @@
 #ifndef OPTIMIZER_H
 #define OPTIMIZER_H
 
-#include "dll.h"
+#include "tac.h"
 
 
 /* ======================================*/
@@ -27,7 +27,7 @@
  * 
  * @param tac_list Список TAC инструкций для оптимизации.
  */
-void optimize_tac(DLList *tac_list);
+void optimize_tac(TACDLList *tac_list);
 
 
 

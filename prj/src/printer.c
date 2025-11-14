@@ -127,21 +127,20 @@ void free_operand(Operand *op) {
 
 
 
-void free_tac_instruction(void* data) {
-    if (data == NULL) return;
+void free_tac_instruction(TacInstruction *tac_intruction) {
+    if (tac_intruction == NULL) return;
     
-    TacInstruction *instr = (TacInstruction*)data;
     
     // Чистим все 3 операнда
-    free_operand(instr->result);
-    free_operand(instr->arg1);
-    free_operand(instr->arg2);
+    free_operand(tac_intruction->result);
+    free_operand(tac_intruction->arg1);
+    free_operand(tac_intruction->arg2);
     
     // Чистим саму инструкцию
-    free(instr);
+    free(tac_intruction);
 }
 
-void print_tac_list(DLList *tac_list) {
+void print_tac_list(TACDLList *tac_list) {
     // Определяем ширину столбцов для идеального выравнивания
     // (OP_FUNCTION_BEGIN - 16 символов, дадим 18)
     const int op_width = 18;
@@ -159,17 +158,17 @@ void print_tac_list(DLList *tac_list) {
     // (18) + (15) + (15) + (15-ish) + (3 * " | ")
     printf("--------------------+-----------------+-----------------+-----------------\n");
 
-    DLL_First(tac_list);
+    TACDLL_First(tac_list);
     int count = 0;
-    while (DLL_IsActive(tac_list)) {
+    while (TACDLL_IsActive(tac_list)) {
         TacInstruction *instr;
-        DLL_GetValue(tac_list, (void**)&instr);
+        TACDLL_GetValue(tac_list, &instr);
 
         if (instr->operation_code == OP_LABEL) {
             // Метки печатаем отдельно для красоты
             // (arg1 хранит имя метки)
             printf("\n%s:\n", instr->arg1->data.label_name);
-            DLL_Next(tac_list);
+            TACDLL_Next(tac_list);
             continue;
         }
 
@@ -190,7 +189,7 @@ void print_tac_list(DLList *tac_list) {
                col_width, arg1_buf,                                // ARG1
                arg2_buf);                                          // ARG2
 
-        DLL_Next(tac_list);
+        TACDLL_Next(tac_list);
         count++;
     }
     printf("--------------------+-----------------+-----------------+-----------------\n");

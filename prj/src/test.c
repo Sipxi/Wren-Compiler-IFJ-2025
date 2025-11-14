@@ -4,7 +4,6 @@
  */
 
 #include "ast.h"
-#include "dll.h"
 #include "symtable.h" 
 #include "tac.h"      
 #include "printer.h"  
@@ -328,8 +327,8 @@ void test_tac_generator() {
     Symtable global_table;
     symtable_init(&global_table);
 
-    DLList tac_list;
-    DLL_Init(&tac_list);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
 
     // 2. Создаем AST и заполняем Symtable
     AstNode *ast_root = create_test_ast(&global_table);
@@ -354,7 +353,7 @@ void test_tac_generator() {
     printf("\n3. Cleaning up resources...\n");
     ast_node_free_recursive(ast_root);
     symtable_free(&global_table);
-    DLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
+    TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
 
     printf("Done.\n");
 
