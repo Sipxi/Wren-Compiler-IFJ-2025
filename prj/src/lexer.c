@@ -16,6 +16,16 @@
 
 #include "error.h"
 
+
+/*=======================================*/
+/* ===== Глобальные переменные ===== */
+/* ======================================*/
+
+
+static Token peeked_token;   // хранит "заглянутый" токен
+static bool has_peeked = false; // флаг, был ли уже сделан peek
+
+
 /* ======================================*/
 /* ===== FSM (Finite State Machine) =====*/
 /* ======================================*/
@@ -78,6 +88,19 @@ typedef enum {
 /* ===== Определение приватных функций лексера =====*/
 /* ======================================*/
 
+
+/**
+ * Получает следующий токен из исходного кода.
+ *
+ * Эта функция читает символы из предоставленного файла
+ * и создаёт следующий токен на основе правил лексера.
+ *
+ * @param lexer Указатель на структуру Lexer.
+ * @param file Указатель на файл, содержащий исходный код.
+ * @return Следующая структура Token.
+ */
+Token scan_token(Lexer *lexer, FILE *file);
+
 /**
  * Проверяет, является ли символ допустимым символом для идентификаторов (буквы
  * и цифры).
@@ -139,8 +162,6 @@ static bool is_whitespace(const char character);
  * @return true если символ является шестнадцатеричной цифрой, иначе false.
  */
 static bool is_hex_digit(const char character);
-
-
 
 /**
  * Записывает указанное количество символов из файла в строку.
@@ -419,40 +440,23 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
     exit(error_code);
 }
 
-static Token peeked_token;   // хранит "заглянутый" токен
-static bool has_peeked = false; // флаг, был ли уже сделан peek
-
-
 Token peek_token(Lexer *lexer, FILE *file) {
     if (!has_peeked) {
-        peeked_token = get_next_token(lexer, file); // читаем токен, но не потребляем
+        peeked_token = scan_token(lexer, file); // читаем токен, но не потребляем
         has_peeked = true;
     }
     return peeked_token;
 }
-
 
 Token get_token(Lexer *lexer, FILE *file) {
     if (has_peeked) {
         has_peeked = false;  // сбрасываем состояние peek
         return peeked_token; // возвращаем тот же токен
     }
-    return get_next_token(lexer, file); // читаем новый токен
+    return scan_token(lexer, file); // читаем новый токен
 }
 
-
-/*
- По сути я теперь сделал несколько функций, которые нам помогают
- легко читать и обработать токены.
-
- Посмотрите и поймите функции:
- lexer_consume_char - читает следующий символ и обновляет позицию лексера
- set_single_token - устанавливает токен с указанным типом и данными (один
- символ) peek_char - просматривает следующий символ в файле без его удаления из
- потока peek_next_char - просматривает символ после следующего в файле без его
- удаления из потока
-*/
-Token get_next_token(Lexer *lexer, FILE *file) {
+Token scan_token(Lexer *lexer, FILE *file) {
     // FSM реализация лексера
     // Если файл уже на конце файла, возвращаем TOKEN_EOF
     if (lexer->current_token->data[0] == EOF) {
@@ -720,7 +724,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                 // Первый символ был '0' - увеличиваем счетчик
                 characters_read++;
                 // Считываем следующий символ после '0'
-                current_char = lexer_consume_char(lexer, file);
                 if (current_char == 'x') {
                     // Обработка шестнадцатеричных чисел
                     characters_read++;
@@ -736,14 +739,15 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     characters_read++;
                     change_state(file, lexer, &state, STATE_CHECK_EXPONENT, current_char);
                     break;
-                } else if (is_digit(current_char)) {
+                }
+                else if (is_digit(current_char) && current_char != '0') {
                     // Оказывается, 0456 это нормальное число во wren, выведет 456
                     // Поэтому 0 просто убираем и читаем дальше как обычное число
                     // Уменьшаем счетчик, так как '0' не учитывается в числе
                     characters_read--;
                     change_state(file, lexer, &state, STATE_NUMBER, current_char);
                     break;
-                }
+                } 
                 // Это просто '0'
                 set_single_token(lexer, TOKEN_INT, '0');
                 return *lexer->current_token;

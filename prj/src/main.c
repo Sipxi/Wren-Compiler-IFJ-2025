@@ -23,7 +23,7 @@ int main() {
         fclose(file);
         return 1;
     }
-    get_next_token(lexer, file);
+    scan_token(lexer, file);
 
     if (lexer->current_token->type != TOKEN_NULL) {
         printf("Token Type: %d, Data: %s, Line: %d\n",
