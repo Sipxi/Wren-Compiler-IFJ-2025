@@ -10,13 +10,26 @@
 
 #include "optimizer.h"
 #include "tac.h"
+#include "symtable.h"
 
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
+
+
  /* ======================================*/
- /* ===== Прототипы приватных функций =====*/
+ /* ===== Глобальные переменные ========*/
  /* ======================================*/
+
+bool optimization_performed;
+
+/* ======================================*/
+/* ===== Прототипы приватных функций =====*/
+/* ======================================*/
+
+/* ========================================*/
+/* ===== Техники оптимизации =====*/
+/* ========================================*/
 
  /**
   * @brief Выполняет оптимизацию "Constant Folding" на списке TAC инструкций.
@@ -24,7 +37,9 @@
   * Эта функция ищет арифметические операции с константными операндами
   * и вычисляет их во время компиляции, заменяя инструкцию на
   * присваивание результата.
-  *
+  * @note Настраивает глобальную переменную 'optimization_performed' в true
+  * если была выполнена хотя бы одна оптимизация.
+  * 
   * Например :
   * t1 = 2 + 3  ->  t1 = 5
   *
@@ -33,14 +48,23 @@
 void constant_folding(DLList *tac_list);
 
 /**
- * @brief Выполняет оптимизацию "Dead Code Elimination" на списке TAC инструкций.
+ * @brief Удаляет недостижимый код из списка TAC инструкций.
  *
- * Эта функция удаляет инструкции, которые не влияют на результат программы,
- * такие как присваивания в неиспользуемые переменные.
+ * Эта функция ищет инструкции, которые никогда не будут выполнены
+ * (например, инструкции после безусловного перехода или возврата из функции)
+ * и удаляет их из списка.
+ * 
+ * @note Настраивает глобальную переменную 'optimization_performed' в true
+ * если была выполнена хотя бы одна оптимизация.
  *
  * @param tac_list Список TAC инструкций для оптимизации.
  */
-void dead_code_elimination(DLList *tac_list);
+void unreachable_code(DLList *tac_list);
+
+
+/* ======================================*/
+/* ===== Помощные функции для Constant Folding ===== */
+/* ======================================*/
 
 /**
  * @brief Проверяет, является ли операция арифметической.
@@ -57,7 +81,6 @@ bool can_be_folded(TacOperationCode op_code);
  * @return true если оба аргумента константы, иначе false.
  */
 bool are_args_constant(TacInstruction *instr);
-
 
 /**
  * @brief Проверяет, является ли число целым и ставит подходящий тип в TacConstant.
@@ -108,9 +131,9 @@ char *multiply_string_constant(TacInstruction *instr);
 
 
 
-/* ====================*/
-/* ===== Constant folding ===== */
-/* ====================*/
+/* ====================================== */
+/* ===== Имплементация помощных функций для Constant Folding ===== */
+/* =========================================*/
 
 char *multiply_string_constant(TacInstruction *instr) {
     // Извлекаем строковое значение и количество повторений
@@ -243,10 +266,16 @@ bool are_args_constant(TacInstruction *instr) {
         instr->arg2->type == OPERAND_TYPE_CONSTANT);
 }
 
+/* ======================================*/
+/* ===== Имплементация техник оптимизации =====*/
+/* ======================================*/
+
 void constant_folding(DLList *tac_list) {
     DLL_First(tac_list);
+
     while (DLL_IsActive(tac_list)) {
-        TacInstruction *instr = (TacInstruction *)tac_list->active_element->data;
+        TacInstruction *instr;
+        DLL_GetValue(tac_list, (void **)&instr);
 
         // Проверяем, является ли операция арифметической
         if (!can_be_folded(instr->operation_code)) {
@@ -318,6 +347,8 @@ void constant_folding(DLList *tac_list) {
         // Если оптимизация выполнена, обновляем инструкцию
         // =====
         if (optimized) {
+            //* Помечаем, что была выполнена оптимизация
+            optimization_performed = true;
             // Освобождаем старые операнды
             free_operand(instr->arg1);
             free_operand(instr->arg2);
@@ -340,11 +371,59 @@ void constant_folding(DLList *tac_list) {
     }
 }
 
+void unreachable_code(DLList *tac_list) {
+    DLL_First(tac_list);
+
+    while (DLL_IsActive(tac_list)) {
+        TacInstruction *instr;
+        DLL_GetValue(tac_list, (void **)&instr);
+
+        // Если инструкция - безусловный переход или возврат из функции
+        if (instr->operation_code == OP_JUMP ||
+            instr->operation_code == OP_RETURN) {
+            // После этой инструкции все следующие до метки - недостижимый код
+            DLL_Next(tac_list);
+            while (DLL_IsActive(tac_list)) {
+                TacInstruction *next_instr;
+                DLL_GetValue(tac_list, (void **)&next_instr);
+                // Если достигнута метка, прекращаем удаление
+                if (next_instr->operation_code == OP_LABEL ||
+                    next_instr->operation_code == OP_FUNCTION_END) {
+                    break;
+                }
+                // Удаляем недостижимую инструкцию
+                DLL_Previous(tac_list);
+                DLL_DeleteAfter(tac_list);
+
+                //* Помечаем, что была выполнена оптимизация
+                optimization_performed = true;
+
+                DLL_Next(tac_list);
+            }
+
+        }
+        DLL_Next(tac_list);
+    }
+}
+
+
+
 /* ======================================*/
 /* ===== Имплементация публичных функций =====*/
 /* ======================================*/
 
 void optimize_tac(DLList *tac_list) {
-    // Вызов оптимизации Constant Folding
-    constant_folding(tac_list);
-}
+    optimization_performed = true;
+
+    while (optimization_performed) {
+        optimization_performed = false;
+
+        // Вызов оптимизации Constant Folding
+        constant_folding(tac_list);
+        // Вызов оптимизации Unreachable Code
+        unreachable_code(tac_list);
+        // Вызов оптимизации Peephole Jump NOP
+        peephole_jump_nop(tac_list);
+
+    }
+}   

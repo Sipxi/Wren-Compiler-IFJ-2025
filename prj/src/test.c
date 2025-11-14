@@ -48,174 +48,181 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
 
 /**
  * @brief Строит фейковый AST для кода:
- * (Тест для ВСЕХ случаев Constant Folding Оптимизатора)
+ * (Тест для Peephole Jump-NOP)
  *
- * static main() {
- * var a // (для контроля)
- *
- * var s1 = "hello" + "world" // -> "helloworld"
- * var s2 = "a" * 3          // -> "aaa"
- * var n1 = 10 + 20.5        // -> 30.5
- * var n2 = 100 / 0          // -> (NaN, не сворачивать)
- *
- * a = 1 // (чтобы 'a' была 'Num')
- * var n3 = a + 10           // (НЕ сворачивать)
+ * // 1. Тест "Пустой 'else'" (Контроль)
+ * static func_empty_else(a, b) {
+ * if (a > b) { a = 1; } else { }
  * }
+ *
+ * // 2. Тест "Пустой 'if'" (Контроль)
+ * static func_empty_if(a, b) {
+ * if (a > b) { } else { b = 2; }
+ * }
+ *
+ * // 3. Тест "Полный" (Контроль)
+ * static func_full(a, b) {
+ * if (a > b) { a = 1; } else { b = 2; }
+ * }
+ *
+ * // 4. НАСТОЯЩИЙ ТЕСТ (Пустой 'then', нет 'else')
+ * static func_nop_jump(a, b) {
+ * if (a > b) { }
+ * }
+ *
  */
 static AstNode *create_test_ast(Symtable *global_table) {
     printf("1. Building Fake AST and Symtable...\n");
 
     // --- 1. (СИМУЛЯЦИЯ Pass 2) ---
     TableEntry *func_main = define_symbol(global_table, "main", KIND_FUNC);
+    TableEntry *func_ee = define_symbol(global_table, "func_empty_else", KIND_FUNC);
+    TableEntry *func_ei = define_symbol(global_table, "func_empty_if", KIND_FUNC);
+    TableEntry *func_f = define_symbol(global_table, "func_full", KIND_FUNC);
+    TableEntry *func_nop = define_symbol(global_table, "func_nop_jump", KIND_FUNC);
+    // (Переменные для 'main', чтобы было что передавать)
     TableEntry *var_a = define_symbol(global_table, "a", KIND_VAR);
-    TableEntry *var_s1 = define_symbol(global_table, "s1", KIND_VAR);
-    TableEntry *var_s2 = define_symbol(global_table, "s2", KIND_VAR);
-    TableEntry *var_n1 = define_symbol(global_table, "n1", KIND_VAR);
-    TableEntry *var_n2 = define_symbol(global_table, "n2", KIND_VAR);
-    TableEntry *var_n3 = define_symbol(global_table, "n3", KIND_VAR);
+    TableEntry *var_b = define_symbol(global_table, "b", KIND_VAR);
+    // (Параметры для функций)
+    TableEntry *param_p1 = define_symbol(global_table, "p1", KIND_VAR);
+    TableEntry *param_p2 = define_symbol(global_table, "p2", KIND_VAR);
 
+    AstNode *program = ast_node_create(NODE_PROGRAM, 0);
 
-    // --- 2. Строим 'main()' ---
+    // --- 2. 'main()' (просто вызывает остальные) ---
     AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
-    main_def->table_entry = func_main; // (Pass 2) Линкуем
+    main_def->table_entry = func_main; // (Pass 2)
+    ast_node_add_child(program, main_def);
     {
-        AstNode *main_block = ast_node_create(NODE_BLOCK, 1);
-        
-        // --- Определения переменных ---
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 2, "a"));
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "s1"));
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 4, "s2"));
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 5, "n1"));
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 6, "n2"));
-        ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 7, "n3"));
-        // (Симуляция Pass 2: Линкуем 'var defs')
-        main_block->child->table_entry = var_a;
-        main_block->child->sibling->table_entry = var_s1;
-        main_block->child->sibling->sibling->table_entry = var_s2;
-        // ... и т.д. (не так важно для 3AC, но важно для семантики)
-
-
-        // --- 1. s1 = "hello" + "world" ---
-        AstNode *assign_s1 = ast_node_create(NODE_ASSIGNMENT, 9);
-        AstNode* s1_id = ast_new_id_node(NODE_ID, 9, "s1");
-        s1_id->table_entry = var_s1; // (Pass 2)
-        
-        AstNode* str_hello = ast_new_string_node("hello", 9); // (из ast.c)
-        str_hello->data_type = TYPE_STR; // (Pass 2)
-        AstNode* str_world = ast_new_string_node("world", 9); // (из ast.c)
-        str_world->data_type = TYPE_STR; // (Pass 2)
-        
-        AstNode *plus_str = ast_new_bin_op(NODE_OP_PLUS, 9, str_hello, str_world);
-        plus_str->data_type = TYPE_STR; // (Pass 2) 'Str + Str' -> 'Str'
-
-        ast_node_add_child(assign_s1, s1_id);
-        ast_node_add_child(assign_s1, plus_str);
-        ast_node_add_child(main_block, assign_s1);
-        var_s1->data->data_type = TYPE_STR; // (Pass 2) 's1' теперь String
-
-
-        // --- 2. s2 = "a" * 3 ---
-        AstNode *assign_s2 = ast_node_create(NODE_ASSIGNMENT, 10);
-        AstNode* s2_id = ast_new_id_node(NODE_ID, 10, "s2");
-        s2_id->table_entry = var_s2; // (Pass 2)
-        
-        AstNode* str_a = ast_new_string_node("a", 10);
-        str_a->data_type = TYPE_STR; // (Pass 2)
-        AstNode* num_3 = ast_new_num_node(3.0, 10);
-        num_3->data_type = TYPE_NUM; // (Pass 2) -> Симулируем 'int'
-        
-        AstNode *mul_str = ast_new_bin_op(NODE_OP_MUL, 10, str_a, num_3);
-        mul_str->data_type = TYPE_STR; // (Pass 2) 'Str * Num' -> 'Str'
-
-        ast_node_add_child(assign_s2, s2_id);
-        ast_node_add_child(assign_s2, mul_str);
-        ast_node_add_child(main_block, assign_s2);
-        var_s2->data->data_type = TYPE_STR; // (Pass 2) 's2' теперь String
-
-
-        // --- 3. n1 = 10 + 20.5 ---
-        AstNode *assign_n1 = ast_node_create(NODE_ASSIGNMENT, 11);
-        AstNode* n1_id = ast_new_id_node(NODE_ID, 11, "n1");
-        n1_id->table_entry = var_n1; // (Pass 2)
-
-        AstNode* num_10 = ast_new_num_node(10.0, 11);
-        num_10->data_type = TYPE_NUM; // (Pass 2) -> Симулируем 'int'
-        AstNode* num_20_5 = ast_new_num_node(20.5, 11);
-        num_20_5->data_type = TYPE_FLOAT; // (Pass 2) -> Симулируем 'float'
-
-        AstNode *plus_num = ast_new_bin_op(NODE_OP_PLUS, 11, num_10, num_20_5);
-        plus_num->data_type = TYPE_FLOAT; // (Pass 2) 'Num + Float' -> 'Float'
-        
-        ast_node_add_child(assign_n1, n1_id);
-        ast_node_add_child(assign_n1, plus_num);
-        ast_node_add_child(main_block, assign_n1);
-        var_n1->data->data_type = TYPE_FLOAT; // (Pass 2) 'n1' теперь Float
-        
-
-        // --- 4. n2 = 100 / 0 ---
-        AstNode *assign_n2 = ast_node_create(NODE_ASSIGNMENT, 12);
-        AstNode* n2_id = ast_new_id_node(NODE_ID, 12, "n2");
-        n2_id->table_entry = var_n2; // (Pass 2)
-        
-        AstNode* num_100 = ast_new_num_node(100.0, 12);
-        num_100->data_type = TYPE_NUM; // (Pass 2)
-        AstNode* num_0 = ast_new_num_node(2.0, 12);
-        num_0->data_type = TYPE_FLOAT; // (Pass 2)
-        
-        AstNode *div_zero = ast_new_bin_op(NODE_OP_DIV, 12, num_100, num_0);
-        div_zero->data_type = TYPE_FLOAT; // (Pass 2) Деление всегда 'Float'
-        
-        ast_node_add_child(assign_n2, n2_id);
-        ast_node_add_child(assign_n2, div_zero);
-        ast_node_add_child(main_block, assign_n2);
-        var_n2->data->data_type = TYPE_FLOAT; // (Pass 2)
-
-
-        // --- 5. a = 1 (Подготовка для Контроля) ---
-        AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 13);
-        AstNode* a_id_1 = ast_new_id_node(NODE_ID, 13, "a");
-        a_id_1->table_entry = var_a; // (Pass 2)
-        AstNode* num_1 = ast_new_num_node(1.0, 13);
-        num_1->data_type = TYPE_NUM; // (Pass 2)
-        ast_node_add_child(assign_a, a_id_1);
-        ast_node_add_child(assign_a, num_1);
-        ast_node_add_child(main_block, assign_a);
-        var_a->data->data_type = TYPE_NUM; // (Pass 2) 'a' теперь Num
-
-
-        // --- 6. n3 = a + 10 (Контроль) ---
-        AstNode *assign_n3 = ast_node_create(NODE_ASSIGNMENT, 14);
-        AstNode* n3_id = ast_new_id_node(NODE_ID, 14, "n3");
-        n3_id->table_entry = var_n3; // (Pass 2)
-        
-        AstNode* a_id_2 = ast_new_id_node(NODE_ID, 14, "a");
-        a_id_2->table_entry = var_a; // (Pass 2)
-        a_id_2->data_type = TYPE_NUM; // (Pass 2) 'a' теперь Num
-        
-        AstNode* num_10_2 = ast_new_num_node(10.0, 14);
-        num_10_2->data_type = TYPE_NUM; // (Pass 2)
-        
-        AstNode *plus_mixed = ast_new_bin_op(NODE_OP_PLUS, 14, a_id_2, num_10_2);
-        plus_mixed->data_type = TYPE_NUM; // (Pass 2) 'Num + Num' -> 'Num'
-        
-        ast_node_add_child(assign_n3, n3_id);
-        ast_node_add_child(assign_n3, plus_mixed);
-        ast_node_add_child(main_block, assign_n3);
-        var_n3->data->data_type = TYPE_NUM; // (Pass 2)
-        
-
-        // --- Собираем 'main' ---
         ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 1));
-        ast_node_add_child(main_def, main_block);
+        ast_node_add_child(main_def, ast_node_create(NODE_BLOCK, 1)); // Пустое тело
     }
 
-    // --- 3. Собираем программу ---
-    AstNode *program = ast_node_create(NODE_PROGRAM, 0);
-    ast_node_add_child(program, main_def);
+    // --- 3. 'func_empty_else' (Пустой else) ---
+    AstNode *func_def_ee = ast_new_id_node(NODE_FUNCTION_DEF, 10, "func_empty_else");
+    func_def_ee->table_entry = func_ee; // (Pass 2)
+    ast_node_add_child(program, func_def_ee);
+    {
+        // Параметры
+        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 10);
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 10, "p1"));
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 10, "p2"));
+        param_list->child->table_entry = param_p1; // (Pass 2)
+        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(func_def_ee, param_list);
+        
+        // Тело
+        AstNode *body = ast_node_create(NODE_BLOCK, 10);
+        AstNode *if_stmt = ast_node_create(NODE_IF, 11);
+        
+        // (cond: p1 > p2)
+        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 11, "p1");
+        p1_id_1->table_entry = param_p1; // (Pass 2)
+        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 11, "p2");
+        p2_id_1->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 11, p1_id_1, p2_id_1));
+        
+        // (then: { p1 = 1; })
+        AstNode *then_block = ast_node_create(NODE_BLOCK, 12);
+        AstNode *assign_p1 = ast_node_create(NODE_ASSIGNMENT, 12);
+        AstNode* p1_id_2 = ast_new_id_node(NODE_ID, 12, "p1");
+        p1_id_2->table_entry = param_p1; // (Pass 2)
+        ast_node_add_child(assign_p1, p1_id_2);
+        ast_node_add_child(assign_p1, ast_new_num_node(1.0, 12));
+        ast_node_add_child(then_block, assign_p1);
+        ast_node_add_child(if_stmt, then_block);
 
-    printf("   ...AST Built (Test for ALL optimizer cases).\n");
+        // (else: { })
+        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 14));
+        
+        ast_node_add_child(body, if_stmt);
+        ast_node_add_child(func_def_ee, body);
+    }
+
+    // --- 4. 'func_empty_if' (Пустой if) ---
+    AstNode *func_def_ei = ast_new_id_node(NODE_FUNCTION_DEF, 20, "func_empty_if");
+    func_def_ei->table_entry = func_ei; // (Pass 2)
+    ast_node_add_child(program, func_def_ei);
+    {
+        // Параметры
+        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 20);
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 20, "p1"));
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 20, "p2"));
+        param_list->child->table_entry = param_p1; // (Pass 2)
+        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(func_def_ei, param_list);
+        
+        // Тело
+        AstNode *body = ast_node_create(NODE_BLOCK, 20);
+        AstNode *if_stmt = ast_node_create(NODE_IF, 21);
+        
+        // (cond: p1 > p2)
+        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 21, "p1");
+        p1_id_1->table_entry = param_p1; // (Pass 2)
+        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 21, "p2");
+        p2_id_1->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 21, p1_id_1, p2_id_1));
+        
+        // (then: { })
+        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 22));
+
+        // (else: { p2 = 2; })
+        AstNode *else_block = ast_node_create(NODE_BLOCK, 24);
+        AstNode *assign_p2 = ast_node_create(NODE_ASSIGNMENT, 24);
+        AstNode* p2_id_2 = ast_new_id_node(NODE_ID, 24, "p2");
+        p2_id_2->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(assign_p2, p2_id_2);
+        ast_node_add_child(assign_p2, ast_new_num_node(2.0, 24));
+        ast_node_add_child(else_block, assign_p2);
+        ast_node_add_child(if_stmt, else_block);
+        
+        ast_node_add_child(body, if_stmt);
+        ast_node_add_child(func_def_ei, body);
+    }
+    
+    // --- 5. 'func_full' (Полный) ---
+    // (Этот код почти идентичен 'func_empty_else' + 'func_empty_if')
+    // (Я его пропущу, он не нужен для теста, но ты можешь добавить)
+
+
+    // --- 6. 'func_nop_jump' (НАСТОЯЩИЙ ТЕСТ) ---
+    AstNode *func_def_nop = ast_new_id_node(NODE_FUNCTION_DEF, 30, "func_nop_jump");
+    func_def_nop->table_entry = func_nop; // (Pass 2)
+    ast_node_add_child(program, func_def_nop);
+    {
+        // Параметры
+        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 30);
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 30, "p1"));
+        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 30, "p2"));
+        param_list->child->table_entry = param_p1; // (Pass 2)
+        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(func_def_nop, param_list);
+        
+        // Тело
+        AstNode *body = ast_node_create(NODE_BLOCK, 30);
+        AstNode *if_stmt = ast_node_create(NODE_IF, 31);
+        
+        // (cond: p1 > p2)
+        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 31, "p1");
+        p1_id_1->table_entry = param_p1; // (Pass 2)
+        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 31, "p2");
+        p2_id_1->table_entry = param_p2; // (Pass 2)
+        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 31, p1_id_1, p2_id_1));
+        
+        // (then: { })
+        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 32));
+
+        // (else: НЕТУ)
+        // (child->sibling->sibling == NULL)
+        
+        ast_node_add_child(body, if_stmt);
+        ast_node_add_child(func_def_nop, body);
+    }
+
+    printf("   ...AST Built (Test for Peephole Jump-NOP).\n");
     return program;
 }
+
 
 /**
  * @brief Печатает данные токена, экранируя специальные символы.
@@ -335,7 +342,7 @@ void test_tac_generator() {
     printf("\n2. Calling generate_tac()...\n");
     generate_tac(ast_root, &tac_list, &global_table);
     printf("   ...generate_tac() finished.\n");
-    optimize_tac(&tac_list);
+    // optimize_tac(&tac_list);
 
 
     // 4. Печатаем результат
