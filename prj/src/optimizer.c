@@ -6,7 +6,6 @@
  * Author:
  *    - Serhij Čepil (253038)
  *
- * TODO Добавить constant folding для "строк * число"
  */
 
 #include "optimizer.h"
@@ -94,8 +93,6 @@ float calculate_num_constant(TacInstruction *instr);
  */
 bool check_whole_number(float value);
 
-
-
 /**
  * @brief Умножает строковую константу на числовую константу из инструкции TAC.
  *
@@ -108,6 +105,12 @@ char *multiply_string_constant(TacInstruction *instr);
 /* ====================================== */
 /* ===== Имплементация приватных функций ===== */
 /* ====================================== */
+
+
+
+/* ====================*/
+/* ===== Constant folding ===== */
+/* ====================*/
 
 char *multiply_string_constant(TacInstruction *instr) {
     // Извлекаем строковое значение и количество повторений
@@ -123,23 +126,21 @@ char *multiply_string_constant(TacInstruction *instr) {
     }
     else {
         // Некорректный тип для умножения строки
-        //! Обработать ошибку подходящим образом
         return NULL;
     }
 
     if (repeat_count < 0) {
         // Отрицательное количество повторений не имеет смысла
-        //! Обработать ошибку подходящим образом
         return NULL;
     }
 
     // Выделяем память для новой строки
     size_t str_length = strlen(str_const.value.str_value);
     size_t new_length = str_length * repeat_count + 1;
+
     char *result_str = (char *)malloc(new_length);
     if (result_str == NULL) {
         // Ошибка памяти
-        //! Обработать ошибку выделения памяти подходящим образом
         return NULL;
     }
 
@@ -154,9 +155,6 @@ char *multiply_string_constant(TacInstruction *instr) {
     return result_str;
 }
 
-
-
-
 void set_num_constant_value(TacConstant *result_const, float result_value) {
     if (check_whole_number(result_value)) {
         result_const->type = TYPE_NUM;
@@ -168,14 +166,8 @@ void set_num_constant_value(TacConstant *result_const, float result_value) {
     }
 }
 
-void dead_code_elimination(DLList *tac_list) {
-    // Пока заглушка
-    ;;
-
-}
-
 bool check_whole_number(float value) {
-    return fmodf(value, 1.0f) == 0.0f;
+    return value == (int)value;
 }
 
 char *concat_string_constants(TacInstruction *instr) {
@@ -224,18 +216,17 @@ float calculate_num_constant(TacInstruction *instr) {
         if (arg2_value == 0.0f) {
             // Ошибка деления на ноль
             //! Обработать ошибку деления на ноль подходящим образом
-            return 0.0f;
+            return nanf("");
         }
         result = arg1_value / arg2_value;
         break;
     default:
         // Неизвестная операция
         //! Возможно стоит добавить обработку ошибок или логирование
-        return 0.0f;
+        return nanf("");
         break;
     }
     return result;
-
 }
 
 bool is_instruction_arithmetic(TacOperationCode op_code) {
@@ -249,7 +240,6 @@ bool is_argrs_constant(TacInstruction *instr) {
     return (instr->arg1->type == OPERAND_TYPE_CONSTANT &&
         instr->arg2->type == OPERAND_TYPE_CONSTANT);
 }
-
 
 void constant_folding(DLList *tac_list) {
     DLL_First(tac_list);
@@ -267,51 +257,81 @@ void constant_folding(DLList *tac_list) {
             continue;
         }
 
+        bool optimized = false;
         TacConstant result_const;
+
+        TacConstant arg1_const = instr->arg1->data.constant;
+        TacConstant arg2_const = instr->arg2->data.constant;
         // Оба аргумента - константы, выполняем вычисление
         // Проверяем тип констант
 
-        // Случай конкатенации строк
-        if (instr->arg1->data.constant.type == TYPE_STR &&
-            instr->arg2->data.constant.type == TYPE_STR &&
-            instr->operation_code == OP_ADD) {
+        // =====
+        // Случай: "a" + "b"
+        // =====
+        if (arg1_const.type == TYPE_STR &&
+            arg2_const.type == TYPE_STR &&
+            instr->operation_code == OP_CONCAT) {
             char *result_str = concat_string_constants(instr);
-            result_const.type = TYPE_STR;
-            result_const.value.str_value = result_str;
+
+            if (result_str != NULL) {
+
+                result_const.type = TYPE_STR;
+                result_const.value.str_value = result_str;
+                optimized = true;
+            }
 
         }
-        // Случай умножения строки на число
-        else if (instr->arg1->data.constant.type == TYPE_STR &&
-            instr->arg2->data.constant.type == TYPE_NUM &&
-            instr->operation_code == OP_MULTIPLY) {
+        // =====
+        // Случай: "a" * 5 или "a" * 5.0
+        // =====
+        else if (arg1_const.type == TYPE_STR &&
+            (arg2_const.type == TYPE_NUM || arg2_const.type == TYPE_FLOAT) &&
+            instr->operation_code == OP_MULTIPLY_STRING) {
             char *result_str = multiply_string_constant(instr);
-            result_const.type = TYPE_STR;
-            result_const.value.str_value = result_str;
-
+            if (result_str != NULL) {
+                result_const.type = TYPE_STR;
+                result_const.value.str_value = result_str;
+                optimized = true;
+            }
         }
-        // Случай чисел (int или float)
-        else if ((instr->arg1->data.constant.type == TYPE_NUM ||
-            instr->arg1->data.constant.type == TYPE_FLOAT) &&
-            (instr->arg2->data.constant.type == TYPE_NUM ||
-                instr->arg2->data.constant.type == TYPE_FLOAT)) {
+        // =====
+        // Случай: 5 * 5 или 5.0 + 3.2 и т.д.
+        // =====
+        else if ((arg1_const.type == TYPE_NUM ||
+            arg1_const.type == TYPE_FLOAT) &&
+            (arg2_const.type == TYPE_NUM ||
+                arg2_const.type == TYPE_FLOAT)) {
+
             float result_value = calculate_num_constant(instr);
-            set_num_constant_value(&result_const, result_value);
+
+            if (!isnan(result_value)) {
+                set_num_constant_value(&result_const, result_value);
+                optimized = true;
+
+            }
 
         }
-        // Освобождаем старые операнды
-        free_operand(instr->arg1);
-        free_operand(instr->arg2);
+
+        // =====
+        // Если оптимизация выполнена, обновляем инструкцию
+        // =====
+        if (optimized) {
+            // Освобождаем старые операнды
+            free_operand(instr->arg1);
+            free_operand(instr->arg2);
 
 
-        // Создаем новый операнд для результата
-        Operand *result_op = create_constant_operand(result_const);
+            // Создаем новый операнд для результата
+            Operand *result_op = create_constant_operand(result_const);
 
-        // Обновляем инструкцию на присваивание
-        instr->operation_code = OP_ASSIGN;
-        instr->arg1 = result_op;
-        instr->arg2 = NULL;
+            // Обновляем инструкцию на присваивание
+            instr->operation_code = OP_ASSIGN;
+            instr->arg1 = result_op;
+            instr->arg2 = NULL;
+
+        }
+
         // Переходим к следующей инструкции
-
         DLL_Next(tac_list);
 
 

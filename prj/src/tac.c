@@ -815,8 +815,14 @@ static Operand *tac_gen_recursive(AstNode *node, DLList *tac_list,
         case NODE_LITERAL_NUM: {
             // Литерал числа
             TacConstant num_const;
-            num_const.type = TYPE_NUM;
-            num_const.value.float_value = node->data.literal_num;
+            // Определяем тип числа (int или float)
+            if (node->data_type == TYPE_FLOAT) {
+                num_const.type = TYPE_FLOAT;
+                num_const.value.float_value = node->data.literal_num;
+            } else {
+                num_const.type = TYPE_NUM;
+                num_const.value.int_value = node->data.literal_num;
+            }   
             return create_constant_operand(num_const);
         }
 

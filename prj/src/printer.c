@@ -39,6 +39,7 @@ const char* op_code_to_string[] = {
     [OP_CONCAT] = "CONCAT",
     [OP_IS] = "IS",
     [OP_DECLARE] = "DECLARE",
+    [OP_MULTIPLY_STRING] = "MUL_STR",
 };
 
 /*=======================================*/
@@ -76,9 +77,11 @@ static void format_operand(Operand *op, char *buffer) {
                 sprintf(buffer, "ERR_SYM");
             break;
         case OPERAND_TYPE_CONSTANT:
-            if (op->data.constant.type == TYPE_NUM) {
+            if (op->data.constant.type == TYPE_FLOAT) {
                 // В IFJ25 это double, так что %g
                 sprintf(buffer, "%g", op->data.constant.value.float_value);
+            } else if (op->data.constant.type == TYPE_NUM) {
+                sprintf(buffer, "%d", op->data.constant.value.int_value);
             } else if (op->data.constant.type == TYPE_STR) {
                 sprintf(buffer, "\"%s\"", op->data.constant.value.str_value);
             } else if (op->data.constant.type == TYPE_NIL) {

@@ -9,8 +9,8 @@
  */
 
 
-#ifndef OPTIMAZER_H
-#define OPTIMAZER_H
+#ifndef OPTIMIZER_H
+#define OPTIMIZER_H
 
 #include "dll.h"
 
@@ -31,4 +31,4 @@ void optimize_tac(DLList *tac_list);
 
 
 
-#endif // OPTIMAZER_H
+#endif // OPTIMIZER_H
