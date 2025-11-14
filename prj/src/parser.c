@@ -12,27 +12,86 @@ static void parser_function_list(Lexer *lexer, FILE *file);
 static void right_side_expression(Lexer *lexer, FILE *file);
 static void operations_function(Lexer *lexer, FILE *file);
 
+void list_of_tersms(Lexer *lexer, FILE *file) {
+    if (is_term(peek_token(lexer, file))) {
+        get_token(lexer, file); // consume parameter
+        while (peek_token(lexer, file).type == TOKEN_COMMA) {
+            get_token(lexer, file); // consume ','
+            if (is_term(peek_token(lexer, file))== false) {
+                printf("Expected parameter identifier after ','.\n");
+                return;
+            }
+            get_token(lexer, file); // consume parameter identifier
+        }
+    }
+}
+
+bool is_builtin(const char *name) {
+    const char *builtins[] = {
+        "read_str",
+        "read_num",
+        "write",
+        "floor",
+        "str",
+        "length",
+        "substring",
+        "strcmp",
+        "ord",
+        "chr"
+    };
+    int num_builtins = sizeof(builtins) / sizeof(builtins[0]);
+    for (int i = 0; i < num_builtins; i++) {
+        if (strcmp(name, builtins[i]) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void right_side_expression(Lexer *lexer, FILE *file) {
-    switch (peek_token(lexer, file).type) {
-    case TOKEN_IDENTIFIER:
-    case TOKEN_GLOBAL_IDENTIFIER:
+    if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
         
-        get_token(lexer, file); 
+        get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
-            // function call
             get_token(lexer, file); // consume '('
             // Здесь можно добавить обработку параметров функции
             parameters_function(lexer, file);
+
             if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
-                printf("Expected ')' after function call parameters.\n");
+                printf("Expected ')' after function parameters.\n");
                 return;
             }
             get_token(lexer, file); // consume ')'
         }
-        break;
-    default:
-        printf("Expected an expression on the right side of assignment.\n");
-        return;
+    }
+    if (peek_token(lexer, file).type == TOKEN_KEYWORD &&
+        strcmp(lexer->current_token->data, "Ifj") == 0) {
+        get_token(lexer, file); // consume 'Ifj' keyword
+        if (peek_token(lexer, file).type == TOKEN_DOT) {
+            get_token(lexer, file); // consume '.'
+            // if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
+            //     printf("Expected method name after '.'.\n");
+            //     return;
+            // }
+            get_token(lexer, file); // consume method name
+            if (!is_builtin(lexer->current_token->data)) {
+                printf("Unknown method name: %s\n", lexer->current_token->data);
+                return;
+            }
+            if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
+                printf("Expected '(' after method name.\n");
+                return;
+            }
+            get_token(lexer, file); // consume '('
+            // Здесь можно добавить обработку параметров метода
+            list_of_tersms(lexer, file);
+
+            if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+                printf("Expected ')' after method parameters.\n");
+                return;
+            }
+            get_token(lexer, file); // consume ')'
+        }
     }
 }
 
@@ -73,13 +132,16 @@ void operations_function(Lexer *lexer, FILE *file) {
                 printf("Expected '(' after 'if' keyword.\n");
                 return;
             }
-            get_token(lexer, file); // consume '('
-            //! Здесь можно добавить обработку условия if
-            if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
-                printf("Expected ')' after 'if' condition.\n");
+            //get_token(lexer, file); // consume '('
+            if (!parser_expression(lexer, file)) {
+                printf("Invalid expression in 'if' condition.\n");
                 return;
             }
-            get_token(lexer, file); // consume ')'
+            // if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+            //     printf("Expected ')' after 'if' condition.\n");
+            //     return;
+            // }
+            //get_token(lexer, file); // consume ')'
             function_block(lexer, file);
             
             if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
@@ -98,7 +160,10 @@ void operations_function(Lexer *lexer, FILE *file) {
                 return;
             }
             get_token(lexer, file); // consume '('
-            //! Здесь можно добавить обработку условия while
+            if (!parser_expression(lexer, file)) {
+                printf("Invalid expression in 'while' condition.\n");
+                return;
+            }
             if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
                 printf("Expected ')' after 'while' condition.\n");
                 return;
@@ -202,6 +267,10 @@ void name_function(Lexer *lexer, FILE *file) {
         return;
     }
     get_token(lexer, file); // consume function name
+
+    if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
+        get_token(lexer, file); // consume '='
+    }
 }
 
 void parser_function_definition(Lexer *lexer, FILE *file) {

@@ -35,7 +35,7 @@ static int get_precedence(Token token) {
     }
 }
 
-static bool is_term(Token token) {
+bool is_term(Token token) {
     switch (token.type) {
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
@@ -45,6 +45,12 @@ static bool is_term(Token token) {
         case TOKEN_HEX:
         case TOKEN_STRING:
             return true;
+        case TOKEN_KEYWORD:
+            if (token.data == NULL) return false;
+            if (strcmp(token.data, "Num") == 0) return true;
+            if (strcmp(token.data, "String") == 0) return true;
+            if (strcmp(token.data, "Null") == 0) return true;
+            return false;
         default:
             return false;
     }
@@ -97,7 +103,6 @@ void token_copy_data(Token* dest, const Token* src) {
     dest->line = src->line;
     if (src->data != NULL) {
         dest->data = strdup_c99(src->data);
-        // free(src->data);
     } else {
         dest->data = NULL;
     }
@@ -112,7 +117,7 @@ bool parser_expression(Lexer *lexer, FILE *file) {
     int paren_depth = 0;
     Token current = peek_token(lexer, file);
 
-    while (current.type != TOKEN_EOF && current.type != TOKEN_EOL && paren_depth >= 0) {
+    while (current.type != TOKEN_EOF && current.type != TOKEN_EOL && paren_depth >= 0 && current.type != TOKEN_OPEN_BRACE) {
         if (is_term(current)) {
             Token tok = get_token(lexer, file);       // получаем токен
             Token *to_push = token_init();
@@ -147,7 +152,7 @@ bool parser_expression(Lexer *lexer, FILE *file) {
                 reduce_expression(&op_stack, &val_stack);
             }
         }
-        else {
+        else if (get_precedence(current) > 0) {
             Token tok = get_token(lexer, file);
             Token *to_push = token_init();
             token_copy_data(to_push, &tok);
@@ -164,6 +169,10 @@ bool parser_expression(Lexer *lexer, FILE *file) {
 
             Stack_Token_Push(&op_stack, *to_push);
         }
+            else {
+                // Некорректный токен в выражении
+                return false;
+            }
 
         current = peek_token(lexer, file);
     }

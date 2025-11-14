@@ -6,4 +6,6 @@
 
 bool parser_expression(Lexer *lexer, FILE *file);
 
+bool is_term(Token token);
+
 #endif 
