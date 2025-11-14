@@ -440,6 +440,11 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
     exit(error_code);
 }
 
+void unget_token(Lexer *lexer, FILE *file) {
+    lexer_unconsume_char(lexer, file,
+                         lexer->current_token->data[0]);
+}
+
 Token peek_token(Lexer *lexer, FILE *file) {
     if (!has_peeked) {
         peeked_token = scan_token(lexer, file); // читаем токен, но не потребляем
