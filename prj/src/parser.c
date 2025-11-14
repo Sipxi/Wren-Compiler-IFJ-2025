@@ -55,6 +55,10 @@ void operations_function(Lexer *lexer, FILE *file) {
     case TOKEN_KEYWORD:
         if (strcmp(lexer->current_token->data, "return") == 0) {
             get_token(lexer, file); // consume 'return' keyword
+            if (peek_token(lexer, file).type == TOKEN_EOL) {
+                // Пустой return
+                return;
+            }
             if (parser_expression(lexer, file)) {
                 // Успешно разобрали выражение
             } else {

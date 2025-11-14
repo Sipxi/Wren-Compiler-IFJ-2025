@@ -17,7 +17,7 @@ Token *token_init() {
     // Инициализировать пустую строку
     token->data[0] = '\0';
     // Инициализировать тип и номер строки значениями по умолчанию
-    token->type = TOKEN_NULL;
+    token->type = TOKEN_UNDEFINED;
     token->line = -1;
     return token;
 }
@@ -34,7 +34,7 @@ void token_free(Token *token) {
 
 char *token_type_to_string(TokenType type) {
     switch (type) {
-        case TOKEN_NULL: return "TOKEN_NULL";
+        case TOKEN_UNDEFINED: return "TOKEN_UNDEFINED";
         case TOKEN_STRING: return "TOKEN_STRING";
         case TOKEN_MULTI_STRING: return "TOKEN_MULTI_STRING";
         case TOKEN_INT: return "TOKEN_INT";

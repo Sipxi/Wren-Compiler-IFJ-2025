@@ -8,7 +8,7 @@
 
 /* Перечисление возможных типов токенов */
 typedef enum {
-    TOKEN_NULL, 
+    TOKEN_UNDEFINED, 
     TOKEN_STRING,
     TOKEN_MULTI_STRING,
     TOKEN_INT,
