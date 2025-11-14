@@ -159,8 +159,8 @@ static AstNode *create_test_ast(Symtable *global_table) {
         
         AstNode* num_100 = ast_new_num_node(100.0, 12);
         num_100->data_type = TYPE_NUM; // (Pass 2)
-        AstNode* num_0 = ast_new_num_node(0.0, 12);
-        num_0->data_type = TYPE_NUM; // (Pass 2)
+        AstNode* num_0 = ast_new_num_node(2.0, 12);
+        num_0->data_type = TYPE_FLOAT; // (Pass 2)
         
         AstNode *div_zero = ast_new_bin_op(NODE_OP_DIV, 12, num_100, num_0);
         div_zero->data_type = TYPE_FLOAT; // (Pass 2) Деление всегда 'Float'

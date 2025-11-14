@@ -48,7 +48,7 @@ void dead_code_elimination(DLList *tac_list);
  * @param op_code Код операции TAC.
  * @return true если операция арифметическая, иначе false.
  */
-bool is_instruction_arithmetic(TacOperationCode op_code);
+bool can_be_folded(TacOperationCode op_code);
 
 /**
  * @brief Проверяет, являются ли оба аргумента инструкции константами.
@@ -56,7 +56,7 @@ bool is_instruction_arithmetic(TacOperationCode op_code);
  * @param instr Указатель на TAC инструкцию.
  * @return true если оба аргумента константы, иначе false.
  */
-bool is_argrs_constant(TacInstruction *instr);
+bool are_args_constant(TacInstruction *instr);
 
 
 /**
@@ -229,14 +229,16 @@ float calculate_num_constant(TacInstruction *instr) {
     return result;
 }
 
-bool is_instruction_arithmetic(TacOperationCode op_code) {
+bool can_be_folded(TacOperationCode op_code) {
     return (op_code == OP_ADD ||
         op_code == OP_SUBTRACT ||
         op_code == OP_DIVIDE ||
-        op_code == OP_MULTIPLY);
+        op_code == OP_MULTIPLY ||
+        op_code == OP_CONCAT ||
+        op_code == OP_MULTIPLY_STRING);
 }
 
-bool is_argrs_constant(TacInstruction *instr) {
+bool are_args_constant(TacInstruction *instr) {
     return (instr->arg1->type == OPERAND_TYPE_CONSTANT &&
         instr->arg2->type == OPERAND_TYPE_CONSTANT);
 }
@@ -247,12 +249,12 @@ void constant_folding(DLList *tac_list) {
         TacInstruction *instr = (TacInstruction *)tac_list->active_element->data;
 
         // Проверяем, является ли операция арифметической
-        if (!is_instruction_arithmetic(instr->operation_code)) {
+        if (!can_be_folded(instr->operation_code)) {
             DLL_Next(tac_list);
             continue;
         }
         // Проверяем, что оба аргумента - константы
-        if (!is_argrs_constant(instr)) {
+        if (!are_args_constant(instr)) {
             DLL_Next(tac_list);
             continue;
         }
