@@ -47,181 +47,105 @@ static TableEntry *define_symbol(Symtable *table, const char *name,
 
 /**
  * @brief Строит фейковый AST для кода:
- * (Тест для Peephole Jump-NOP)
+ * (Тест для 'a = fun()')
  *
- * // 1. Тест "Пустой 'else'" (Контроль)
- * static func_empty_else(a, b) {
- * if (a > b) { a = 1; } else { }
+ * static fun() {
+ * return;
  * }
  *
- * // 2. Тест "Пустой 'if'" (Контроль)
- * static func_empty_if(a, b) {
- * if (a > b) { } else { b = 2; }
+ * static main() {
+ * var a
+ * a = fun()
  * }
- *
- * // 3. Тест "Полный" (Контроль)
- * static func_full(a, b) {
- * if (a > b) { a = 1; } else { b = 2; }
- * }
- *
- * // 4. НАСТОЯЩИЙ ТЕСТ (Пустой 'then', нет 'else')
- * static func_nop_jump(a, b) {
- * if (a > b) { }
- * }
- *
  */
 static AstNode *create_test_ast(Symtable *global_table) {
     printf("1. Building Fake AST and Symtable...\n");
 
     // --- 1. (СИМУЛЯЦИЯ Pass 2) ---
     TableEntry *func_main = define_symbol(global_table, "main", KIND_FUNC);
-    TableEntry *func_ee = define_symbol(global_table, "func_empty_else", KIND_FUNC);
-    TableEntry *func_ei = define_symbol(global_table, "func_empty_if", KIND_FUNC);
-    TableEntry *func_f = define_symbol(global_table, "func_full", KIND_FUNC);
-    TableEntry *func_nop = define_symbol(global_table, "func_nop_jump", KIND_FUNC);
-    // (Переменные для 'main', чтобы было что передавать)
+    TableEntry *func_fun = define_symbol(global_table, "fun", KIND_FUNC);
     TableEntry *var_a = define_symbol(global_table, "a", KIND_VAR);
-    TableEntry *var_b = define_symbol(global_table, "b", KIND_VAR);
-    // (Параметры для функций)
-    TableEntry *param_p1 = define_symbol(global_table, "p1", KIND_VAR);
-    TableEntry *param_p2 = define_symbol(global_table, "p2", KIND_VAR);
 
+    // (Pass 2) Симулируем, что семантика определила:
+    // 'fun' возвращает TYPE_NIL
+    func_fun->data->data_type = TYPE_NIL;
+    // 'a' пока не имеет типа (TYPE_NIL)
+    var_a->data->data_type = TYPE_NIL;
+
+
+    // --- 2. Строим 'fun()' ---
+    AstNode *fun_def = ast_new_id_node(NODE_FUNCTION_DEF, 1, "fun");
+    fun_def->table_entry = func_fun; // (Pass 2) Линкуем
+    {
+        // (Pass 1) Пустой список параметров
+        ast_node_add_child(fun_def, ast_node_create(NODE_PARAM_LIST, 1));
+        
+        // (Pass 1) Тело: { return; }
+        AstNode *body = ast_node_create(NODE_BLOCK, 2);
+        ast_node_add_child(body, ast_node_create(NODE_RETURN, 2)); // Пустой return
+        ast_node_add_child(fun_def, body);
+    }
+
+    // --- 3. Строим 'main()' ---
+    AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 5, "main");
+    main_def->table_entry = func_main; // (Pass 2) Линкуем
+    {
+        AstNode *main_block = ast_node_create(NODE_BLOCK, 5);
+
+        // --- var a ---
+        AstNode* def_a = ast_new_id_node(NODE_VAR_DEF, 6, "a");
+        def_a->table_entry = var_a; // (Pass 2) Линкуем
+        ast_node_add_child(main_block, def_a);
+
+        // --- a = fun() ---
+        
+        // (Pass 1) Узел '='
+        AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 7);
+        
+        // (Pass 1) LHS: 'a'
+        AstNode* a_id = ast_new_id_node(NODE_ID, 7, "a");
+        a_id->table_entry = var_a; // (Pass 2) Линкуем
+        a_id->data_type = TYPE_NIL; // (Pass 2) Тип 'a' *до* присваивания
+        ast_node_add_child(assign_a, a_id);
+
+        // (Pass 1) RHS: 'fun()'
+        AstNode *call_expr = ast_node_create(NODE_CALL_STATEMENT, 7);
+        
+        // Child 1: ID "fun" (кого вызываем)
+        AstNode* fun_id = ast_new_id_node(NODE_ID, 7, "fun");
+        fun_id->table_entry = func_fun; // (Pass 2) Линкуем
+        fun_id->data_type = func_fun->data->data_type; // (Pass 2) Тип самой функции
+        ast_node_add_child(call_expr, fun_id);
+        
+        // Child 2: Arg list (список аргументов)
+        ast_node_add_child(call_expr, ast_node_create(NODE_ARGUMENT_LIST, 7));
+        
+        // (Pass 2) Семантика установила тип *всего выражения*
+        // (Тип выражения 'fun()' равен типу, который возвращает 'fun')
+        call_expr->data_type = func_fun->data->data_type; // (TYPE_NIL)
+        
+        // Добавляем RHS (вызов) в присваивание
+        ast_node_add_child(assign_a, call_expr);
+        
+        // Добавляем стейтмент 'a = fun()' в блок
+        ast_node_add_child(main_block, assign_a);
+        
+        // (Pass 2) Симуляция: 'a' в symtable теперь тоже TYPE_NIL
+        var_a->data->data_type = TYPE_NIL;
+
+        // --- Собираем 'main' ---
+        ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 5));
+        ast_node_add_child(main_def, main_block);
+    }
+
+    // --- 4. Собираем программу ---
     AstNode *program = ast_node_create(NODE_PROGRAM, 0);
+    ast_node_add_child(program, fun_def); // Добавляем 'fun'
+    ast_node_add_child(program, main_def); // Добавляем 'main'
 
-    // --- 2. 'main()' (просто вызывает остальные) ---
-    AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
-    main_def->table_entry = func_main; // (Pass 2)
-    ast_node_add_child(program, main_def);
-    {
-        ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 1));
-        ast_node_add_child(main_def, ast_node_create(NODE_BLOCK, 1)); // Пустое тело
-    }
-
-    // --- 3. 'func_empty_else' (Пустой else) ---
-    AstNode *func_def_ee = ast_new_id_node(NODE_FUNCTION_DEF, 10, "func_empty_else");
-    func_def_ee->table_entry = func_ee; // (Pass 2)
-    ast_node_add_child(program, func_def_ee);
-    {
-        // Параметры
-        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 10);
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 10, "p1"));
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 10, "p2"));
-        param_list->child->table_entry = param_p1; // (Pass 2)
-        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(func_def_ee, param_list);
-        
-        // Тело
-        AstNode *body = ast_node_create(NODE_BLOCK, 10);
-        AstNode *if_stmt = ast_node_create(NODE_IF, 11);
-        
-        // (cond: p1 > p2)
-        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 11, "p1");
-        p1_id_1->table_entry = param_p1; // (Pass 2)
-        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 11, "p2");
-        p2_id_1->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 11, p1_id_1, p2_id_1));
-        
-        // (then: { p1 = 1; })
-        AstNode *then_block = ast_node_create(NODE_BLOCK, 12);
-        AstNode *assign_p1 = ast_node_create(NODE_ASSIGNMENT, 12);
-        AstNode* p1_id_2 = ast_new_id_node(NODE_ID, 12, "p1");
-        p1_id_2->table_entry = param_p1; // (Pass 2)
-        ast_node_add_child(assign_p1, p1_id_2);
-        ast_node_add_child(assign_p1, ast_new_num_node(1.0, 12));
-        ast_node_add_child(then_block, assign_p1);
-        ast_node_add_child(if_stmt, then_block);
-
-        // (else: { })
-        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 14));
-        
-        ast_node_add_child(body, if_stmt);
-        ast_node_add_child(func_def_ee, body);
-    }
-
-    // --- 4. 'func_empty_if' (Пустой if) ---
-    AstNode *func_def_ei = ast_new_id_node(NODE_FUNCTION_DEF, 20, "func_empty_if");
-    func_def_ei->table_entry = func_ei; // (Pass 2)
-    ast_node_add_child(program, func_def_ei);
-    {
-        // Параметры
-        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 20);
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 20, "p1"));
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 20, "p2"));
-        param_list->child->table_entry = param_p1; // (Pass 2)
-        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(func_def_ei, param_list);
-        
-        // Тело
-        AstNode *body = ast_node_create(NODE_BLOCK, 20);
-        AstNode *if_stmt = ast_node_create(NODE_IF, 21);
-        
-        // (cond: p1 > p2)
-        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 21, "p1");
-        p1_id_1->table_entry = param_p1; // (Pass 2)
-        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 21, "p2");
-        p2_id_1->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 21, p1_id_1, p2_id_1));
-        
-        // (then: { })
-        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 22));
-
-        // (else: { p2 = 2; })
-        AstNode *else_block = ast_node_create(NODE_BLOCK, 24);
-        AstNode *assign_p2 = ast_node_create(NODE_ASSIGNMENT, 24);
-        AstNode* p2_id_2 = ast_new_id_node(NODE_ID, 24, "p2");
-        p2_id_2->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(assign_p2, p2_id_2);
-        ast_node_add_child(assign_p2, ast_new_num_node(2.0, 24));
-        ast_node_add_child(else_block, assign_p2);
-        ast_node_add_child(if_stmt, else_block);
-        
-        ast_node_add_child(body, if_stmt);
-        ast_node_add_child(func_def_ei, body);
-    }
-    
-    // --- 5. 'func_full' (Полный) ---
-    // (Этот код почти идентичен 'func_empty_else' + 'func_empty_if')
-    // (Я его пропущу, он не нужен для теста, но ты можешь добавить)
-
-
-    // --- 6. 'func_nop_jump' (НАСТОЯЩИЙ ТЕСТ) ---
-    AstNode *func_def_nop = ast_new_id_node(NODE_FUNCTION_DEF, 30, "func_nop_jump");
-    func_def_nop->table_entry = func_nop; // (Pass 2)
-    ast_node_add_child(program, func_def_nop);
-    {
-        // Параметры
-        AstNode *param_list = ast_node_create(NODE_PARAM_LIST, 30);
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 30, "p1"));
-        ast_node_add_child(param_list, ast_new_id_node(NODE_PARAM, 30, "p2"));
-        param_list->child->table_entry = param_p1; // (Pass 2)
-        param_list->child->sibling->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(func_def_nop, param_list);
-        
-        // Тело
-        AstNode *body = ast_node_create(NODE_BLOCK, 30);
-        AstNode *if_stmt = ast_node_create(NODE_IF, 31);
-        
-        // (cond: p1 > p2)
-        AstNode* p1_id_1 = ast_new_id_node(NODE_ID, 31, "p1");
-        p1_id_1->table_entry = param_p1; // (Pass 2)
-        AstNode* p2_id_1 = ast_new_id_node(NODE_ID, 31, "p2");
-        p2_id_1->table_entry = param_p2; // (Pass 2)
-        ast_node_add_child(if_stmt, ast_new_bin_op(NODE_OP_GT, 31, p1_id_1, p2_id_1));
-        
-        // (then: { })
-        ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 32));
-
-        // (else: НЕТУ)
-        // (child->sibling->sibling == NULL)
-        
-        ast_node_add_child(body, if_stmt);
-        ast_node_add_child(func_def_nop, body);
-    }
-
-    printf("   ...AST Built (Test for Peephole Jump-NOP).\n");
+    printf("   ...AST Built (Test for 'a = fun()').\n");
     return program;
 }
-
 
 /**
  * @brief Печатает данные токена, экранируя специальные символы.

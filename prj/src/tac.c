@@ -798,15 +798,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         // Это будет 'result' (LHS - левая часть)
         Operand *lhs_op = create_symbol_operand(var_entry);
 
-        // // Создаем операнд-константу для 'nil'
-        // TacConstant null_const;
-        // null_const.type = TYPE_NIL;
-        // // (в .value ничего писать не надо, т.к. это nil)
-
-        // //    Это будет 'arg1' (RHS - правая часть)
-        // Operand *rhs_op = create_constant_operand(null_const);
-        // // OP_ASSIGN, result=id, arg1=nil, arg2=NULL
-
         generate_instruction(tac_list, OP_DECLARE, lhs_op, NULL, NULL);
 
         return NULL;  // 'var' - это стейтмент, он не возвращает значения
@@ -888,7 +879,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
             tac_gen_recursive(arg_list_node, tac_list, symtable);
         }
 
-        return NULL;
+        return func_op;  // Возвращаем операнд функции (может быть нужен)
     }
 
     /* ===== Обработка узла списка аргументов ===== */
