@@ -1,5 +1,6 @@
 #include "parser.h"
 #include "expression.h"
+#include "stack_token.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -61,11 +62,13 @@ void right_side_expression(Lexer *lexer, FILE *file) {
                 return;
             }
             get_token(lexer, file); // consume ')'
-        }
-        unget_token(identifier); // вернуть идентификатор обратно для выражения
-        if (!parser_expression(lexer, file)) {
+            return;
+        }  
+        else  {
+            if (!parser_expression(lexer, file)) {
             printf("Invalid expression on right side of assignment.\n");
             return;
+            }
         }
     }
     if (peek_token(lexer, file).type == TOKEN_KEYWORD &&
@@ -95,6 +98,7 @@ void right_side_expression(Lexer *lexer, FILE *file) {
                 return;
             }
             get_token(lexer, file); // consume ')'
+            return;
         }
     }
     else {
@@ -126,6 +130,12 @@ void operations_function(Lexer *lexer, FILE *file) {
             get_token(lexer, file); // consume 'return' keyword
             if (peek_token(lexer, file).type == TOKEN_EOL) {
                 // Пустой return
+                return;
+            }
+            if (peek_token(lexer, file).type == TOKEN_KEYWORD &&
+                strcmp(lexer->current_token->data, "null") == 0) {
+                // Пустой return
+                get_token(lexer, file); // consume 'null' keyword
                 return;
             }
             if (parser_expression(lexer, file)) {
@@ -169,16 +179,16 @@ void operations_function(Lexer *lexer, FILE *file) {
                 printf("Expected '(' after 'while' keyword.\n");
                 return;
             }
-            get_token(lexer, file); // consume '('
+            // get_token(lexer, file); // consume '('
             if (!parser_expression(lexer, file)) {
                 printf("Invalid expression in 'while' condition.\n");
                 return;
             }
-            if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
-                printf("Expected ')' after 'while' condition.\n");
-                return;
-            }
-            get_token(lexer, file); // consume ')'
+            // if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+            //     printf("Expected ')' after 'while' condition.\n");
+            //     return;
+            // }
+            // get_token(lexer, file); // consume ')'
             function_block(lexer, file);
             break;
         }
@@ -205,6 +215,12 @@ void operations_function(Lexer *lexer, FILE *file) {
         break;
     case TOKEN_CLOSE_BRACE:
         return; // end of function body
+    case TOKEN_OPEN_BRACE:
+        function_block(lexer, file);
+        break;
+    case TOKEN_EOF:
+        printf("Unexpected end of file inside function body.\n");
+        return;
     default:
         return;
     }

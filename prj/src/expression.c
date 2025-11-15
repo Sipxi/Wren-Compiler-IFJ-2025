@@ -50,6 +50,7 @@ bool is_term(Token token) {
             if (strcmp(token.data, "Num") == 0) return true;
             if (strcmp(token.data, "String") == 0) return true;
             if (strcmp(token.data, "Null") == 0) return true;
+            if (strcmp(token.data, "null") == 0) return true;
             return false;
         default:
             return false;
@@ -67,6 +68,8 @@ bool reduce_expression(Stack* op_stack, Stack* val_stack) {
     if (op_token.type == TOKEN_UNDEFINED) {
         return false;
     }
+
+    //! добавить проверку типов операторов после is
 
     Token right = Stack_Token_Top(val_stack);
     Stack_Token_Pop(val_stack);
@@ -161,7 +164,7 @@ bool parser_expression(Lexer *lexer, FILE *file) {
             // Пока верхний оператор в стеке имеет **больший или равный приоритет**
             while (!Stack_Token_IsEmpty(&op_stack)) {
                 Token top = Stack_Token_Top(&op_stack);
-                Stack_Token_Pop(&op_stack);
+                // Stack_Token_Pop(&op_stack);
                 if (get_precedence(top) >= get_precedence(tok)) {
                     reduce_expression(&op_stack, &val_stack);
                 } else break;
