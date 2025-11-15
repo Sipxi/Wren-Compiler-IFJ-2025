@@ -269,6 +269,8 @@ static const char* type_to_string(DataType type) {
         case TYPE_NUM:    return "Number";
         case TYPE_STR:    return "String";
         case TYPE_NIL:    return "Nil";
+        case TYPE_BOOL:   return "Boolean";
+        case TYPE_FLOAT:  return "Float";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
     return "UNKNOWN_TYPE";
@@ -325,7 +327,7 @@ static void symtable_print_entry(TableEntry *entry, size_t index, int level) {
             print_indent(level + 1);
             printf("Лок. таблица:\n");
             // Вызываем главную рекурсивную функцию с большим отступом
-            symtable_print_internal(data->local_table, level + 2);
+            symtable_print_internal(data->local_table, level + 1);
         } else {
             print_indent(level + 1);
             printf("Лок. таблица: (NULL)\n");

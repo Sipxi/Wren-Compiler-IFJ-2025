@@ -1,4 +1,4 @@
-/** ss
+/**
  * semantics.c - Семантический анализ
  * ШАГ 0 - подготовка, заполнение глобальной таблицы символов встроенными функциями
  * ШАГ 2A - сбор функций, проход по АСТ добавить в global_table
@@ -11,6 +11,7 @@
 #include "ast.h"
 #include "scopemap.h"
 #include "scopestack.h"
+#include "semantics.h"
 #include <stdio.h> 
 #include <stdlib.h>
 
@@ -61,7 +62,6 @@ bool analyze_semantics(AstNode* root) {
     if (!register_builtin_function("Ifj.length", 1, TYPE_NUM)) return false;
 
     printf("DEBUG: Step 0 completed. Global tagit ble populated with ALL built-in functions.\n");
-
 
 
     //* --- ШАГ 2a: Сбор Пользовательских Функций ---
@@ -130,7 +130,7 @@ bool analyze_semantics(AstNode* root) {
     printf("DEBUG: Final check completed. 'main@0' found and defined.\n");
 
     // В конце чистим
-    symtable_free(&global_table);
+    // symtable_free(&global_table);
     return true;
 }
 
@@ -145,15 +145,17 @@ bool analyze_semantics(AstNode* root) {
 static bool register_builtin_function(const char* name, int arity, DataType return_type) {
     
     // 1. Создаем "искаженное имя"
+    //? Подумать про маллок
     char mangled_name[256];
     sprintf(mangled_name, "%s@%d", name, arity);
 
+    //? Symbol data create_symbol_data(KIND_FUNC, return_type, true, NULL);
     // 2. Создаем SymbolData для этой функции
     SymbolData data;
     data.kind = KIND_FUNC;       // Это функция
     data.data_type = return_type; // Что она возвращает
     data.is_defined = true;      // Встроенные функции всегда "определены"
-    data.local_table = NULL;     // У них нет локальной таблицы IFJ25
+    data.local_table = NULL;     // У них нет локальной таблицы IFJ25 
 
     // 3. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
@@ -843,14 +845,14 @@ static bool analyze_expression(AstNode* node, Symtable* func_local_table, ScopeS
 
         // ... (case'ы для Литералов и NODE_ID) ...
         //* --- РЕКУРСИВНЫЕ СЛУЧАИ (Операторы) ---
-        
+        //! СДЕЛАТЬ ФЛОУТ И ПРОВЕРКУ НА ДЕЛЕНИЕ НА 0
         case NODE_OP_PLUS:
         case NODE_OP_MINUS:
         case NODE_OP_MUL:
         case NODE_OP_DIV:
         {
             printf("DEBUG: Analyzing Binary Op (%d).\n", node->type);
-            
+            //? Вынеси node->child и node->child->sibling в переменные для читаемости кода
             // 1. Анализируем левую часть
             DataType left_type;
             if (!analyze_expression(node->child, func_local_table, stack, mangling_counter, &left_type)) {
@@ -1035,7 +1037,7 @@ static bool analyze_expression(AstNode* node, Symtable* func_local_table, ScopeS
                 strcmp(type_name, "Null") != 0)
             {
                  fprintf(stderr, "Semantic Error (Line %d): Unknown type name '%s' in 'is' expression.\n", node->line_number, type_name);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ 6
+                // ВОЗВРАЩАЕМ КОД ОШИБКИ 
                 return false;
             }
 

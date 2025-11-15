@@ -142,6 +142,7 @@ AstNode* ast_new_id_node(NodeType type, int line, const char* id) {
  * @param line Номер строки.
  * @return Указатель на новый узел.
  */
+
 AstNode* ast_new_num_node(double value, int line) {
     // 1. Создаем "пустой" узел
     AstNode* node = ast_node_create(NODE_LITERAL_NUM, line);
