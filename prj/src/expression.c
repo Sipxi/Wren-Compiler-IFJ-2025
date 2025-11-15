@@ -109,35 +109,83 @@ bool is_term(Token token) {
     }
 }
 
+bool char_to_double(const char *str, double *out_value) {
+    if (!str || !out_value) return false;
 
+    int errno = 0;
+    char *endptr = NULL;
+    double val = strtod(str, &endptr);
+
+    // Проверка ошибок
+    if (errno != 0) return false;              // ошибка конверсии
+    if (endptr == str) return false;           // ничего не распознано
+    while (*endptr == ' ' || *endptr == '\t')  // пропускаем пробелы
+        endptr++;
+    if (*endptr != '\0') return false;         // мусор после числа
+
+    *out_value = val;
+    return true;
+}
+
+
+int counter = 0;
+AstNode *current_op;
 
 bool process_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
     
-  
-    
+    counter++;
     
     //! добавить проверку типов операторов после is
     
     Token right = Stack_Token_Top(val_stack);
-    NodeType node_type_right = token_type_to_node(right);
-    AstNode *right_node = ast_new_id_node(node_type_right, right.line, right.data);
-    Stack_Token_Pop(val_stack);
-    if (right.type == TOKEN_UNDEFINED) {
-        return false;
+    AstNode *right_node;
+    AstNode *left_node;
+
+    if (right.type == TOKEN_IDENTIFIER && right.data == NULL) {
+        right_node = current_op;
+        Stack_Token_Pop(val_stack);
+        if (right.type == TOKEN_UNDEFINED) {
+            return false;
+        }
+    } else {
+        NodeType node_type_right = token_type_to_node(right);
+        right_node = ast_new_id_node(node_type_right, right.line, right.data);
+        Stack_Token_Pop(val_stack);
+        if (right.type == TOKEN_UNDEFINED) {
+            return false;
+        }
     }
+
     
     Token left = Stack_Token_Top(val_stack);
-    NodeType node_type_left = token_type_to_node(left);
-    AstNode *left_node = ast_new_id_node(node_type_left, left.line, left.data);
-    Stack_Token_Pop(val_stack);
-    if (left.type == TOKEN_UNDEFINED) {
-        return false;
+
+    if (left.type == TOKEN_IDENTIFIER && left.data == NULL) {
+        left_node = current_op;
+        Stack_Token_Pop(val_stack);
+        if (left.type == TOKEN_UNDEFINED) {
+            return false;
+        }
+    } else {
+        NodeType node_type_left = token_type_to_node(left);
+        left_node = ast_new_id_node(node_type_left, left.line, left.data);
+        Stack_Token_Pop(val_stack);
+        if (left.type == TOKEN_UNDEFINED) {
+            return false;
+        }
     }
+
+
     
     Token op_token = Stack_Token_Top(op_stack);
+    Stack_Token_Pop(op_stack);
+    if (op_token.type == TOKEN_UNDEFINED) {
+        return false;
+    }
     NodeType node_type_op = token_type_to_node(op_token);
     AstNode *op_node = ast_new_bin_op(node_type_op, op_token.line, left_node, right_node); 
-    ast_node_add_child(expr_node, op_node);
+
+    current_op = op_node;
+    
     Stack_Token_Pop(op_stack);
     if (op_token.type == TOKEN_UNDEFINED) {
         return false;
@@ -227,7 +275,34 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     }
     bool success = (!Stack_Token_IsEmpty(&val_stack) && paren_depth == 0);
 
-    
+    if (success) {
+        if (counter == 0) {
+            // Единственное значение в стеке - это корень выражения
+            Token final = Stack_Token_Top(&val_stack);
+            NodeType node_type_final = token_type_to_node(final);
+            if (node_type_final == NODE_ID) {
+                AstNode *final_node = ast_new_id_node(node_type_final, final.line, final.data);
+                ast_node_add_child(expr_node, final_node);
+            } else if (node_type_final == NODE_LITERAL_NUM) {
+                double num_value;
+                if (!char_to_double(final.data, &num_value)) {
+                    success = false;
+                }
+                AstNode *final_node = ast_new_num_node(num_value, final.line);
+                ast_node_add_child(expr_node, final_node);
+            } else if (node_type_final == NODE_LITERAL_STRING) {
+                AstNode *final_node = ast_new_string_node(final.data, final.line);
+                ast_node_add_child(expr_node, final_node);
+            } else if (node_type_final == NODE_LITERAL_NULL) {
+                AstNode *final_node = ast_new_null_node(final.line);
+                ast_node_add_child(expr_node, final_node);
+            } else {
+                // Ошибка: некорректный тип финального узла
+                success = false;
+            }
+        }
+        ast_node_add_child(expr_node, current_op);
+    }
 
     while (!Stack_Token_IsEmpty(&val_stack)) {
         Token t = Stack_Token_Top(&val_stack);
