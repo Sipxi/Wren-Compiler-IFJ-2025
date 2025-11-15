@@ -92,7 +92,7 @@ bool reduce_expression(Stack* op_stack, Stack* val_stack) {
     return true;
 }
 
-char *strdup_c99(const char *s) {
+char *strdup_c99_(const char *s) {
     size_t size = strlen(s) + 1;
     char *p = malloc(size);
     if (p) {
@@ -105,7 +105,7 @@ void token_copy_data(Token* dest, const Token* src) {
     dest->type = src->type;
     dest->line = src->line;
     if (src->data != NULL) {
-        dest->data = strdup_c99(src->data);
+        dest->data = strdup_c99_(src->data);
     } else {
         dest->data = NULL;
     }

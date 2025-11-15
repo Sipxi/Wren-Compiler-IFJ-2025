@@ -1,6 +1,6 @@
 #include "parser.h"
 #include "expression.h"
-#include "stack_token.h"
+#include "ast.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -397,6 +397,7 @@ void parser_kostra(Lexer *lexer, FILE *file) {
 
 
     // Парсим список функций внутри класса
+
 
 
     while (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
