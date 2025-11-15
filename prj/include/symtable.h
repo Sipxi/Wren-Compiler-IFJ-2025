@@ -1,6 +1,9 @@
-/* symtable.h
+/**
+ * @file symtable.h
+ * 
  * Заголовочный файл для таблицы символов
- * Автор: Serhij Čepil (253038)
+ * Author: 
+ *          - Serhij Čepil (253038)
  */
 
 
