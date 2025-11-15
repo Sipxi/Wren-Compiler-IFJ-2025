@@ -91,9 +91,8 @@ typedef enum {
  *
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
- * @return Следующая структура Token.
  */
-Token scan_token(Lexer* lexer, FILE* file);
+void scan_token(Lexer* lexer, FILE* file);
 
 /**
  * Проверяет, является ли символ допустимым символом для идентификаторов (буквы
@@ -422,8 +421,8 @@ static void ensure_buffer_has(Lexer* lexer, int needed_count, FILE* file) {
            lexer->buffered_count < TOKEN_BUFFER_SIZE) {
         // читаем новый токен и добавляем его в конец буфера
         Token *to_add = token_init();
-        Token temp_token = scan_token(lexer, file);
-        token_copy_data(to_add, &temp_token);
+        scan_token(lexer, file);
+        token_copy_data(to_add, lexer->current_token);
         lexer->buffered_tokens[lexer->buffered_count] = *to_add;
         lexer->buffered_count++;
     }
@@ -431,7 +430,8 @@ static void ensure_buffer_has(Lexer* lexer, int needed_count, FILE* file) {
 
 static void shift_buffer(Lexer* lexer) {
     for (int i = 1; i < lexer->buffered_count; i++) {
-        lexer->buffered_tokens[i - 1] = lexer->buffered_tokens[i];
+        Token temp = lexer->buffered_tokens[i];
+        lexer->buffered_tokens[i - 1] = temp;
     }
     lexer->buffered_count--;
 }
@@ -451,7 +451,7 @@ Lexer* lexer_init() {
     lexer->position = 1;
     lexer->line = 1;
     lexer->current_token = token_init();
-
+    lexer->buffered_count = 0;
     return lexer;
 }
 
@@ -459,7 +459,15 @@ void lexer_free(Lexer* lexer) {
     if (lexer == NULL) {
         return;
     }
+    // Освободить память для текущего токена
     token_free(lexer->current_token);
+    // Освободить память для всех токенов в буфере
+    if (lexer->buffered_count > 0) {
+        for (int i = 0; i < lexer->buffered_count; i++) {
+            token_free(&lexer->buffered_tokens[i]);
+        }
+    }
+    // Освободить память для структуры Lexer
     free(lexer);
 }
 
@@ -487,29 +495,19 @@ Token peek_next_token(Lexer* lexer, FILE* file) {
 
 Token get_token(Lexer* lexer, FILE* file) {
     if (lexer->buffered_count > 0) {
-        // Если что-то в буфере есть - берем из него
+        // (Твой код буфера)
         Token token = lexer->buffered_tokens[0];
-
-        // Сдвигаем буфер
         shift_buffer(lexer);
-
         return token;
     } else {
-        // Буфер пуст, читаем новый токен
-        Token temp_token = scan_token(lexer, file);
-        Token *to_return = token_init();
-        token_copy_data(to_return, &temp_token);
-        return *to_return;
+        // Буфер пуст. Просто сканируем и возвращаем копию
+        scan_token(lexer, file);
+        return *lexer->current_token; 
     }
 }
 
-Token scan_token(Lexer* lexer, FILE* file) {
+void scan_token(Lexer* lexer, FILE* file) {
     // FSM реализация лексера
-    // Если файл уже на конце файла, возвращаем TOKEN_EOF
-    if (lexer->current_token->data[0] == EOF) {
-        set_single_token(lexer, TOKEN_EOF, EOF);
-        return *lexer->current_token;
-    }
     LexerFSMState state = STATE_START;
     bool find_eol = false;
     int count_block_comment = 0;
@@ -623,7 +621,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                     lexer_consume_char(lexer, file);
                 } else {  // Это просто оператор деления
                     set_single_token(lexer, TOKEN_DIVISION, current_char);
-                    return *lexer->current_token;
+                    return;
                 }
                 break;
             case STATE_START_BLOCK_COMMENT:
@@ -703,7 +701,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 } else if (!is_whitespace(current_char)) {
                     set_single_token(lexer, TOKEN_EOL, '\n');
                     lexer_unconsume_char(lexer, file, current_char);
-                    return *lexer->current_token;
+                    return;
                 }
                 break;
 
@@ -725,7 +723,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                     lexer->current_token->type = TOKEN_KEYWORD;
                 }
 
-                return *lexer->current_token;
+                return;
             case STATE_ONE_UNDERSCORE:
                 // При переходе читаем символ
                 current_char = lexer_consume_char(lexer, file);
@@ -767,10 +765,10 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file,
                                 characters_read);
 
-                return *lexer->current_token;
+                return;
             case STATE_DOT:
                 set_single_token(lexer, TOKEN_DOT, current_char);
-                return *lexer->current_token;
+                return;
 
             case STATE_NUMBER:
                 // Проверяем, является ли следующий символ цифрой
@@ -800,7 +798,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 // Установить тип токена в TOKEN_INT
                 set_multi_token(lexer, TOKEN_INT, file, characters_read);
                 // Вернуть текущий токен
-                return *lexer->current_token;
+                return;
 
             case STATE_ZERO_START:
                 // Первый символ был '0' - увеличиваем счетчик
@@ -836,7 +834,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 }
                 // Это просто '0'
                 set_single_token(lexer, TOKEN_INT, '0');
-                return *lexer->current_token;
+                return;
 
             case STATE_DECIMAL_POINT:
                 // Считытываем следующий символ после '.'
@@ -907,7 +905,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 lexer_unconsume_char(lexer, file, current_char);
                 // Установить тип токена в TOKEN_HEX
                 set_multi_token(lexer, TOKEN_HEX, file, characters_read);
-                return *lexer->current_token;
+                return;
 
             case STATE_FLOAT_NUMBER:
                 // Следующий символ будет считываться в начале всего цикла
@@ -928,7 +926,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 lexer_unconsume_char(lexer, file, current_char);
                 // Установить тип токена в TOKEN_FLOAT
                 set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
-                return *lexer->current_token;
+                return;
 
             case STATE_EXP_NUMBER:
                 // Следующий символ будет считываться в начале всего цикла
@@ -942,7 +940,7 @@ Token scan_token(Lexer* lexer, FILE* file) {
                 lexer_unconsume_char(lexer, file, current_char);
                 // Установить тип токена в TOKEN_EXP
                 set_multi_token(lexer, TOKEN_EXP, file, characters_read);
-                return *lexer->current_token;
+                return;
 
                 /////////////////////////////////////////////
 
@@ -1025,23 +1023,23 @@ Token scan_token(Lexer* lexer, FILE* file) {
             case STATE_STRING_END:
                 lexer_unconsume_char(lexer, file, current_char);
                 set_multi_token(lexer, TOKEN_STRING, file, characters_read);
-                return *lexer->current_token;
+                return;
 
                 /////////////////////////////////////////////
 
             case STATE_PLUS:
                 set_single_token(lexer, TOKEN_PLUS, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_MINUS:
                 set_single_token(lexer, TOKEN_MINUS, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_MULTIPLY:
                 set_single_token(lexer, TOKEN_MULTIPLY, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_NOT_EQUAL:
                 lexer_consume_char(lexer, file);
                 set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
-                return *lexer->current_token;
+                return;
             case STATE_ASSIGN:
                 if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL,
@@ -1050,10 +1048,10 @@ Token scan_token(Lexer* lexer, FILE* file) {
                     break;
                 }
                 set_single_token(lexer, TOKEN_ASSIGN, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_EQUAL:
                 set_multi_token(lexer, TOKEN_EQUAL, file, strlen("=="));
-                return *lexer->current_token;
+                return;
             case STATE_LESS:
                 if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL_LESS,
@@ -1062,10 +1060,10 @@ Token scan_token(Lexer* lexer, FILE* file) {
                     break;
                 }
                 set_single_token(lexer, TOKEN_LESS, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_EQUAL_LESS:
                 set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
-                return *lexer->current_token;
+                return;
             case STATE_GREATER:
                 if (peek_char(file) == '=') {
                     change_state(file, lexer, &state, STATE_EQUAL_GREATER,
@@ -1074,29 +1072,29 @@ Token scan_token(Lexer* lexer, FILE* file) {
                     break;
                 }
                 set_single_token(lexer, TOKEN_GREATER, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_EQUAL_GREATER:
                 set_multi_token(lexer, TOKEN_EQUAL_GREATER, file, strlen(">="));
-                return *lexer->current_token;
+                return;
             case STATE_OPEN_BRACE:
                 set_single_token(lexer, TOKEN_OPEN_BRACE, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_CLOSE_BRACE:
                 set_single_token(lexer, TOKEN_CLOSE_BRACE, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_OPEN_PAREN:
                 set_single_token(lexer, TOKEN_OPEN_PAREN, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_CLOSE_PAREN:
                 set_single_token(lexer, TOKEN_CLOSE_PAREN, current_char);
-                return *lexer->current_token;
+                return;
             case STATE_EOF:
                 // Если переход был из однострочного комментария
                 if (find_eol)
                     set_single_token(lexer, TOKEN_EOL, EOF);
                 else
                     set_single_token(lexer, TOKEN_EOF, EOF);
-                return *lexer->current_token;
+                return;
             default:
                 // Ошибка: неизвестное состояние
                 lexer_error(lexer, LEXER_ERROR, "Unknown state in lexer FSM");

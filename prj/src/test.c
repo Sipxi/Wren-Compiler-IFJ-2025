@@ -385,7 +385,8 @@ int main() {
     printf("=== IFJ-2025 Test Suite ===\n\n");
 
     // test_tac_generator();
-    test_parser();
+    // test_parser();
+    test_lexer();
 
     return EXIT_SUCCESS;
 }
