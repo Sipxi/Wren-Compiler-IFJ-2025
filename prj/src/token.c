@@ -1,4 +1,7 @@
 #include "token.h"
+#include <stddef.h>
+#include <stdlib.h>
+
 
 Token *token_init() {
     // Выделить память для структуры Token 
