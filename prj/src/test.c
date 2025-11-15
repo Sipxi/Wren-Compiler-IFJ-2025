@@ -4,10 +4,7 @@
 #include "parser.h"
 #include "symtable.h"
 
-/*
-Игровая площадка для тестирования чего угодно
-Пожалуйста, не удаляйте этот файл, он нам еще пригодится
-Если хотите запустить этот файл:
+
 /**
  * @file test.c
  * Главный тестовый файл для проекта IFJ-2025.
@@ -321,7 +318,7 @@ int test_lexer() {
         return EXIT_FAILURE;
     }
     while (lexer->current_token->type != TOKEN_EOF) {
-        get_next_token(lexer, file);
+        get_token(lexer, file);
 
         printf("Token Type: %s, Data: ",
             token_type_to_string(lexer->current_token->type));
@@ -336,6 +333,10 @@ int test_lexer() {
         fprintf(stderr, "Error closing file.\n");
     }
     return EXIT_SUCCESS;
+}
+
+void test_parser() {
+    parser_run();
 }
 
 void test_tac_generator() {
@@ -383,7 +384,8 @@ void test_tac_generator() {
 int main() {
     printf("=== IFJ-2025 Test Suite ===\n\n");
 
-    test_tac_generator();
+    // test_tac_generator();
+    test_parser();
 
     return EXIT_SUCCESS;
 }
