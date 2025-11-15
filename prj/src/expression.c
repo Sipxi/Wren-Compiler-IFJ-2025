@@ -1,6 +1,8 @@
 #include "expression.h"
 #include "stack_token.h"
 #include "token.h"
+#include "ast.h"
+#include "ast_printer.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -35,6 +37,53 @@ static int get_precedence(Token token) {
     }
 }
 
+ NodeType token_type_to_node(Token token) {
+    switch (token.type) {
+        case TOKEN_PLUS:
+            return NODE_OP_PLUS;
+        case TOKEN_MINUS:
+            return NODE_OP_MINUS;
+        case TOKEN_MULTIPLY:
+            return NODE_OP_MUL;
+        case TOKEN_DIVISION:
+            return NODE_OP_DIV;
+        case TOKEN_LESS:
+            return NODE_OP_LT;
+        case TOKEN_GREATER:
+            return NODE_OP_GT;
+        case TOKEN_EQUAL_LESS:
+            return NODE_OP_LTE;
+        case TOKEN_EQUAL_GREATER:
+            return NODE_OP_GTE;
+        case TOKEN_EQUAL:
+            return NODE_OP_EQ;
+        case TOKEN_NOT_EQUAL:
+            return NODE_OP_NEQ;
+        case TOKEN_KEYWORD:
+            if (strcmp(token.data, "is") == 0) {
+                return NODE_OP_IS;
+            }
+            if (strcmp(token.data, "Num") == 0 || strcmp(token.data, "String") == 0 || strcmp(token.data, "Null") == 0) {
+                return NODE_TYPE_NAME; // default to IS for unknown keywords
+            }
+            if (strcmp(token.data, "null") == 0) {
+                return NODE_LITERAL_NULL;
+            }
+        case TOKEN_IDENTIFIER:
+        case TOKEN_GLOBAL_IDENTIFIER:
+            return NODE_ID; // not an operator, but a term
+        case TOKEN_INT:
+        case TOKEN_FLOAT:
+        case TOKEN_EXP:
+        case TOKEN_HEX:
+            return NODE_LITERAL_NUM;
+        case TOKEN_STRING:
+            return NODE_LITERAL_STRING;
+        default:
+            return 0; // Не оператор
+    }
+}
+
 bool is_term(Token token) {
     switch (token.type) {
         case TOKEN_IDENTIFIER:
@@ -59,27 +108,35 @@ bool is_term(Token token) {
 
 
 
-bool reduce_expression(Stack* op_stack, Stack* val_stack) {
+bool reduce_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
     
   
     
-    Token op_token = Stack_Token_Top(op_stack);
-    Stack_Token_Pop(op_stack);
-    if (op_token.type == TOKEN_UNDEFINED) {
-        return false;
-    }
-
+    
     //! добавить проверку типов операторов после is
-
+    
     Token right = Stack_Token_Top(val_stack);
+    NodeType node_type_right = token_type_to_node(right);
+    AstNode *right_node = ast_new_id_node(node_type_right, right.line, right.data);
     Stack_Token_Pop(val_stack);
     if (right.type == TOKEN_UNDEFINED) {
         return false;
     }
-
+    
     Token left = Stack_Token_Top(val_stack);
+    NodeType node_type_left = token_type_to_node(left);
+    AstNode *left_node = ast_new_id_node(node_type_left, left.line, left.data);
     Stack_Token_Pop(val_stack);
     if (left.type == TOKEN_UNDEFINED) {
+        return false;
+    }
+    
+    Token op_token = Stack_Token_Top(op_stack);
+    NodeType node_type_op = token_type_to_node(op_token);
+    AstNode *op_node = ast_new_bin_op(node_type_op, op_token.line, left_node, right_node); 
+    ast_node_add_child(expr_node, op_node);
+    Stack_Token_Pop(op_stack);
+    if (op_token.type == TOKEN_UNDEFINED) {
         return false;
     }
 
@@ -111,7 +168,7 @@ void token_copy_data(Token* dest, const Token* src) {
     }
 }
 
-bool parser_expression(Lexer *lexer, FILE *file) {
+bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     Stack op_stack;
     Stack val_stack;
     Stack_Token_Init(&op_stack);
@@ -152,7 +209,7 @@ bool parser_expression(Lexer *lexer, FILE *file) {
                     Stack_Token_Pop(&op_stack);
                     break;
                 }
-                reduce_expression(&op_stack, &val_stack);
+                reduce_expression(&op_stack, &val_stack, expr_node);
             }
         }
         else if (get_precedence(current) > 0) {
@@ -166,7 +223,7 @@ bool parser_expression(Lexer *lexer, FILE *file) {
                 Token top = Stack_Token_Top(&op_stack);
                 // Stack_Token_Pop(&op_stack);
                 if (get_precedence(top) >= get_precedence(tok)) {
-                    reduce_expression(&op_stack, &val_stack);
+                    reduce_expression(&op_stack, &val_stack, expr_node);
                 } else break;
             }
 
@@ -181,9 +238,10 @@ bool parser_expression(Lexer *lexer, FILE *file) {
     }
     // Свернуть оставшиеся операторы
     while (!Stack_Token_IsEmpty(&op_stack) && paren_depth >= 0) {
-        reduce_expression(&op_stack, &val_stack);
+        reduce_expression(&op_stack, &val_stack, expr_node);
     }
     bool success = (!Stack_Token_IsEmpty(&val_stack) && paren_depth == 0);
+
     while (!Stack_Token_IsEmpty(&val_stack)) {
         Token t = Stack_Token_Top(&val_stack);
         if (t.data) free(t.data);

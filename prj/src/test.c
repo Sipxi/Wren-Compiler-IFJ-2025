@@ -14,6 +14,7 @@
  */
 
 #include "ast.h"
+#include "ast_printer.h"
 #include "dll.h"
 #include "symtable.h" 
 #include "tac.h"      
@@ -379,26 +380,24 @@
 /*=======================================*/
 // === ГЛАВНАЯ ФУНКЦИЯ ===
 /*=======================================*/
-AstNode *create_test_ast(Symtable *global_table) {
-     printf("1. Building Fake AST and Symtable...\n");
+// AstNode *create_test_ast(Symtable *global_table) {
+//      printf("1. Building Fake AST and Symtable...\n");
 
-    // 1. Создаем узел
-    AstNode *program = ast_node_create(NODE_PROGRAM, 1);
+//     // 1. Создаем узел
+//     AstNode *program = ast_node_create(NODE_PROGRAM, 1);
 
-    // 2. Вызываем отладчик, чтобы посмотреть на узел (ОПЦИОНАЛЬНО)
-    printf("--- (Debug print from inside create_test_ast) ---\n");
-    ast_print_debug(program);
-    printf("--- (End debug print) ---\n");
+//     // 2. Вызываем отладчик, чтобы посмотреть на узел (ОПЦИОНАЛЬНО)
+//     printf("--- (Debug print from inside create_test_ast) ---\n");
+//     ast_print_debug(program);
+//     printf("--- (End debug print) ---\n");
 
-    // 3. Возвращаем созданное дерево
-    return program;
-}
+//     // 3. Возвращаем созданное дерево
+//     return program;
+// }
 
 int main() {
-    Symtable *test_table = NULL;
-    AstNode *test_ast = create_test_ast(test_table);
-    ast_print_debug(test_ast);
-    ast_node_free_recursive(test_ast);
+    parser_run();
+    
     
     return 0;
 }

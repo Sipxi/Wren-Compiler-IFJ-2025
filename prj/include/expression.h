@@ -3,8 +3,9 @@
 
 #include "lexer.h"
 #include <stdbool.h>
+#include "ast.h"
 
-bool parser_expression(Lexer *lexer, FILE *file);
+bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node);
 
 bool is_term(Token token);
 
