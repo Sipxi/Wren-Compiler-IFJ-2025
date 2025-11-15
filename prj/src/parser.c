@@ -53,8 +53,8 @@ bool is_builtin(const char *name) {
 
 void right_side_expression(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
-        get_token(lexer, file); // consume identifier
-        if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
+        // Token identifier = get_token(lexer, file); // consume identifier
+        if (peek_next_token(lexer, file).type == TOKEN_OPEN_PAREN) {
             get_token(lexer, file); // consume '('
             // Здесь можно добавить обработку параметров функции
             parameters_function(lexer, file, NULL);

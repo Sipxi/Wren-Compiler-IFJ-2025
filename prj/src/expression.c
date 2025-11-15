@@ -1,6 +1,8 @@
 #include "expression.h"
 #include "stack_token.h"
 #include "token.h"
+#include "utils.h"
+
 #include "ast.h"
 #include "ast_printer.h"
 #include <string.h>
@@ -149,24 +151,6 @@ bool reduce_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
     return true;
 }
 
-char *strdup_c99_(const char *s) {
-    size_t size = strlen(s) + 1;
-    char *p = malloc(size);
-    if (p) {
-        memcpy(p, s, size);
-    }
-    return p;
-}
-
-void token_copy_data(Token* dest, const Token* src) {
-    dest->type = src->type;
-    dest->line = src->line;
-    if (src->data != NULL) {
-        dest->data = strdup_c99_(src->data);
-    } else {
-        dest->data = NULL;
-    }
-}
 
 bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     Stack op_stack;

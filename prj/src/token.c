@@ -1,4 +1,6 @@
 #include "token.h"
+#include "utils.h"
+
 #include <stddef.h>
 #include <stdlib.h>
 
@@ -23,6 +25,17 @@ Token *token_init() {
     token->type = TOKEN_UNDEFINED;
     token->line = -1;
     return token;
+}
+
+
+void token_copy_data(Token* dest, const Token* src) {
+    dest->type = src->type;
+    dest->line = src->line;
+    if (src->data != NULL) {
+        dest->data = strdup_c99(src->data);
+    } else {
+        dest->data = NULL;
+    }
 }
 
 void token_free(Token *token) {
