@@ -440,9 +440,17 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
     exit(error_code);
 }
 
-void unget_token(Lexer *lexer, FILE *file) {
-    lexer_unconsume_char(lexer, file,
-                         lexer->current_token->data[0]);
+void unget_token(Token token_to_unget) {
+    // Если у нас УЖЕ есть "заглянутый" токен, мы не можем
+    // положить еще один. Буфер (peek_token) вмещает только один токен.
+    if (has_peeked) {
+        return; // Ошибка: попытка "unget" при полном буфере
+    }
+
+    // 1. Копируем токен в буфер
+    peeked_token = token_to_unget;
+    // 2. Устанавливаем флаг, что буфер занят
+    has_peeked = true;
 }
 
 Token peek_token(Lexer *lexer, FILE *file) {

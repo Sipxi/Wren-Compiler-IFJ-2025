@@ -100,7 +100,7 @@ Token get_token(Lexer *lexer, FILE *file);
  * @param lexer Указатель на структуру Lexer.
  * @param file Указатель на файл, содержащий исходный код.
  */
-void unget_token(Lexer *lexer, FILE *file);
+void unget_token(Token token_to_unget);
 
 /*=======================================*/
 /* ===== Конец структуры и функций лексера ===== */

@@ -50,8 +50,7 @@ bool is_builtin(const char *name) {
 
 void right_side_expression(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
-        
-        get_token(lexer, file); // consume identifier
+        Token identifier = get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
             get_token(lexer, file); // consume '('
             // Здесь можно добавить обработку параметров функции
@@ -62,6 +61,11 @@ void right_side_expression(Lexer *lexer, FILE *file) {
                 return;
             }
             get_token(lexer, file); // consume ')'
+        }
+        unget_token(identifier); // вернуть идентификатор обратно для выражения
+        if (!parser_expression(lexer, file)) {
+            printf("Invalid expression on right side of assignment.\n");
+            return;
         }
     }
     if (peek_token(lexer, file).type == TOKEN_KEYWORD &&
@@ -91,6 +95,12 @@ void right_side_expression(Lexer *lexer, FILE *file) {
                 return;
             }
             get_token(lexer, file); // consume ')'
+        }
+    }
+    else {
+        if (!parser_expression(lexer, file)) {
+            printf("Invalid expression on right side of assignment.\n");
+            return;
         }
     }
 }

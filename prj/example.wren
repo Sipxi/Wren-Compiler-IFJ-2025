@@ -8,7 +8,7 @@ class Program {
              // porovnavaci vyraz ma na obou stranach zase vyrazy
                 // v zakladnim zadani neumime volat funkci mimo prirazeni, proto zde prirazujeme
                 // navratovou hodnotu (kazda funkce nejakou ma) napr. do "dummy" globalni promenne __d
-            __d = Ifj.write("Celkem velke cislo!\n")
+            
             
             arg = arg * 42  // prikaz prirazeni
             var ansStr 
