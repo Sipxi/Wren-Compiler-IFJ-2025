@@ -71,6 +71,7 @@ static int get_precedence(Token token) {
             if (strcmp(token.data, "null") == 0) {
                 return NODE_LITERAL_NULL;
             }
+            return -1; // Не оператор
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
             return NODE_ID; // not an operator, but a term
@@ -82,7 +83,7 @@ static int get_precedence(Token token) {
         case TOKEN_STRING:
             return NODE_LITERAL_STRING;
         default:
-            return 0; // Не оператор
+            return -1; // Не оператор
     }
 }
 
@@ -110,7 +111,7 @@ bool is_term(Token token) {
 
 
 
-bool reduce_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
+bool process_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
     
   
     
@@ -193,7 +194,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                     Stack_Token_Pop(&op_stack);
                     break;
                 }
-                reduce_expression(&op_stack, &val_stack, expr_node);
+                process_expression(&op_stack, &val_stack, expr_node);
             }
         }
         else if (get_precedence(current) > 0) {
@@ -207,7 +208,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                 Token top = Stack_Token_Top(&op_stack);
                 // Stack_Token_Pop(&op_stack);
                 if (get_precedence(top) >= get_precedence(tok)) {
-                    reduce_expression(&op_stack, &val_stack, expr_node);
+                    process_expression(&op_stack, &val_stack, expr_node);
                 } else break;
             }
 
@@ -222,9 +223,11 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     }
     // Свернуть оставшиеся операторы
     while (!Stack_Token_IsEmpty(&op_stack) && paren_depth >= 0) {
-        reduce_expression(&op_stack, &val_stack, expr_node);
+        process_expression(&op_stack, &val_stack, expr_node);
     }
     bool success = (!Stack_Token_IsEmpty(&val_stack) && paren_depth == 0);
+
+    
 
     while (!Stack_Token_IsEmpty(&val_stack)) {
         Token t = Stack_Token_Top(&val_stack);
