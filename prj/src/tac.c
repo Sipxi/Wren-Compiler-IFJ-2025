@@ -485,24 +485,6 @@ static Operand *create_symbol_operand(TableEntry *entry) {
     return op;
 }
 
-static char *create_unique_label(const char *prefix) {
-    // Создаем буфер для строки. 256 байт хватит с запасом
-    // (Например, для L_WHILE_CONDITION_12345)
-    char buffer[256];
-
-    // Форматируем строку: "PREFIX_COUNTER"
-    // sprintf работает как printf, но пишет в 'buffer'
-    sprintf(buffer, "%s_%d", prefix, global_label_counter);
-
-    global_label_counter++;
-
-    // Копируем строку из буфера (стек) в кучу (heap)
-    // strdup() = это malloc() + strcpy()
-    // Мы должны вернуть строку из кучи, т.к. 'buffer' умрет
-    // сразу после выхода из этой функции.
-    return strdup_c99(buffer);
-}
-
 static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
     Symtable *symtable) {
     // Базовый случай рекурсии
@@ -1117,6 +1099,24 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 /* ======================================*/
 /* ===== Имплементация публичных функций =====*/
 /* ======================================*/
+
+char *create_unique_label(const char *prefix) {
+    // Создаем буфер для строки. 256 байт хватит с запасом
+    // (Например, для L_WHILE_CONDITION_12345)
+    char buffer[256];
+
+    // Форматируем строку: "PREFIX_COUNTER"
+    // sprintf работает как printf, но пишет в 'buffer'
+    sprintf(buffer, "%s_%d", prefix, global_label_counter);
+
+    global_label_counter++;
+
+    // Копируем строку из буфера (стек) в кучу (heap)
+    // strdup() = это malloc() + strcpy()
+    // Мы должны вернуть строку из кучи, т.к. 'buffer' умрет
+    // сразу после выхода из этой функции.
+    return strdup_c99(buffer);
+}
 
 Operand *create_constant_operand(TacConstant constant) {
     // Выделяем память под сам операнд
