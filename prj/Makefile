@@ -55,5 +55,9 @@ run: $(MAIN_TARGET)
 test-pg: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
+# Run the test playground with valgrind
+test-pg-valgrind: $(TEST_TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TEST_TARGET)
+
 # Phony targets
-.PHONY: all clean run test-pg
+.PHONY: all clean run test-pg test-pg-valgrind

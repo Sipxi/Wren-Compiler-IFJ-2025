@@ -65,7 +65,6 @@ typedef enum {
     STATE_MULTIPLE_STRING_END,
 
     STATE_COMMENT,
-    STATE_WHITESPACE,
     STATE_DONE,
     STATE_START_BLOCK_COMMENT,
     STATE_END_BLOCK_COMMENT,
@@ -453,11 +452,9 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_IDENTIFIER,
                                  current_char);
                     break;
-                } else if (is_whitespace(current_char)) {
-                    change_state(file, lexer, &state, STATE_WHITESPACE,
-                                    current_char);
+                } else if (is_whitespace(current_char)) 
                     break;
-                } else if (current_char == '_') {
+                else if (current_char == '_') {
                     characters_read++;
                     change_state(file, lexer, &state, STATE_ONE_UNDERSCORE,
                                  current_char);
@@ -522,10 +519,6 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                                 "Unknown character encountered");
                     break;
                 }
-            case STATE_WHITESPACE:
-                if (!is_whitespace(current_char))
-                    change_state(file, lexer, &state, STATE_START, current_char);
-                break;
             case STATE_DIVISION:
                 // Проверяем, является ли следующий символ началом комментария
                 if (peek_char(file) == '/')
@@ -569,7 +562,7 @@ Token get_next_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_EOL, current_char);
                 // иначе в пробельное состояние
                 else if (count_block_comment == 0)
-                    change_state(file, lexer, &state, STATE_WHITESPACE, current_char);
+                    change_state(file, lexer, &state, STATE_START, current_char);
                 // если все блоки не закрыты остаемся в теле комментария
                 else   
                     change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT, current_char);
