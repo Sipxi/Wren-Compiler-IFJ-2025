@@ -88,15 +88,14 @@ static bool symtable_resize(Symtable* table) {
 /* ===== Реализация публичных функций =====*/
 /* ======================================*/
 
-bool symtable_init(Symtable* table, int nesting_level, Symtable *parent_scope) {
+bool symtable_init(Symtable* table) {
     table->entries = calloc(INITIAL_CAPACITY, sizeof(TableEntry));
     if (table->entries == NULL) {
         return false;  // Ошибка выделения памяти
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
-    table->nesting_level = nesting_level;
-    // table->parent_scope = parent_scope;
+    table->nesting_level = 0;
     return true;
 }
 
@@ -153,7 +152,10 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
             return false;  // Ошибка изменения размера, вставка не выполнена
         }
     }
-
+    data->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
+    if (data->local_table != NULL) {
+        data->local_table->nesting_level = table->nesting_level + 1;
+    }
     size_t hash_index = get_hash(key, table->capacity);
     size_t original_index = hash_index;
     TableEntry* entry = &table->entries[hash_index];
@@ -251,6 +253,7 @@ static const char* kind_to_string(SymbolKind kind) {
     switch (kind) {
         case KIND_VAR:    return "Variable";
         case KIND_FUNC:   return "Function";
+        case KIND_BLOCK:  return "Block";
     }
     return "UNKNOWN_KIND";
 }
