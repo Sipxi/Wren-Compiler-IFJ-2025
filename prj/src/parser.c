@@ -17,11 +17,20 @@ static void operations_function(Lexer *lexer, FILE *file, AstNode *block_node);
 
 AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
     AstNode *arg_list = ast_node_create(NODE_ARGUMENT_LIST, lexer->current_token->line);
+    if (peek_token(lexer, file).type == TOKEN_EOL) {
+        get_token(lexer, file); // consume EOL
+    }
     if (is_term(peek_token(lexer, file))) {
         get_token(lexer, file); // consume parameter
         ast_node_add_child(arg_list, ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data));
+        if (peek_token(lexer, file).type == TOKEN_EOL) {
+            get_token(lexer, file); // consume EOL
+        }
         while (peek_token(lexer, file).type == TOKEN_COMMA) {
-            get_token(lexer, file); // consume ','
+            get_token(lexer, file); // consume ','   
+            if (peek_token(lexer, file).type == TOKEN_EOL) {
+                get_token(lexer, file); // consume EOL
+            }
             if (is_term(peek_token(lexer, file))== false) {
                 printf("Expected parameter identifier after ','.\n");
                 return;
@@ -61,10 +70,9 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
         get_token(lexer, file); // consume 'Ifj' keyword
         if (peek_token(lexer, file).type == TOKEN_DOT) {
             get_token(lexer, file); // consume '.'
-            // if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
-                //     printf("Expected method name after '.'.\n");
-                //     return;
-                // }
+            if (peek_token(lexer, file).type == TOKEN_EOL) {
+                    get_token(lexer, file); // consume EOL
+                }
                 get_token(lexer, file); // consume method name
                 if (!is_builtin(lexer->current_token->data)) {
                     printf("Unknown method name: %s\n", lexer->current_token->data);
@@ -91,6 +99,10 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                 get_token(lexer, file); // consume ')'
                 ast_node_add_child(assignment_node, builtin_func_name);
                 ast_node_add_child(assignment_node, list_args);
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after method call.\n");
+                }
+                get_token(lexer, file); // consume EOL
                 return;
             }
         }
@@ -114,6 +126,10 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                 get_token(lexer, file); // consume ')'
                 ast_node_add_child(assignment_node, builtin_func_name);
                 ast_node_add_child(assignment_node, list_args);
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after function call.\n");
+                }
+                get_token(lexer, file); // consume EOL
                 return;
             }  
             else  {
@@ -121,6 +137,10 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                 printf("Invalid expression on right side of assignment.\n");
                 return;
                 }
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after expression.\n");
+                }
+                get_token(lexer, file); // consume EOL
             }
         }
         else {
@@ -160,6 +180,10 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             ast_node_add_child(block_node, return_node);
 
             if (peek_token(lexer, file).type == TOKEN_EOL) {
+                if (peek_next_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected token EOL 'return'.\n");
+                }
+                get_token(lexer, file); // consume EOL
                 // Пустой return
                 return;
             }
@@ -170,7 +194,10 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
                 AstNode *null_node = ast_node_create(NODE_LITERAL_NULL, lexer->current_token->line);
                 ast_node_add_child(return_node, null_node);
-
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after 'return null'.\n");
+                }
+                get_token(lexer, file); // consume EOL
                 return;
             }
             if (parser_expression(lexer, file, return_node)) {
@@ -179,6 +206,10 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
                 printf("Invalid expression after 'return' keyword.\n");
                 return;
             };
+            if (peek_token(lexer, file).type != TOKEN_EOL) {
+                printf("Expected end of line after return expression.\n");
+            }
+            get_token(lexer, file); // consume EOL
             break;
         }
         if (strcmp(lexer->current_token->data, "if") == 0) {
@@ -310,6 +341,9 @@ void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
 }
 
 void parameters_function(Lexer *lexer, FILE *file, AstNode *param_list) {
+    if (peek_token(lexer, file).type == TOKEN_EOL) {
+        get_token(lexer, file); // consume EOL
+    }
     // Здесь можно добавить обработку параметров функции
     if (peek_token(lexer, file).type == TOKEN_IDENTIFIER) {
         get_token(lexer, file); // consume parameter identifier
@@ -317,9 +351,13 @@ void parameters_function(Lexer *lexer, FILE *file, AstNode *param_list) {
         AstNode *param_node = ast_new_id_node(NODE_PARAM, lexer->current_token->line, lexer->current_token->data);
         // Добавляем param_node в дерево AST здесь
         ast_node_add_child(param_list, param_node);
+        
 
         while (peek_token(lexer, file).type == TOKEN_COMMA) {
             get_token(lexer, file); // consume ','
+            if (peek_token(lexer, file).type == TOKEN_EOL) {
+                get_token(lexer, file); // consume EOL
+            }
             if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
                 printf("Expected parameter identifier after ','.\n");
                 return;
@@ -329,6 +367,7 @@ void parameters_function(Lexer *lexer, FILE *file, AstNode *param_list) {
             AstNode *param_node = ast_new_id_node(NODE_PARAM, lexer->current_token->line, lexer->current_token->data);
             // Добавляем param_node в дерево AST здесь
             ast_node_add_child(param_list, param_node);
+            
         }
     }
 }
@@ -349,6 +388,10 @@ void tail_function(Lexer *lexer, FILE *file, AstNode *func_node) {
             return;
         }
         get_token(lexer, file); // consume ')'
+    }
+    if (peek_token(lexer, file).type == TOKEN_EOL) {
+        printf("Unexpected end of line after function header.\n");
+        return;
     }
 
     function_block(lexer, file, func_node);
@@ -437,6 +480,10 @@ void parser_prolog(Lexer *lexer, FILE *file) {
 
     get_token(lexer, file);
 
+    if (peek_token(lexer, file).type == TOKEN_EOL) {
+        printf("Expected 'for' keyword after import string literal.\n");
+    }
+
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "for") != 0) {
         printf("Expected 'for' keyword after import string literal.\n");
@@ -488,6 +535,12 @@ void parser_kostra(Lexer *lexer, FILE *file) {
         parser_function_list(lexer, file);
     }
     get_token(lexer, file);
+
+    if (peek_token(lexer, file).type != TOKEN_EOF) {
+        printf("Expected end of file after class definition.\n");
+    }
+    //! исправить ошибку с EOF, без этого не работает, оштбка в free_lexer
+    get_token(lexer, file);
 }
 
 void parser_run() {
@@ -504,12 +557,13 @@ void parser_run() {
         return;
     }
 
-
+    // Для первой фразы import "ifj25" for Ifj
     parser_prolog(lexer, file);
     if (peek_token(lexer, file).type != TOKEN_EOL) {
         printf("Expected end of line after import statement.\n");
     }
     get_token(lexer, file); // consume EOL
+    // Основной парсер
     parser_kostra(lexer, file);
 
     ast_print_debug(program); 
