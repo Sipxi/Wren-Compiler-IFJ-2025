@@ -1,3 +1,12 @@
+/**
+ * @file token.c
+ * 
+ * Реализация функций для работы с токенами.
+ *
+ * Author:
+ *     - Serhij Čepil (253038)
+ * ! Допишите ваши имена и номера
+ */
 #include "token.h"
 #include <stddef.h>
 #include <stdlib.h>

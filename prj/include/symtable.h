@@ -1,6 +1,9 @@
-/* symtable.h
+/**
+ * @file symtable.h
+ * 
  * Заголовочный файл для таблицы символов
- * Автор: Serhij Čepil (253038)
+ * Author: 
+ *          - Serhij Čepil (253038)
  */
 
 
@@ -56,6 +59,7 @@ typedef enum{
     TYPE_NUM,
     TYPE_STR,
     TYPE_NIL,
+    TYPE_NULL,
     TYPE_FLOAT,
 
     //TODO Добавить другие типы данных по мере необходимости

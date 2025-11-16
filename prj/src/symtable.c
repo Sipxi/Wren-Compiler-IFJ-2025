@@ -266,6 +266,7 @@ static const char* type_to_string(DataType type) {
         case TYPE_NUM:    return "Number";
         case TYPE_STR:    return "String";
         case TYPE_NIL:    return "Nil";
+        case TYPE_NULL:   return "Null";
         case TYPE_FLOAT:  return "Float";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
