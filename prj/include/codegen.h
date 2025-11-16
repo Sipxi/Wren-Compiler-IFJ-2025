@@ -47,7 +47,6 @@ void gen_arithmetic(TacInstruction *instr);
 void gen_defvar(Operand *var);
 void gen_move(Operand *dest, Operand *src);
 void gen_param(TACDLList *instructions);
-void gen_end();
 void gen_mul_str(TacInstruction *instr);
 void gen_comprasion(TacInstruction *instr);
 void gen_eq_comprasion(TacInstruction *instr);

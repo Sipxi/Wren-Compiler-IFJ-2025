@@ -30,6 +30,13 @@
   */
 void print_tac_list(TACDLList *tac_list);
 
+ /**
+  * @brief Печатает 3AC в читаемом виде.
+  *
+  * @param instr Инструкция.
+  */
+void print_single_tac_instruction(TacInstruction *instr);
+
 /**
  * @brief Функция для TACDLL_Dispose для очистки памяти из-под TacInstruction.
  * (Вызывается из dll.c)
