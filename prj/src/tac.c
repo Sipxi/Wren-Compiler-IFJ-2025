@@ -571,7 +571,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         tac_gen_recursive(body, tac_list, symtable);
 
         // Делаем новый операнд для конца функции
-        Operand *func_entry_op_end = create_symbol_operand(func_entry);
+        Operand *func_entry_op_end = create_label_operand(func_entry);
         // Генерируем инструкцию конца функции
         generate_instruction(tac_list, OP_FUNCTION_END, NULL,
             func_entry_op_end, NULL);
