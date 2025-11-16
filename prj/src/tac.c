@@ -1110,7 +1110,6 @@ Operand *create_constant_operand(TacConstant constant) {
     return op;
 }
 
-
 void generate_tac(AstNode *ast_root, TACDLList *tac_list, Symtable *global_table) {
     // Сбрасываем счетчики на случай повторного вызова
     global_temp_counter = 0;
