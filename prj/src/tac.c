@@ -38,6 +38,7 @@ int global_label_counter = 0;
 /* ======================================*/
 
 
+
 /**
  * @brief Главная рекурсивная функция. Обходит AST и генерирует TAC.
  *
@@ -1010,7 +1011,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         }
         else {
             num_const.type = TYPE_NUM;
-            num_const.value.int_value = node->data.literal_num;
+            num_const.value.int_value = (int) node->data.literal_num;
         }
         return create_constant_operand(num_const);
     }
@@ -1049,6 +1050,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 
     // Эта строка НИКОГДА не выполнится, если default делает exit().
     raise_tac_error("Reached unreachable code in TAC generation", INTERNAL_ERROR);
+    return NULL;
 }
 
 /* ======================================*/
@@ -1129,6 +1131,8 @@ void raise_tac_error(const char *message,
         error_code, ANSI_COLOR_RESET);
     fprintf(stderr, "    Во время 3-Адресной Код-генерации:\n\n");
 
+    // Печатаем само сообщение об ошибке (Нормальный)
+    fprintf(stderr, "    %s\n\n", message);
     // Сообщение о выходе (Тусклый)
     fprintf(stderr, "%s    Завершаем программу.%s\n", ANSI_STYLE_DIM,
         ANSI_COLOR_RESET);
