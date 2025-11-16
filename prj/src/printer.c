@@ -103,6 +103,30 @@ static void format_operand(Operand *op, char *buffer) {
 /* ===== Реализация публичных функций =====*/
 /*=======================================*/
 
+
+void print_single_tac_instruction(TacInstruction *instr){
+
+    const int op_width = 18;
+    const int col_width = 15; // Ширина для столбцов RESULT, ARG1
+    
+    // Создаем буферы для отформатированных операндов
+    char result_buf[256];
+    char arg1_buf[256];
+    char arg2_buf[256];
+
+    // Заполняем буферы
+    format_operand(instr->result, result_buf);
+    format_operand(instr->arg1, arg1_buf);
+    format_operand(instr->arg2, arg2_buf);
+
+    // Печатаем ОДНУ строку с идеальным выравниванием
+    printf("%-*s | %-*s | %-*s | %s\n",
+            op_width, op_code_to_string[instr->operation_code], // OPCODE
+            col_width, result_buf,                              // RESULT
+            col_width, arg1_buf,                                // ARG1
+            arg2_buf);                                          // ARG2
+}
+
 void free_operand(Operand *op) {
     if (op == NULL) return;
     
@@ -172,22 +196,7 @@ void print_tac_list(TACDLList *tac_list) {
             continue;
         }
 
-        // Создаем буферы для отформатированных операндов
-        char result_buf[256];
-        char arg1_buf[256];
-        char arg2_buf[256];
-
-        // Заполняем буферы
-        format_operand(instr->result, result_buf);
-        format_operand(instr->arg1, arg1_buf);
-        format_operand(instr->arg2, arg2_buf);
-
-        // Печатаем ОДНУ строку с идеальным выравниванием
-        printf("%-*s | %-*s | %-*s | %s\n",
-               op_width, op_code_to_string[instr->operation_code], // OPCODE
-               col_width, result_buf,                              // RESULT
-               col_width, arg1_buf,                                // ARG1
-               arg2_buf);                                          // ARG2
+        print_single_tac_instruction(instr);
 
         TACDLL_Next(tac_list);
         count++;

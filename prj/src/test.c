@@ -8,6 +8,7 @@
 #include "tac.h"      
 #include "printer.h"  
 #include "lexer.h"
+#include "codegen.h"
 #include "optimizer.h"
 
 #include <stdio.h>
@@ -177,11 +178,11 @@ void test_symtable() {
     symtable_init(&local_table);
     Symtable local_local_table;
     symtable_init(&local_local_table);
-    SymbolData data_local = { KIND_FUNC, TYPE_NUM, true, &local_local_table };
+    SymbolData data_local = { KIND_FUNC, TYPE_NUM, true, &local_local_table, 0 };
     symtable_insert(&local_table, "local_var", &data_local);
-    SymbolData data1 = { KIND_VAR, TYPE_NUM, true, &local_table };
+    SymbolData data1 = { KIND_VAR, TYPE_NUM, true, &local_table, 0 };
     symtable_insert(&table, "var1", &data1);
-    SymbolData data2 = { KIND_FUNC, TYPE_NUM, false, NULL };
+    SymbolData data2 = { KIND_FUNC, TYPE_NUM, false, NULL, 0 };
     symtable_insert(&table, "func1", &data2);
 
 
@@ -196,7 +197,7 @@ void test_symtable() {
     for (int i = 0; i < 5; i++) {
         char key[16];
         snprintf(key, sizeof(key), "var%d", i);
-        SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL };
+        SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL, 0};
         if (!symtable_insert(&table, key, &data)) {
             printf("Ошибка вставки символа '%s'\n", key);
         }
@@ -204,7 +205,7 @@ void test_symtable() {
     symtable_print(&table);
 
     printf("Проверка вставки существующего символа...\n");
-    SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL };
+    SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL, 0 };
     symtable_insert(&table, "func1", &data); // Перезапись существующего
 
     symtable_print(&table);
@@ -282,6 +283,25 @@ void test_tac_generator() {
     printf("Done.\n");
 
 }
+void test_gen_code() {
+
+    Symtable global_table;
+    symtable_init(&global_table);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
+    AstNode *ast_root = create_test_ast(&global_table);
+    generate_tac(ast_root, &tac_list, &global_table);
+    
+    printf("\n--- Generated Code ---\n");
+    generate_code(&tac_list, &global_table);
+
+    printf("\n3. Cleaning up resources...\n");
+    ast_node_free_recursive(ast_root);
+    symtable_free(&global_table);
+    TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
+
+    printf("Done.\n");
+}
 
 
 /*=======================================*/
@@ -290,8 +310,8 @@ void test_tac_generator() {
 
 int main() {
     printf("=== IFJ-2025 Test Suite ===\n\n");
-
     test_tac_generator();
+    test_gen_code();
 
     return EXIT_SUCCESS;
 }

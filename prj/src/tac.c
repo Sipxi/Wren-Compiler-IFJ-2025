@@ -38,7 +38,6 @@ int global_label_counter = 0;
 /* ======================================*/
 
 
-
 /**
  * @brief Главная рекурсивная функция. Обходит AST и генерирует TAC.
  *
@@ -811,7 +810,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         }
 
         // Генерируем инструкцию вызова функции
-        Operand *func_op = create_label_operand(func_entry);
+        Operand *func_op = create_label_operand(func_entry->key);
         generate_instruction(tac_list, OP_CALL, NULL, func_op, NULL);
 
         if (arg_list_node != NULL) {
