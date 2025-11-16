@@ -17,6 +17,30 @@ static void right_side_expression(Lexer *lexer, FILE *file, AstNode *parent_node
 static void operations_function(Lexer *lexer, FILE *file, AstNode *block_node);
 static AstNode *list_of_tersms(Lexer *lexer, FILE *file);
 
+// Проверяет, является ли токен терминальным (term)
+bool is_term(Token token) {
+    switch (token.type) {
+        case TOKEN_IDENTIFIER:
+        case TOKEN_GLOBAL_IDENTIFIER:
+        case TOKEN_INT:
+        case TOKEN_FLOAT:
+        case TOKEN_EXP:
+        case TOKEN_HEX:
+        case TOKEN_STRING:
+            return true;
+        case TOKEN_KEYWORD:
+            if (token.data == NULL) return false;
+            if (strcmp(token.data, "Num") == 0) return true;
+            if (strcmp(token.data, "String") == 0) return true;
+            if (strcmp(token.data, "Null") == 0) return true;
+            if (strcmp(token.data, "null") == 0) return true;
+            return false;
+        default:
+            return false;
+    }
+}
+
+
 // Парсит список term функции
 AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
     AstNode *arg_list = ast_node_create(NODE_ARGUMENT_LIST, lexer->current_token->line);

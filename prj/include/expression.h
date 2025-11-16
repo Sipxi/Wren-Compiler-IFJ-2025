@@ -7,6 +7,6 @@
 
 bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node);
 
-bool is_term(Token token);
+
 
 #endif 
