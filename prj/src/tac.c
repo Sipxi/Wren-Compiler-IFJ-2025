@@ -871,7 +871,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         }
 
         // Генерируем инструкцию вызова функции
-        Operand *func_op = create_symbol_operand(func_entry);
+        Operand *func_op = create_label_operand(func_entry);
         generate_instruction(tac_list, OP_CALL, NULL, func_op, NULL);
 
         if (arg_list_node != NULL) {
