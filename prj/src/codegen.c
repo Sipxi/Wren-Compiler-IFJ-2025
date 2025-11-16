@@ -6,12 +6,6 @@
 #include "codegen.h"
 #include <stdlib.h>
 
-// * Поговорив с Gemini я понял, что мне не нужно реализовывать tzb потому-что я не работаю с регистрами
-void DLL_GetInstr(DLList *list, TacInstruction **instr){
-    void *data_ptr;
-    DLL_GetValue(list, &data_ptr);
-    *instr = (TacInstruction*)data_ptr;
-}
 
 void gen_init(Symtable *table){
     fprintf(stdout, ".IFJcode25\n");
@@ -284,32 +278,32 @@ void gen_move(Operand *dest, Operand *src){
 
 }
 
-void gen_param(DLList *instructions){
+void gen_param(TACDLList *instructions){
     gen_create_frame();
 
     TacInstruction *instr;
-    DLL_GetInstr(instructions, &instr);
+    TACDLL_GetValue(instructions, &instr);
     char *label_name = instr->arg1->data.label_name;
 
-    DLList instrs_fun = *instructions;
+    TACDLList instrs_fun = *instructions;
     TacInstruction *instr_param;
-    DLL_First(&instrs_fun);
-    while (DLL_IsActive(&instrs_fun)){
-        DLL_GetInstr(&instrs_fun, &instr_param);
-        DLL_Next(&instrs_fun);    
+    TACDLL_First(&instrs_fun);
+    while (TACDLL_IsActive(&instrs_fun)){
+        TACDLL_GetValue(&instrs_fun, &instr_param);
+        TACDLL_Next(&instrs_fun);    
         if (instr_param->operation_code == OP_LABEL &&
             strcmp(instr_param->arg1->data.label_name, label_name) == 0)
             break;
     }
 
-    DLL_Next(&instrs_fun);    
-    DLL_Next(instructions);
-    while (DLL_IsActive(instructions)) {
-        DLL_GetInstr(instructions, &instr);
-        DLL_GetInstr(&instrs_fun, &instr_param);
+    TACDLL_Next(&instrs_fun);    
+    TACDLL_Next(instructions);
+    while (TACDLL_IsActive(instructions)) {
+        TACDLL_GetValue(instructions, &instr);
+        TACDLL_GetValue(&instrs_fun, &instr_param);
 
         if (instr->operation_code != OP_PARAM){
-            DLL_Previous(instructions);
+            TACDLL_Previous(instructions);
             break;
         }
 
@@ -320,8 +314,8 @@ void gen_param(DLList *instructions){
         gen_operand(instr->arg1);
         fprintf(stdout, "\n");
 
-        DLL_Next(instructions);
-        DLL_Next(&instrs_fun);
+        TACDLL_Next(instructions);
+        TACDLL_Next(&instrs_fun);
     }
 }
 void gen_end(){
@@ -441,9 +435,9 @@ void gen_declare(Operand *result){
     fprintf(stdout, " nil@nil\n");
 }
 
-void gen_function_begin(DLList  *instructions){
+void gen_function_begin(TACDLList  *instructions){
     TacInstruction *instr;
-    DLL_GetInstr(instructions, &instr);
+    TACDLL_GetValue(instructions, &instr);
     if (strcmp(instr->arg1->data.label_name, "main") == 0) {
         fprintf(stdout, "$$main:\n");        
     } else
@@ -453,9 +447,9 @@ void gen_function_begin(DLList  *instructions){
     fprintf(stdout, "DEFVAR LF@ret\n");
     fprintf(stdout, "MOVE LF@ret nil@nil\n");
     
-    DLL_Next(instructions);
-    while (DLL_IsActive(instructions)){
-        DLL_GetInstr(instructions, &instr);
+    TACDLL_Next(instructions);
+    while (TACDLL_IsActive(instructions)){
+        TACDLL_GetValue(instructions, &instr);
         TacOperationCode op_code = instr->operation_code;
         if (op_code == OP_FUNCTION_END) {
             break;
@@ -464,23 +458,23 @@ void gen_function_begin(DLList  *instructions){
             // if (instr->result->data.symbol_entry->data->nesting_level != 0)
                 gen_defvar(instr->result);
         }
-        DLL_Next(instructions);
+        TACDLL_Next(instructions);
     }
 }
 
-void gen_label_from_instr(DLList  *instructions){
+void gen_label_from_instr(TACDLList  *instructions){
     TacInstruction *instr;
-    DLL_GetInstr(instructions, &instr);
-    DLList instructions_copy = *instructions;
-    DLL_Next(&instructions_copy);
-    if (DLL_IsActive(&instructions_copy)) {
-        DLL_GetInstr(&instructions_copy, &instr);
+    TACDLL_GetValue(instructions, &instr);
+    TACDLList instructions_copy = *instructions;
+    TACDLL_Next(&instructions_copy);
+    if (TACDLL_IsActive(&instructions_copy)) {
+        TACDLL_GetValue(&instructions_copy, &instr);
     }
     if (instr->operation_code == OP_FUNCTION_BEGIN || instr->operation_code == OP_PARAM) {
-        DLL_Previous(&instructions_copy);
+        TACDLL_Previous(&instructions_copy);
         gen_function_begin(&instructions_copy);
     } else {
-        DLL_GetInstr(instructions, &instr);
+        TACDLL_GetValue(instructions, &instr);
         gen_label(instr->arg1->data.label_name);
     }
 }
@@ -509,12 +503,13 @@ void gen_is(TacInstruction *instr){
 
 }
 
-int generate_code(DLList *instructions, Symtable *table) {
+int generate_code(TACDLList *instructions, Symtable *table) {
     gen_init(table);
-    DLL_First(instructions);
-    while (DLL_IsActive(instructions)) {
+    TACDLL_First(instructions);
+    while (TACDLL_IsActive(instructions)) {
+        fprintf(stdout, "\n");
         TacInstruction *instr;
-        DLL_GetInstr(instructions, &instr);
+        TACDLL_GetValue(instructions, &instr);
         switch (instr->operation_code) {
         case OP_JUMP:
             gen_jump(instr->arg2->data.label_name);
@@ -571,7 +566,7 @@ int generate_code(DLList *instructions, Symtable *table) {
         default:
             break;
         }
-        DLL_Next(instructions);
+        TACDLL_Next(instructions);
     }
     gen_end();
     return 0;

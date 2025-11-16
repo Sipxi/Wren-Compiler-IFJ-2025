@@ -287,8 +287,8 @@ void test_gen_code() {
 
     Symtable global_table;
     symtable_init(&global_table);
-    DLList tac_list;
-    DLL_Init(&tac_list);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
     AstNode *ast_root = create_test_ast(&global_table);
     generate_tac(ast_root, &tac_list, &global_table);
     
@@ -298,7 +298,7 @@ void test_gen_code() {
     printf("\n3. Cleaning up resources...\n");
     ast_node_free_recursive(ast_root);
     symtable_free(&global_table);
-    DLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
+    TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
 
     printf("Done.\n");
 }

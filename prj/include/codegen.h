@@ -7,7 +7,6 @@
 #ifndef CODEGEN_H
 #define CODEGEN_H
 
-#include "dll.h"
 #include <stdio.h>
 #include <stdbool.h>
 #include <symtable.h>
@@ -28,7 +27,7 @@ typedef enum {
 } FrameType;
 
 
-void DLL_GetInstr(DLList *list, TacInstruction **instr);
+void DLL_GetInstr(TACDLList *list, TacInstruction **instr);
 void gen_init(Symtable *table);
 void gen_push_frame();
 void gen_create_frame();
@@ -47,16 +46,16 @@ void gen_convert_result(TacInstruction *instr);
 void gen_arithmetic(TacInstruction *instr);
 void gen_defvar(Operand *var);
 void gen_move(Operand *dest, Operand *src);
-void gen_param(DLList *instructions);
+void gen_param(TACDLList *instructions);
 void gen_end();
 void gen_mul_str(TacInstruction *instr);
 void gen_comprasion(TacInstruction *instr);
 void gen_eq_comprasion(TacInstruction *instr);
 void gen_not_equal(TacInstruction *instr);
 void gen_declare(Operand *result);
-void gen_function_begin(DLList  *instructions);
-void gen_label_from_instr(DLList  *instructions);
+void gen_function_begin(TACDLList  *instructions);
+void gen_label_from_instr(TACDLList  *instructions);
 void gen_is(TacInstruction *instr);
-int generate_code(DLList *instructions, Symtable *table);
+int generate_code(TACDLList *instructions, Symtable *table);
 
 #endif // CODEGEN_H
