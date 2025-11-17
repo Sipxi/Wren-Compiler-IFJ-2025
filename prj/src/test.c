@@ -1,319 +1,323 @@
 /**
- * @file test.c
- * Главный тестовый файл для проекта IFJ-2025.
+ * test_semantics.c
+ *
+ * Тестовый фреймворк для семантического анализатора (Pass 2).
+ * Обновлен для работы с exit() кодами вместо return false/true.
  */
-
-#include "ast.h"
-#include "symtable.h" 
-#include "tac.h"      
-#include "printer.h"  
-#include "lexer.h"
-#include "codegen.h"
-#include "optimizer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h> 
+#include <unistd.h>
+#include <sys/wait.h>
+#include "semantics.h" // Наш модуль, который мы тестируем
+#include "ast.h"        // Наш ast.h
+#include "symtable.h"   // Наша таблица символов
 
- /*=======================================*/
- /*===== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========*/
- /*=======================================*/
+ // --- "Красивый визуал" (ANSI цвета) ---
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_RESET   "\x1b[0m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
 
- /**
-  * Вспомогательная функция для определения символа для симуляции семантики.
-  *
-  * @param table Таблица символов.
-  * @param name Имя символа.
-  * @param kind Вид символа (переменная, функция и т.д).
-  * @return Указатель на созданную запись таблицы символов.
-  * @note Вызывает exit(1) при ошибке вставки.
-  */
-static TableEntry *define_symbol(Symtable *table, const char *name,
-    SymbolKind kind) {
-    SymbolData *data = (SymbolData *)calloc(1, sizeof(SymbolData));
-    data->kind = kind;
-    data->data_type = (kind == KIND_VAR) ? TYPE_NIL : TYPE_NUM; // По умолчанию
-    data->is_defined = true;
-
-    if (!symtable_insert(table, name, data)) {
-        fprintf(stderr, "Failed to insert '%s' into symtable.\n", name);
-        free(data); // symtable не завладел 'data', чистим
-        exit(EXIT_FAILURE);
-    }
-
-    // Free data after successful insertion, since symtable makes its own copy
-    free(data);
-    return symtable_lookup(table, name);
-}
+int total_tests = 0;
+int passed_tests = 0;
 
 /**
- * @brief Строит фейковый AST для кода:
- * (Тест для 'a = fun()')
+ * @brief "Запускатор" тестов.
  *
- * static fun() {
- * return;
- * }
- *
+ * @param test_name         Имя теста для вывода.
+ * @param test_ast_root     Фейковый AST, который нужно проверить.
+ * @param expected_code     Ожидаемый код выхода (0 для успеха, коды ошибок для ошибок).
+ */
+void run_test(const char *test_name, AstNode *test_ast_root, int expected_code) {
+    total_tests++;
+    printf(ANSI_COLOR_CYAN "Тест: %s" ANSI_COLOR_RESET " (ожидаем код %d)...\n", test_name, expected_code);
+
+    pid_t pid = fork();
+    
+    if (pid == 0) {
+        // Дочерний процесс - запускаем семантический анализ
+        // Если функция завершается нормально, выходим с кодом 0
+        bool result = analyze_semantics(test_ast_root);
+        if (result) {
+            exit(0); // Успешное завершение
+        } else {
+            exit(99); // Это не должно происходить, так как теперь используется exit()
+        }
+    } else if (pid > 0) {
+        // Родительский процесс - ждем завершения и проверяем код выхода
+        int status;
+        waitpid(pid, &status, 0);
+        
+        int actual_code = 0;
+        if (WIFEXITED(status)) {
+            actual_code = WEXITSTATUS(status);
+        } else {
+            actual_code = 99; // Процесс был убит сигналом
+        }
+
+        // Проверяем результат
+        if (actual_code == expected_code) {
+            printf("  " ANSI_COLOR_GREEN "[PASS]" ANSI_COLOR_RESET " Получен ожидаемый код выхода: %d\n", actual_code);
+            passed_tests++;
+        } else {
+            printf("  " ANSI_COLOR_RED "[FAIL]" ANSI_COLOR_RESET " Ожидался код %d, но получен %d\n", expected_code, actual_code);
+        }
+    } else {
+        // Ошибка fork()
+        printf("  " ANSI_COLOR_RED "[ERROR]" ANSI_COLOR_RESET " Не удалось создать дочерний процесс\n");
+    }
+
+    // Очистка AST (делается в родительском процессе)
+    if (test_ast_root) {
+        ast_node_free_recursive(test_ast_root);
+    }
+
+    printf("------------------------------------------------------------\n");
+}
+
+/* ================================================================== */
+/* ============= ФУНКЦИИ-ГЕНЕРАТОРЫ ФЕЙКОВЫХ AST ================== */
+/* ================================================================== */
+
+// Все функции-генераторы остаются теми же...
+// (копируем все функции create_test_* без изменений)
+
+/**
+ * @brief Тест: Ошибка 4 (Редефиниция) [cite: 39]
+ * Код:
  * static main() {
  * var a
- * a = fun()
+ * var a  // <-- ОШИБКА ЗДЕСЬ
  * }
  */
-static AstNode *create_test_ast(Symtable *global_table) {
-    printf("1. Building Fake AST and Symtable...\n");
+AstNode *create_test_redefinition_error() {
+    // Используем твои API-функции из ast.h
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
-    // --- 1. (СИМУЛЯЦИЯ Pass 2) ---
-    TableEntry *func_main = define_symbol(global_table, "main", KIND_FUNC);
-    TableEntry *func_fun = define_symbol(global_table, "fun", KIND_FUNC);
-    TableEntry *var_a = define_symbol(global_table, "a", KIND_VAR);
+    // static main()
+    AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1)); // Пустой список параметров
+    ast_node_add_child(root, func_main);
 
-    // (Pass 2) Симулируем, что семантика определила:
-    // 'fun' возвращает TYPE_NIL
-    func_fun->data->data_type = TYPE_NIL;
-    // 'a' пока не имеет типа (TYPE_NIL)
-    var_a->data->data_type = TYPE_NIL;
+    // { ... }
+    AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
+    ast_node_add_child(func_main, main_block);
 
+    // var a
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
 
-    // --- 2. Строим 'fun()' ---
-    AstNode *fun_def = ast_new_id_node(NODE_FUNCTION_DEF, 1, "fun");
-    fun_def->table_entry = func_fun; // (Pass 2) Линкуем
-    {
-        // (Pass 1) Пустой список параметров
-        ast_node_add_child(fun_def, ast_node_create(NODE_PARAM_LIST, 1));
-        
-        // (Pass 1) Тело: { return; }
-        AstNode *body = ast_node_create(NODE_BLOCK, 2);
-        ast_node_add_child(body, ast_node_create(NODE_RETURN, 2)); // Пустой return
-        ast_node_add_child(fun_def, body);
-    }
+    // var a  <-- Ошибка 4
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 4, "a"));
 
-    // --- 3. Строим 'main()' ---
-    AstNode *main_def = ast_new_id_node(NODE_FUNCTION_DEF, 5, "main");
-    main_def->table_entry = func_main; // (Pass 2) Линкуем
-    {
-        AstNode *main_block = ast_node_create(NODE_BLOCK, 5);
-
-        // --- var a ---
-        AstNode* def_a = ast_new_id_node(NODE_VAR_DEF, 6, "a");
-        def_a->table_entry = var_a; // (Pass 2) Линкуем
-        ast_node_add_child(main_block, def_a);
-
-        // --- a = fun() ---
-        
-        // (Pass 1) Узел '='
-        AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 7);
-        
-        // (Pass 1) LHS: 'a'
-        AstNode* a_id = ast_new_id_node(NODE_ID, 7, "a");
-        a_id->table_entry = var_a; // (Pass 2) Линкуем
-        a_id->data_type = TYPE_NIL; // (Pass 2) Тип 'a' *до* присваивания
-        ast_node_add_child(assign_a, a_id);
-
-        // (Pass 1) RHS: 'fun()'
-        AstNode *call_expr = ast_node_create(NODE_CALL_STATEMENT, 7);
-        
-        // Child 1: ID "fun" (кого вызываем)
-        AstNode* fun_id = ast_new_id_node(NODE_ID, 7, "fun");
-        fun_id->table_entry = func_fun; // (Pass 2) Линкуем
-        fun_id->data_type = func_fun->data->data_type; // (Pass 2) Тип самой функции
-        ast_node_add_child(call_expr, fun_id);
-        
-        // Child 2: Arg list (список аргументов)
-        ast_node_add_child(call_expr, ast_node_create(NODE_ARGUMENT_LIST, 7));
-        
-        // (Pass 2) Семантика установила тип *всего выражения*
-        // (Тип выражения 'fun()' равен типу, который возвращает 'fun')
-        call_expr->data_type = func_fun->data->data_type; // (TYPE_NIL)
-        
-        // Добавляем RHS (вызов) в присваивание
-        ast_node_add_child(assign_a, call_expr);
-        
-        // Добавляем стейтмент 'a = fun()' в блок
-        ast_node_add_child(main_block, assign_a);
-        
-        // (Pass 2) Симуляция: 'a' в symtable теперь тоже TYPE_NIL
-        var_a->data->data_type = TYPE_NIL;
-
-        // --- Собираем 'main' ---
-        ast_node_add_child(main_def, ast_node_create(NODE_PARAM_LIST, 5));
-        ast_node_add_child(main_def, main_block);
-    }
-
-    // --- 4. Собираем программу ---
-    AstNode *program = ast_node_create(NODE_PROGRAM, 0);
-    ast_node_add_child(program, fun_def); // Добавляем 'fun'
-    ast_node_add_child(program, main_def); // Добавляем 'main'
-
-    printf("   ...AST Built (Test for 'a = fun()').\n");
-    return program;
+    return root;
 }
 
 /**
- * @brief Печатает данные токена, экранируя специальные символы.
- * @param data Данные токена (строка).
+ * @brief Тест: Ошибка 3 (Неопределенная переменная) [cite: 38]
+ * Код:
+ * static main() {
+ * a = 10  // <-- ОШИБКА ЗДЕСЬ ('a' не определена)
+ * }
  */
-void print_token_data(const char *data) {
-    for (const char *p = data; *p; p++) {
-        switch (*p) {
-        case '\n': printf("\\n"); break;
-        case '\t': printf("\\t"); break;
-        case '\r': printf("\\r"); break;
-        default:   putchar(*p); break;
-        }
-    }
+AstNode *create_test_undefined_variable_error() {
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
+
+    // static main()
+    AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(root, func_main);
+
+    // { ... }
+    AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
+    ast_node_add_child(func_main, main_block);
+
+    // a = 10
+    AstNode *assignment = ast_node_create(NODE_ASSIGNMENT, 3);
+    ast_node_add_child(assignment, ast_new_id_node(NODE_ID, 3, "a")); // <-- Ошибка 3
+    ast_node_add_child(assignment, ast_new_num_node(10.0, 3));
+
+    ast_node_add_child(main_block, assignment);
+
+    return root;
 }
 
-/*=======================================*/
-// === ТЕСТОВЫЕ ФУНКЦИИ ===
-/*=======================================*/
+/**
+ * @brief Тест: Ошибка 6 (Несовместимость типов) [cite: 41]
+ * Код:
+ * static main() {
+ * var a = "hello" + 10 // <-- ОШИБКА ЗДЕСЬ (String + Num)
+ * }
+ * (Мы симулируем `var a; a = "hello" + 10;` т.к. `var a = ...` это расширение)
+ */
+AstNode *create_test_type_mismatch_error() {
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
-void test_symtable() {
+    // static main()
+    AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(root, func_main);
 
-    Symtable table;
-    symtable_init(&table);
-    symtable_print(&table);
+    // { ... }
+    AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
+    ast_node_add_child(func_main, main_block);
 
-    printf("Вставка символов...\n");
-    Symtable local_table;
-    symtable_init(&local_table);
-    Symtable local_local_table;
-    symtable_init(&local_local_table);
-    SymbolData data_local = { KIND_FUNC, TYPE_NUM, true, &local_local_table, 0 };
-    symtable_insert(&local_table, "local_var", &data_local);
-    SymbolData data1 = { KIND_VAR, TYPE_NUM, true, &local_table, 0 };
-    symtable_insert(&table, "var1", &data1);
-    SymbolData data2 = { KIND_FUNC, TYPE_NUM, false, NULL, 0 };
-    symtable_insert(&table, "func1", &data2);
+    // var a
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
 
+    // "hello" + 10
+    AstNode *plus_op = ast_new_bin_op(NODE_OP_PLUS, 3,
+        ast_new_string_node("hello", 3), // левый операнд (String)
+        ast_new_num_node(10.0, 3)         // правый операнд (Num)
+    );
 
+    // a = ...
+    AstNode *assignment = ast_node_create(NODE_ASSIGNMENT, 3);
+    ast_node_add_child(assignment, ast_new_id_node(NODE_ID, 3, "a"));
+    ast_node_add_child(assignment, plus_op);
 
-    symtable_print(&table);
+    ast_node_add_child(main_block, assignment);
 
-    printf("Удаление символа 'var1'...\n");
-    symtable_delete(&table, "var1");
-    symtable_print(&table);
-
-    printf("Проверка переполнения таблицы...\n");
-    for (int i = 0; i < 5; i++) {
-        char key[16];
-        snprintf(key, sizeof(key), "var%d", i);
-        SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL, 0};
-        if (!symtable_insert(&table, key, &data)) {
-            printf("Ошибка вставки символа '%s'\n", key);
-        }
-    }
-    symtable_print(&table);
-
-    printf("Проверка вставки существующего символа...\n");
-    SymbolData data = { KIND_VAR, TYPE_NUM, true, NULL, 0 };
-    symtable_insert(&table, "func1", &data); // Перезапись существующего
-
-    symtable_print(&table);
-    symtable_free(&table);
+    return root;
 }
 
-int test_lexer() {
-    // Use stdin for input (supports redirection like: ./test < input.wren)
-    FILE *file = fopen("example.wren", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return EXIT_FAILURE;
-    }
+/**
+ * @brief Тест: OK (Правильное использование переменной)
+ * Код:
+ * static main() {
+ * var a
+ * a = 10
+ * var b = a + 20
+ * }
+ * (Симулируем: var a; a = 10; var b; b = a + 20;)
+ */
+AstNode *create_test_valid_program() {
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
-    Lexer *lexer = lexer_init();
-    if (lexer == NULL) {
-        fprintf(stderr, "Error initializing lexer.\n");
-        fclose(file);
-        return EXIT_FAILURE;
-    }
-    while (lexer->current_token->type != TOKEN_EOF) {
-        get_token(lexer, file);
+    // static main()
+    AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(root, func_main);
 
-        printf("Token Type: %s, Data: ",
-            token_type_to_string(lexer->current_token->type));
+    // { ... }
+    AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
+    ast_node_add_child(func_main, main_block);
 
-        print_token_data(lexer->current_token->data);
+    // var a
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
 
-        printf(", Line: %d\n", lexer->current_token->line);
-    }
-    // Don't close stdin
-    lexer_free(lexer);
-    if (fclose(file) != EXIT_SUCCESS) { // обработка ошибки закрытия файла
-        fprintf(stderr, "Error closing file.\n");
-    }
-    return EXIT_SUCCESS;
+    // a = 10
+    AstNode *assign_a = ast_node_create(NODE_ASSIGNMENT, 4);
+    ast_node_add_child(assign_a, ast_new_id_node(NODE_ID, 4, "a"));
+    ast_node_add_child(assign_a, ast_new_num_node(10.0, 4));
+    ast_node_add_child(main_block, assign_a);
+
+    // var b
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 5, "b"));
+
+    // a + 20
+    AstNode *plus_op = ast_new_bin_op(NODE_OP_PLUS, 6,
+        ast_new_id_node(NODE_ID, 6, "a"), // левый операнд (переменная)
+        ast_new_num_node(20.0, 6)         // правый операнд (литерал)
+    );
+
+    // b = ...
+    AstNode *assign_b = ast_node_create(NODE_ASSIGNMENT, 6);
+    ast_node_add_child(assign_b, ast_new_id_node(NODE_ID, 6, "b"));
+    ast_node_add_child(assign_b, plus_op);
+    ast_node_add_child(main_block, assign_b);
+
+    return root;
 }
 
-void test_tac_generator() {
+// Добавляем еще несколько тестов для демонстрации...
 
-    printf("--- 3AC Generator Test ---\n");
+/**
+ * @brief Тест: Ошибка 3 (Нет функции main)
+ * Код:
+ * static foo() { } // (main отсутствует)
+ */
+AstNode *create_test_no_main_function_error() {
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
-    // 1. Инициализация
-    Symtable global_table;
-    symtable_init(&global_table);
+    AstNode *func_foo = ast_new_id_node(NODE_FUNCTION_DEF, 1, "foo");
+    ast_node_add_child(func_foo, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(func_foo, ast_node_create(NODE_BLOCK, 1));
+    ast_node_add_child(root, func_foo);
 
-    TACDLList tac_list;
-    TACDLL_Init(&tac_list);
-
-    // 2. Создаем AST и заполняем Symtable
-    AstNode *ast_root = create_test_ast(&global_table);
-
-    // Раскомментируй, если у тебя есть symtable_print
-    // printf("\n--- Symbol Table (Simulated Pass 2) ---\n");
-    // symtable_print(&global_table);
-
-    // 3. === ЗАПУСКАЕМ ТВОЙ ГЕНЕРАТОР ===
-    printf("\n2. Calling generate_tac()...\n");
-    generate_tac(ast_root, &tac_list, &global_table);
-    printf("   ...generate_tac() finished.\n");
-    optimize_tac(&tac_list);
-
-
-    // 4. Печатаем результат
-    // (Убедись, что у тебя есть 'printer.c' и 'printer.h' с этой функцией)
-    printf("\n--- Generated 3-Address Code ---\n");
-    print_tac_list(&tac_list);
-
-    // 5. Очистка
-    printf("\n3. Cleaning up resources...\n");
-    ast_node_free_recursive(ast_root);
-    symtable_free(&global_table);
-    TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
-
-    printf("Done.\n");
-
-}
-void test_gen_code() {
-
-    Symtable global_table;
-    symtable_init(&global_table);
-    TACDLList tac_list;
-    TACDLL_Init(&tac_list);
-    AstNode *ast_root = create_test_ast(&global_table);
-    generate_tac(ast_root, &tac_list, &global_table);
-    
-    printf("\n--- Generated Code ---\n");
-    generate_code(&tac_list, &global_table);
-
-    printf("\n3. Cleaning up resources...\n");
-    ast_node_free_recursive(ast_root);
-    symtable_free(&global_table);
-    TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
-
-    printf("Done.\n");
+    return root;
 }
 
+/**
+ * @brief Тест: Ошибка 5 (Встроенная функция - неверный тип параметра)
+ * Код:
+ * static main() {
+ * var a = Ifj.length(123) // <-- ОШИБКА 5 (ожидает String)
+ * }
+ */
+AstNode *create_test_builtin_type_error() {
+    AstNode *root = ast_node_create(NODE_PROGRAM, 1);
+    AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(root, func_main);
 
+    AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
+    ast_node_add_child(func_main, main_block);
 
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
 
-/*=======================================*/
-// === ГЛАВНАЯ ФУНКЦИЯ ===
-/*=======================================*/
+    AstNode *call_expr = ast_node_create(NODE_CALL_STATEMENT, 6);
+    ast_node_add_child(call_expr, ast_new_id_node(NODE_ID, 6, "Ifj.length"));
+    AstNode *args = ast_node_create(NODE_ARGUMENT_LIST, 6);
+    ast_node_add_child(args, ast_new_num_node(123.0, 6)); // <-- Ошибка 5
+    ast_node_add_child(call_expr, args);
+
+    AstNode *assign = ast_node_create(NODE_ASSIGNMENT, 6);
+    ast_node_add_child(assign, ast_new_id_node(NODE_ID, 6, "a"));
+    ast_node_add_child(assign, call_expr);
+    ast_node_add_child(main_block, assign);
+
+    return root;
+}
+
+/* ================================================================== */
+/* ==================== ГЛАВНАЯ ФУНКЦИЯ ТЕСТА ======================= */
+/* ================================================================== */
 
 int main() {
-    printf("=== IFJ-2025 Test Suite ===\n\n");
-    test_lexer();
-    // test_precedence_stack();
-    test_tac_generator();
-    return EXIT_SUCCESS;
+    printf("============================================================\n");
+    printf(" Запуск тестов для Семантического Анализатора (Pass 2)...\n");
+    printf(" (Используются коды выхода вместо булевых значений)\n");
+    printf("============================================================\n");
+
+    // --- Тесты на Ошибки (ожидаем соответствующие коды ошибок) ---
+    printf(ANSI_COLOR_CYAN "--- Тесты на Ошибки ---\n" ANSI_COLOR_RESET);
+    
+    // Ошибки определения (код 3)
+    run_test("Ошибка 3: Использование неопределенной переменной", create_test_undefined_variable_error(), 3);
+    run_test("Ошибка 3: Нет функции main", create_test_no_main_function_error(), 3);
+    
+    // Ошибки переопределения (код 4)
+    run_test("Ошибка 4: Переопределение переменной в том же скоупе", create_test_redefinition_error(), 4);
+    
+    // Ошибки типов встроенных функций (код 5)
+    run_test("Ошибка 5: Неверный тип параметра встроенной функции", create_test_builtin_type_error(), 5);
+    
+    // Ошибки совместимости типов (код 6)
+    run_test("Ошибка 6: Несовместимые типы в выражении", create_test_type_mismatch_error(), 6);
+
+    // --- Тесты на Успех (ожидаем код 0) ---
+    printf(ANSI_COLOR_CYAN "\n--- Тесты на Успех (ожидаем код 0) ---\n" ANSI_COLOR_RESET);
+    run_test("Успех: Валидная программа", create_test_valid_program(), 0);
+
+    // --- Итоги ---
+    printf("============================================================\n");
+    if (passed_tests == total_tests) {
+        printf(ANSI_COLOR_GREEN "Все %d тестов пройдены успешно!\n" ANSI_COLOR_RESET, total_tests);
+    } else {
+        printf(ANSI_COLOR_RED "Провалено %d из %d тестов.\n" ANSI_COLOR_RESET, total_tests - passed_tests, total_tests);
+    }
+    printf("============================================================\n");
+
+    return (passed_tests == total_tests) ? 0 : 1;
 }

@@ -247,7 +247,7 @@ typedef struct AstNode {
 /**
  * @brief Создает новый узел AST.
  * Данные (union) и семантические поля инициализируются в NULL/0.
- * @param type Тип узла (NodeType).
+ * @param type Тип узла (NodeTypgit coe).
  * @param line_number Номер строки для отладки.
  * @return Указатель на новый узел.
  */
@@ -295,5 +295,17 @@ AstNode *ast_new_string_node(const char *value, int line);
 
 AstNode *ast_new_null_node(int line);
 
-AstNode *ast_new_bin_op(NodeType type, int line, AstNode *left, AstNode *right);
+/* ======================================*/
+/* ===== 2. ПАРСЕР-ПОМОЩНИКИ (API) =====*/
+/* ======================================*/
+
+AstNode* ast_new_id_node(NodeType type, int line, const char* id);
+
+AstNode* ast_new_num_node(double value, int line);
+
+AstNode* ast_new_string_node(const char* value, int line);
+
+AstNode* ast_new_null_node(int line);
+
+AstNode* ast_new_bin_op(NodeType type, int line, AstNode* left, AstNode* right);
 #endif
