@@ -199,11 +199,6 @@ bool analyze_semantics(AstNode* root) {
 
     printf("DEBUG: Final check completed. 'main@0' found and defined.\n");
 
-<<<<<<< HEAD
-    // В конце чистим
-    // symtable_free(&global_table);
-=======
->>>>>>> main
     return true;
 }
 

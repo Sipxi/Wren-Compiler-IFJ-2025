@@ -184,7 +184,6 @@ AstNode *create_test_type_mismatch_error() {
     return root;
 }
 
-<<<<<<< HEAD
 /**
  * @brief Тест: Ошибка 5 (Неверное кол-во аргументов) [cite: 40]
  * Код:
@@ -228,8 +227,6 @@ AstNode *create_test_arg_count_error() {
     return root;
 }
 
-=======
->>>>>>> main
 /**
  * @brief Тест: OK (Правильное использование переменной)
  * Код:
@@ -279,7 +276,6 @@ AstNode *create_test_valid_program() {
     return root;
 }
 
-<<<<<<< HEAD
 /**
  * @brief Тест: OK (Правильное вложенное затенение - shadowing с выражением)
  * Код:
@@ -832,9 +828,6 @@ AstNode *create_test_null_relational_op_error() {
 
     return root;
 }
-=======
-// Добавляем еще несколько тестов для демонстрации...
->>>>>>> main
 
 /**
  * @brief Тест: Ошибка 3 (Нет функции main)
