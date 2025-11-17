@@ -328,6 +328,9 @@ static void symtable_print_entry(TableEntry *entry, size_t index, int level) {
         printf("Тип:     %s\n", type_to_string(data->data_type));
         print_indent(level + 1);
         printf("Опред:   %s\n", data->is_defined ? "true" : "false");
+        print_indent(level + 1);
+        printf("Unique:  %s\n", data->unique_name ? data->unique_name : "-");
+       
 
         // 4. Рекурсивный вызов (ИСПРАВЛЕНО)
         // Мы смотрим в 'entry', а не в 'data'!
