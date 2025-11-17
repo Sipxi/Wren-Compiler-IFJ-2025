@@ -6,6 +6,7 @@
         "error.h": "c",
         "codegen.h": "c",
         "symtable.h": "c",
-        "stdlib.h": "c"
+        "stdlib.h": "c",
+        "stdio.h": "c"
     }
 }
