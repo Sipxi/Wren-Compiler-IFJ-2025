@@ -1,6 +1,9 @@
-/* symtable.h
+/**
+ * @file symtable.h
+ * 
  * Заголовочный файл для таблицы символов
- * Автор: Serhij Čepil (253038)
+ * Author: 
+ *          - Serhij Čepil (253038)
  */
 
 
@@ -56,6 +59,7 @@ typedef enum{
     TYPE_NUM,
     TYPE_STR,
     TYPE_NIL,
+    TYPE_NULL,
     TYPE_FLOAT,
 
     //TODO Добавить другие типы данных по мере необходимости
@@ -65,6 +69,7 @@ typedef enum{
 typedef enum{
     KIND_VAR,
     KIND_FUNC,
+    KIND_BLOCK,
 
     //TODO Добавить другие виды символов по мере необходимости
 } SymbolKind;
@@ -94,6 +99,7 @@ typedef struct{
     bool is_defined; // Флаг, указывающий, определен ли символ (для функций)
 
     struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
+    int nesting_level; // Уровень вложенности, на котором был объявлен символ
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
 
@@ -110,6 +116,9 @@ typedef struct Symtable{
     TableEntry* entries;   // Массив записей таблицы символов
     size_t count;           // Текущее количество записей в таблице
     size_t capacity;       // Вместимость таблицы, т.е. максимальное количество записей
+
+    int nesting_level;     // Уровень вложенности (0 для GF, 1 для LF, 2+ для вложенных блоков)
+    // struct Symtable* parent_scope; // Указатель на родительскую таблицу (для поиска)
 } Symtable;
 
 // ======================================*/

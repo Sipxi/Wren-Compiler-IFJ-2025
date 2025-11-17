@@ -1,3 +1,4 @@
+
 /**
  * @file lexer.c
  *
@@ -56,6 +57,7 @@ typedef enum {
     STATE_CLOSE_PAREN,
     STATE_OPEN_BRACE,
     STATE_CLOSE_BRACE,
+    STATE_COMMA,
 
     STATE_FIRST_QUOT,
     STATE_SECOND_QUOT,
@@ -166,7 +168,7 @@ static bool is_hex_digit(const char character);
  * @param str Строка для записи.
  * @return Количество записанных символов.
  */
-static bool write_str(FILE* file, int count, char** str);
+static void write_str(FILE* file, int count, char** str);
 
 /**
  * Просматривает следующий символ в файле без его удаления из потока.
@@ -319,20 +321,20 @@ static bool is_hex_digit(const char character) {
            (character >= 'A' && character <= 'F');
 }
 
-static bool write_str(FILE* file, int count, char** str) {
+static void write_str(FILE* file, int count, char** str) {
     // Переместить указатель файла назад к последней прочитанной
     // последовательности символов
     if (fseek(file, -count, SEEK_CUR) != 0) {
-        fprintf(stderr, "fseek failed\n");
-        return false;
+        lexer_error(NULL, INTERNAL_ERROR,
+                    "Failed to seek back in file for token data");
     }
 
     // Выделить или перераспределить память для строки (+1 для нулевого
     // терминатора)
     char* temp = realloc(*str, count + 1);
     if (temp == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
-        return false;
+        lexer_error(NULL, INTERNAL_ERROR,
+                    "Failed to allocate memory for token data");
     }
     *str = temp;
 
@@ -341,15 +343,13 @@ static bool write_str(FILE* file, int count, char** str) {
         int c = fgetc(file);
         if (c == EOF) {
             (*str)[i] = '\0';
-            return false;
+            return;
         }
         (*str)[i] = (char)c;
     }
 
     // Нулевой терминатор
     (*str)[count] = '\0';
-
-    return true;
 }
 
 static char peek_char(FILE* file) {
@@ -444,7 +444,8 @@ Lexer* lexer_init() {
     // Выделить память для структуры Lexer
     Lexer* lexer = (Lexer*)malloc(sizeof(Lexer));
     if (lexer == NULL) {
-        return NULL;
+        lexer_error(NULL, INTERNAL_ERROR,
+                    "Failed to allocate memory for Lexer");
     }
     // Инициализировать позицию и номер строки
     // Начать позицию с 1 и номер строки с 1
@@ -600,11 +601,17 @@ void scan_token(Lexer* lexer, FILE* file) {
                 } else if (current_char == '\n') {
                     change_state(file, lexer, &state, STATE_EOL, current_char);
                     break;
-                } else {
+                } else if(current_char == ',') {
+                    change_state(file, lexer, &state, STATE_COMMA, current_char);
+                    break;
+                }else {
                     lexer_error(lexer, LEXER_ERROR,
                                 "Unknown character encountered");
                     break;
                 }
+            case STATE_COMMA:
+                set_single_token(lexer, TOKEN_COMMA, current_char);
+                return;
             case STATE_WHITESPACE:
                 if (!is_whitespace(current_char))
                     change_state(file, lexer, &state, STATE_START,
@@ -942,8 +949,6 @@ void scan_token(Lexer* lexer, FILE* file) {
                 set_multi_token(lexer, TOKEN_EXP, file, characters_read);
                 return;
 
-                /////////////////////////////////////////////
-
             case STATE_FIRST_QUOT:
                 if (current_char == '"') {
                     characters_read++;
@@ -1025,8 +1030,6 @@ void scan_token(Lexer* lexer, FILE* file) {
                 set_multi_token(lexer, TOKEN_STRING, file, characters_read);
                 return;
 
-                /////////////////////////////////////////////
-
             case STATE_PLUS:
                 set_single_token(lexer, TOKEN_PLUS, current_char);
                 return;
@@ -1098,7 +1101,6 @@ void scan_token(Lexer* lexer, FILE* file) {
             default:
                 // Ошибка: неизвестное состояние
                 lexer_error(lexer, LEXER_ERROR, "Unknown state in lexer FSM");
-                break;
         }
     }
     // Этот код никогда не будет достигнут

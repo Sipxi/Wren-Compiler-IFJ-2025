@@ -95,6 +95,7 @@ bool symtable_init(Symtable* table) {
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
+    table->nesting_level = 0;
     return true;
 }
 
@@ -151,7 +152,10 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
             return false;  // Ошибка изменения размера, вставка не выполнена
         }
     }
-
+    data->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
+    if (data->local_table != NULL) {
+        data->local_table->nesting_level = table->nesting_level + 1;
+    }
     size_t hash_index = get_hash(key, table->capacity);
     size_t original_index = hash_index;
     TableEntry* entry = &table->entries[hash_index];
@@ -201,6 +205,8 @@ void symtable_delete(Symtable* table, const char* key) {
         table->count--;                // Уменьшаем количество записей
         // Освобождение памяти для ключа и данных
         free(entry->key);
+        if (entry->data->local_table != NULL)
+            symtable_free(entry->data->local_table);
         free(entry->data);
         entry->key = NULL;
         entry->data = NULL;
@@ -212,6 +218,8 @@ void symtable_free(Symtable* table) {
         TableEntry* entry = &table->entries[i];
         if (entry->status == SLOT_OCCUPIED) {
             free(entry->key);   // Освобождаем память для ключа
+            if (entry->data->local_table != NULL)
+                symtable_free(entry->data->local_table); // Рекурсивно освобождаем локальную таблицу
             free(entry->data);  // Освобождаем память для данных символа
         }
     }
@@ -219,6 +227,7 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
+    // table->parent_scope = NULL;
 }
 
 /* ===================================================*/
@@ -244,6 +253,7 @@ static const char* kind_to_string(SymbolKind kind) {
     switch (kind) {
         case KIND_VAR:    return "Variable";
         case KIND_FUNC:   return "Function";
+        case KIND_BLOCK:  return "Block";
     }
     return "UNKNOWN_KIND";
 }
@@ -256,6 +266,7 @@ static const char* type_to_string(DataType type) {
         case TYPE_NUM:    return "Number";
         case TYPE_STR:    return "String";
         case TYPE_NIL:    return "Nil";
+        case TYPE_NULL:   return "Null";
         case TYPE_FLOAT:  return "Float";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }

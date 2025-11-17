@@ -1,15 +1,40 @@
+/**
+ * @file token.c
+ * 
+ * Реализация функций для работы с токенами.
+ *
+ * Author:
+ *     - Serhij Čepil (253038)
+ * ! Допишите ваши имена и номера
+ */
 #include "token.h"
+#include "error_codes.h"
 #include "utils.h"
-
+#include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
 
+
+void token_init_error(ErrorCode error_code) {
+    fprintf(stderr, "Token: Chyba alokace paměti\n");
+    exit(error_code);
+}
+
+void token_copy_data(Token* dest, const Token* src) {
+    dest->type = src->type;
+    dest->line = src->line;
+    if (src->data != NULL) {
+        dest->data = strdup_c99(src->data);
+    } else {
+        dest->data = NULL;
+    }
+}
 
 Token *token_init() {
     // Выделить память для структуры Token 
     Token *token = (Token *)malloc(sizeof(Token));
     if (token == NULL) {
-        return NULL;
+        token_init_error(INTERNAL_ERROR);
     }
             
     // Выделить память для поля данных токена
@@ -17,7 +42,7 @@ Token *token_init() {
     token->data = (char *)malloc(sizeof(char) + 1);
     if (token->data == NULL) {
         free(token);
-        return NULL;
+        token_init_error(INTERNAL_ERROR);
     }
     // Инициализировать пустую строку
     token->data[0] = '\0';
