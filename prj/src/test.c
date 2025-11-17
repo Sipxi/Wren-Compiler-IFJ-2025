@@ -227,7 +227,7 @@ int test_lexer() {
         return EXIT_FAILURE;
     }
     while (lexer->current_token->type != TOKEN_EOF) {
-        get_next_token(lexer, file);
+        get_token(lexer, file);
 
         printf("Token Type: %s, Data: ",
             token_type_to_string(lexer->current_token->type));
@@ -266,7 +266,7 @@ void test_tac_generator() {
     printf("\n2. Calling generate_tac()...\n");
     generate_tac(ast_root, &tac_list, &global_table);
     printf("   ...generate_tac() finished.\n");
-    // optimize_tac(&tac_list);
+    optimize_tac(&tac_list);
 
 
     // 4. Печатаем результат
@@ -304,14 +304,16 @@ void test_gen_code() {
 }
 
 
+
+
 /*=======================================*/
 // === ГЛАВНАЯ ФУНКЦИЯ ===
 /*=======================================*/
 
 int main() {
     printf("=== IFJ-2025 Test Suite ===\n\n");
+    test_lexer();
+    // test_precedence_stack();
     test_tac_generator();
-    test_gen_code();
-
     return EXIT_SUCCESS;
 }
