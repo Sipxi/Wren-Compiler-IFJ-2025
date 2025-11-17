@@ -224,6 +224,12 @@ void symtable_free(Symtable* table) {
     for (size_t i = 0; i < table->capacity; i++) {
         TableEntry* entry = &table->entries[i];
         if (entry->status == SLOT_OCCUPIED) {
+            // Рекурсивно освобождаем вложенные таблицы символов
+            if (entry->local_table != NULL) {
+                symtable_free(entry->local_table);
+                free(entry->local_table);
+                entry->local_table = NULL;
+            }
             free(entry->key);   // Освобождаем память для ключа
             free(entry->data);  // Освобождаем память для данных символа
         }
@@ -272,11 +278,9 @@ static const char* type_to_string(DataType type) {
         case TYPE_NIL:    return "Nil";
         case TYPE_BOOL:   return "Boolean";
         case TYPE_FLOAT:  return "Float";
-        default:          return "UNKNOWN_TYPE";
+        default: return "UNKNOWN_TYPE";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
-    
-   
 }
 
 /**
