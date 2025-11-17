@@ -186,10 +186,10 @@ void gen_same_operand_check(TacInstruction *instr){
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg2);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 GF@$tmp_type_2\n", label_start_operation);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 GF@$tmp_type_2\n", label_start_operation);
 
     // конвертация в float
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_2 string@int\n", label_arg_2_float);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_arg_2_float);
 
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 ");
     gen_operand(instr->arg1);
@@ -208,11 +208,11 @@ void gen_convert_result(TacInstruction *instr){
     fprintf(stdout, "ISINT GF@$tmp ");
     gen_operand(instr->result);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp bool@false\n", label_end_convert);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp bool@false\n", label_end_convert);
     fprintf(stdout, "TYPE GF@$tmp_type_1 ");
     gen_operand(instr->result);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 string@int\n", label_end_convert);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@int\n", label_end_convert);
     fprintf(stdout, "FLOAT2INT ");
     gen_operand(instr->result);
     fprintf(stdout, " ");
@@ -325,7 +325,7 @@ void gen_mul_str(TacInstruction *instr){
     char *label_loop = create_unique_label("MUL_STR_LOOP");
     char *label_loop_end = create_unique_label("MUL_STR_LOOP_END");
     // Перевод на инт
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_2 string@int\n", label_loop);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_loop);
     fprintf(stdout, "FLOAT2INT GF@$tmp ");
     gen_operand(instr->arg2);
     fprintf(stdout, "\n");
@@ -338,7 +338,7 @@ void gen_mul_str(TacInstruction *instr){
     fprintf(stdout, " string@\n");
     // Начало цикла
     gen_label(label_loop);
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp int@0\n", label_loop_end);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp int@0\n", label_loop_end);
     // Конкатенация строки
     fprintf(stdout, "CONCAT ");
     gen_operand(instr->result);
@@ -374,7 +374,7 @@ void gen_comprasion(TacInstruction *instr){
     fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool\n");
 
      // конвертация в float
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_2 string@int\n", label_arg_2_float);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_arg_2_float);
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
@@ -515,7 +515,7 @@ void gen_read_num(TACDLList *instructions){
     // fprintf(stdout, "ISINT GF@$tmp ");
     // gen_operand(instr->arg1);
     // fprintf(stdout, "\n");
-    // fprintf(stdout, "JUMPIFEQ %s GF@$tmp bool@false\n", label_end);
+    // fprintf(stdout, "JUMPIFEQ $%s GF@$tmp bool@false\n", label_end);
     // fprintf(stdout, "FLOAT2INT ");
     // gen_operand(instr->arg1);
     // fprintf(stdout, " ");
@@ -539,14 +539,14 @@ void gen_write(TACDLList *instructions){
     fprintf(stdout, "TYPE GF@$tmp_type_1 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 string@nil\n", label_write);
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 string@string\n", label_write);
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 string@bool\n", label_write);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@nil\n", label_write);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@string\n", label_write);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@bool\n", label_write);
 
     fprintf(stdout, "ISINT GF@$tmp_type_1 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ %s GF@$tmp_type_1 bool@false\n", label_write);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@false\n", label_write);
     fprintf(stdout, "INT2FLOAT GF@$tmp ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
