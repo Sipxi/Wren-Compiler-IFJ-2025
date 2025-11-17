@@ -7,10 +7,6 @@
         "codegen.h": "c",
         "symtable.h": "c",
         "stdlib.h": "c",
-        "tac_printer.h": "c",
-        "parser.h": "c",
-        "ast.h": "c",
-        "semantics.h": "c",
-        "random": "c"
+        "stdio.h": "c"
     }
 }

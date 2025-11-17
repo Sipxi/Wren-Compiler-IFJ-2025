@@ -139,7 +139,6 @@ AstNode *ast_new_num_node(double value, int line) {
 
     // 2. Кладем *значение* (не указатель!) прямо в union.
     node->data.literal_num = value;
-
     // 3. Семантические поля остаются NULL.
     return node;
 }

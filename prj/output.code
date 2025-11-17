@@ -1,0 +1,81 @@
+.IFJcode25
+DEFVAR GF@$tmp_2
+DEFVAR GF@$tmp
+DEFVAR GF@$tmp_type_1
+DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_op_1
+DEFVAR GF@$tmp_op_2
+DEFVAR GF@ret_ifj_fun
+CREATEFRAME
+CALL $$main
+
+EXIT int@0
+LABEL $EXIT25
+EXIT int@25
+LABEL $EXIT26
+EXIT int@26
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | main@0          | ____
+LABEL $$main
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+DEFVAR LF@a$1
+DEFVAR LF@b$1
+DEFVAR LF@$t$0
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | main@0          | ____
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | a               | ____            | ____
+MOVE LF@a$1 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | 10              | ____
+MOVE LF@a$1 int@10
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | b               | ____            | ____
+MOVE LF@b$1 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t0             | ____            | ____
+MOVE LF@$t$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#ADD                | $t0             | a               | 20
+TYPE GF@$tmp_type_1 LF@a$1
+TYPE GF@$tmp_type_2 int@20
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+MOVE GF@$tmp_op_1 LF@a$1
+MOVE GF@$tmp_op_2 int@20
+JUMPIFEQ $START_OPERATION_0 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_1 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@a$1
+LABEL $ARG2_TO_FLOAT_1
+INT2FLOAT GF@$tmp_op_2 int@20
+LABEL $START_OPERATION_0
+ADD LF@$t$0 GF@$tmp_op_1 GF@$tmp_op_2
+ISINT GF@$tmp LF@$t$0
+JUMPIFEQ $END_CONVERT_2 GF@$tmp bool@false
+TYPE GF@$tmp_type_1 LF@$t$0
+JUMPIFEQ $END_CONVERT_2 GF@$tmp_type_1 string@int
+FLOAT2INT LF@$t$0 LF@$t$0
+LABEL $END_CONVERT_2
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | b               | $t0             | ____
+MOVE LF@b$1 LF@$t$0
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | main@0          | ____
+MOVE LF@ret nil@nil
+POPFRAME
+RETURN
