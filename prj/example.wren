@@ -1,1 +1,1 @@
-func(a,b);
+func(a,b)

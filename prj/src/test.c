@@ -266,7 +266,7 @@ void test_tac_generator() {
     printf("\n2. Calling generate_tac()...\n");
     generate_tac(ast_root, &tac_list, &global_table);
     printf("   ...generate_tac() finished.\n");
-    // optimize_tac(&tac_list);
+    optimize_tac(&tac_list);
 
 
     // 4. Печатаем результат
@@ -304,6 +304,8 @@ void test_gen_code() {
 }
 
 
+
+
 /*=======================================*/
 // === ГЛАВНАЯ ФУНКЦИЯ ===
 /*=======================================*/
@@ -311,5 +313,7 @@ void test_gen_code() {
 int main() {
     printf("=== IFJ-2025 Test Suite ===\n\n");
     test_lexer();
+    // test_precedence_stack();
+    test_tac_generator();
     return EXIT_SUCCESS;
 }
