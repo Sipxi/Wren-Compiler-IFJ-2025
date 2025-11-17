@@ -262,44 +262,60 @@ AstNode *create_test_valid_program() {
 }
 
 /**
- * @brief Тест: OK (Правильное вложенное затенение - shadowing) [cite: 153]
+ * @brief Тест: OK (Правильное вложенное затенение - shadowing с выражением)
  * Код:
  * static main() {
  * var a
- * if (true) {
+ * if (5 == 10) {
  * var a // <-- OK, это новая 'a' в новой области видимости
  * }
  * }
  */
 AstNode *create_test_valid_shadowing() {
+    // Корень программы
     AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
     // static main()
     AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
-    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1)); // Пустой список параметров ()
     ast_node_add_child(root, func_main);
 
     // { ... } (Блок main)
     AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
     ast_node_add_child(func_main, main_block);
 
-    // var a
-    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
+    // var a (на 2-й строке)
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 2, "a"));
 
-    // if (true)
-    AstNode *if_stmt = ast_node_create(NODE_IF, 4);
-    ast_node_add_child(if_stmt, ast_new_num_node(1.0, 4)); // Условие (true)
+    // if (5 == 10) (на 3-й строке)
+    AstNode *if_stmt = ast_node_create(NODE_IF, 3);
     ast_node_add_child(main_block, if_stmt);
 
-    // { ... } (Блок if)
-    AstNode *if_block = ast_node_create(NODE_BLOCK, 5);
+    // ---
+    // Создание узла условия (5 == 10)
+    // ---
+    // 1. Создаем узел для операции '=='
+    AstNode *condition_op = ast_node_create(NODE_OP_EQ, 3); // Предполагаемое имя узла
+
+    // 2. Создаем и добавляем левый операнд (5)
+    ast_node_add_child(condition_op, ast_new_num_node(5.0, 3));
+
+    // 3. Создаем и добавляем правый операнд (10)
+    ast_node_add_child(condition_op, ast_new_num_node(10.0, 3));
+
+    // 4. Добавляем узел '==' (со всем его поддеревом) как условие в if
+    ast_node_add_child(if_stmt, condition_op);
+    // --- Конец изменений ---
+
+    // { ... } (Блок if, на 4-й строке)
+    AstNode *if_block = ast_node_create(NODE_BLOCK, 4);
     ast_node_add_child(if_stmt, if_block);
 
-    // var a (внутри if)
-    ast_node_add_child(if_block, ast_new_id_node(NODE_VAR_DEF, 6, "a")); // <-- OK
+    // var a (внутри if, на 4-й строке)
+    ast_node_add_child(if_block, ast_new_id_node(NODE_VAR_DEF, 4, "a")); // <-- OK
 
-    // else { }
-    ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 7)); // Пустой else
+    // else { } (Пустой else, строка 5)
+    ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 5));
 
     return root;
 }
