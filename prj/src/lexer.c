@@ -425,6 +425,9 @@ static void ensure_buffer_has(Lexer* lexer, int needed_count, FILE* file) {
         token_copy_data(to_add, lexer->current_token);
         lexer->buffered_tokens[lexer->buffered_count] = *to_add;
         lexer->buffered_count++;
+        // НЕ освобождаем to_add, так как data теперь принадлежит токену в буфере
+        // Освобождаем только саму структуру токена, но не данные
+        free(to_add);
     }
 }
 
