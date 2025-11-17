@@ -850,8 +850,16 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
     {
         //* --- БАЗОВЫЕ СЛУЧАИ (Литералы) ---
         case NODE_LITERAL_NUM:
-            node->data_type = TYPE_NUM;
-            *result_type = TYPE_NUM;
+            double val = node->data.literal_num;
+            // Проверяем, является ли число целым (отбрасываем дробную часть и сравниваем)
+            // (long long)val == val работает для чисел в диапазоне int64
+            if ((long long)val == val) {
+                node->data_type = TYPE_NUM;   // Это "целый" Num
+                *result_type = TYPE_NUM;
+            } else {
+                node->data_type = TYPE_FLOAT; // Это "дробный" Num
+                *result_type = TYPE_FLOAT;
+            }
             return true;
 
         case NODE_LITERAL_STRING:
@@ -976,11 +984,10 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                     if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
                         *result_type = TYPE_NUM;
                         
-                        // --- ПРОВЕРКА НА 0 (Статическая) ---
                         AstNode* r_node = node->child->sibling;
                         if (r_node->type == NODE_LITERAL_NUM && r_node->data.literal_num == 0.0) {
                             fprintf(stderr, "Error: Division by zero literal (Line %d).\n", node->line_number);
-                            return false; // Ошибка 10/57
+                            return false;
                         }
                     } else {
                         fprintf(stderr, "Error 6: Invalid operands for '/' (Line %d).\n", node->line_number);
