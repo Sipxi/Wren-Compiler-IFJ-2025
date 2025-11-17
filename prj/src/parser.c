@@ -216,7 +216,8 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
         // вместо 
     case TOKEN_IDENTIFIER:
     case TOKEN_GLOBAL_IDENTIFIER: {
-        Token identifier = get_token(lexer, file); // consume identifier
+        Token identifier = peek_token(lexer, file);
+        get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
             // создаем узел присваивания
             AstNode *assignment_node = ast_node_create(NODE_ASSIGNMENT, lexer->current_token->line);
@@ -487,8 +488,8 @@ AstNode *name_function(Lexer *lexer, FILE *file) {
     }
     AstNode *func_name_node;
     //! Проверка на malloc
-    Token func_name_token = get_token(lexer, file); // consume function name    
-
+    Token func_name_token = peek_token(lexer, file);    
+    get_token(lexer, file); // consume function name
     // Определяем тип функции по следующему токену
     if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
         func_name_node = ast_new_id_node(NODE_FUNCTION_DEF, lexer->current_token->line, func_name_token.data);

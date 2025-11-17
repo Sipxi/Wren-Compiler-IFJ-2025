@@ -497,16 +497,13 @@ Token peek_next_token(Lexer* lexer, FILE* file) {
     return lexer->buffered_tokens[1];
 }
 
-Token get_token(Lexer* lexer, FILE* file) {
+void get_token(Lexer* lexer, FILE* file) {
     if (lexer->buffered_count > 0) {
         // (Твой код буфера)
-        Token token = lexer->buffered_tokens[0];
         shift_buffer(lexer);
-        return token;
     } else {
         // Буфер пуст. Просто сканируем и возвращаем копию
-        scan_token(lexer, file);
-        return *lexer->current_token; 
+        scan_token(lexer, file);        
     }
 }
 
