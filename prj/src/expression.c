@@ -60,7 +60,7 @@ NodeType token_type_to_node(Token token) {
             if (strcmp(token.data, "null") == 0) {
                 return NODE_LITERAL_NULL;
             }
-            return -1; // Не оператор
+            exit(25); // Не оператор
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
             return NODE_ID; // not an operator, but a term
@@ -136,7 +136,7 @@ bool handle_reduce(PStack *stack) {
         }
         bool match = true;
         for (int j = 0; j < count; j++) {
-            if (handle[j].symbol != rule[rule_length - j]) {
+            if ((int) handle[j].symbol != rule[rule_length - j]) {
                 match = false;
                 break;
             }
@@ -149,9 +149,6 @@ bool handle_reduce(PStack *stack) {
                 AstNode *left_node = handle[2].ast_node;
                 Token op_token = handle[1].token;
                 NodeType node_type = grammar_symbol_to_node_type(handle[1].symbol);
-                if (node_type == -1) {
-                    return false; // Ошибка: неизвестный оператор
-                }
                 new_ast_node = ast_new_bin_op(node_type, op_token.line, left_node, right_node);
                 
             }
@@ -200,7 +197,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     PSTACK_init(&stack);
 
     // Помещаем $ на стек
-    PStackItem dollar_item = { .symbol = GS_DOLLAR, .token = TOKEN_EOF, .ast_node = NULL };
+    PStackItem dollar_item = { .symbol = GS_DOLLAR, .token.type = TOKEN_UNDEFINED, .ast_node = NULL };
     PSTACK_push(&stack, dollar_item);
 
     // Читаем первый токен

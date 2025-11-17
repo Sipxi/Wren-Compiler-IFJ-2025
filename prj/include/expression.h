@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "ast.h"
 
-
+bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node);
 
 
 

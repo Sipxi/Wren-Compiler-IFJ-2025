@@ -116,6 +116,7 @@ TermIndex token_to_index(Token token) {
         case TOKEN_EOL:
         case TOKEN_EOF:
         case TOKEN_OPEN_BRACE:
+        case TOKEN_UNDEFINED:
         // (Добавь сюда другие токены, завершающие выражение, 
         // например, TOKEN_COMMA или TOKEN_CLOSE_BRACE)
             return T_DOLLAR;

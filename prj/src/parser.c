@@ -204,7 +204,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
     switch (peek_token(lexer, file).type) {
         // вместо 
     case TOKEN_IDENTIFIER:
-    case TOKEN_GLOBAL_IDENTIFIER: 
+    case TOKEN_GLOBAL_IDENTIFIER: {
         Token identifier = get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
             // создаем узел присваивания
@@ -224,6 +224,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             exit(25);
         }
         break;
+    }
     case TOKEN_KEYWORD:
         if (strcmp(lexer->current_token->data, "return") == 0) {
             get_token(lexer, file); // consume 'return' keyword
