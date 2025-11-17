@@ -329,7 +329,7 @@ static bool process_function_declaration(AstNode* func_node) {
     // 5. Создаем SymbolData (БЕЗ local_table)
     SymbolData data;
     data.kind = KIND_FUNC;
-    data.data_type = TYPE_NIL; // По умолчанию, функция возвращает nil
+    data.data_type = TYPE_UNKNOWN; // По умолчанию, функция возвращает unknown
     data.is_defined = false;   // Мы еще НЕ анализировали тело (Шаг 2b)
     
     // 6. Вставляем в global_table
@@ -451,7 +451,7 @@ static bool analyze_function_body(AstNode* func_node)
         // 6b. Создаем данные для Symtable
         SymbolData data;
         data.kind = KIND_VAR;
-        data.data_type = TYPE_NIL;
+        data.data_type = TYPE_UNKNOWN;;
         data.is_defined = true;
 
         // 6c. Вставляем в 'func_local_table' (Уровень 1)
@@ -900,7 +900,16 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                 return false;
             }
         
-            // 3. Проверка на NIL
+            
+            // 3 Если тип хотя бы одного операнда неизвестен (напр., это параметр),
+            // мы не можем проверить это статически. Считаем, что все ОК (Runtime проверит)
+            if (left_type == TYPE_UNKNOWN || right_type == TYPE_UNKNOWN) {
+                *result_type = TYPE_UNKNOWN;
+                node->data_type = TYPE_UNKNOWN;
+                return true;
+            }
+            
+            // 3a. Проверка на NIL
             if (left_type == TYPE_NIL || right_type == TYPE_NIL) {
                  fprintf(stderr, "Semantic Error (Line %d): Cannot use 'null' in arithmetic/string ops.\n", node->line_number);
                 return false; // Ошибка 6
@@ -968,6 +977,12 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             if (!analyze_expression(node->child, stack, &l)) return false;
             if (!analyze_expression(node->child->sibling, stack, &r)) return false;
 
+            if (l == TYPE_UNKNOWN || r == TYPE_UNKNOWN) {
+                *result_type = TYPE_BOOL; // Результат сравнения всегда Bool (даже если типы неизвестны)
+                node->data_type = TYPE_BOOL;
+                return true;
+            }
+            
             if (l != TYPE_NUM || r != TYPE_NUM) {
                  fprintf(stderr, "Error 6: Relational ops require NUM (Line %d).\n", node->line_number);
                 return false;
