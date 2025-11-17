@@ -1,3 +1,14 @@
+/**
+ * @file token.h
+ * 
+ * Заголовочный файл для структуры и функций токенов.
+ * 
+ * Author:
+ *      - Serhij Čepil (253038)
+ * ! Допишите ваши имена и номера
+ */
+
+
 #ifndef TOKEN_H
 #define TOKEN_H
 
@@ -53,6 +64,16 @@ typedef struct {
     int line;
 } Token;
 
+
+/**
+ * @brief Копирует данные из одного токена в другой.
+ * 
+ * @param dest Указатель на целевой токен.
+ * @param src Указатель на исходный токен.
+ * 
+ */
+void token_copy_data(Token* dest, const Token* src);
+
 /**
  * Инициализирует структуру Token.
  * Эта функция выделяет память для поля данных
@@ -79,4 +100,4 @@ void token_free(Token *token);
  */
 char *token_type_to_string(TokenType type);
 
-#endif
+#endif // TOKEN_H

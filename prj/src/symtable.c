@@ -1,8 +1,13 @@
-/* symtable.c
- * Файл реализации для таблицы символов
- * Автор: Serhij Čepil (253038)
+/** 
+ * @file symtable.c
+ * 
+ * @brief Файл реализации для таблицы символов
+ *
+ * Author:
+ *      - Serhij Čepil (253038)
  */
 #include "symtable.h"
+#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,28 +43,10 @@ static bool check_load_factor(Symtable* table) {
            LOAD_FACTOR_THRESHOLD;
 }
 
-/**
- * Копирует строку, выделяя для неё память.
- *
- * Сделано из-за того, что С99 не гарантирует наличие strdup в string.h
- *? Нужно ли это?
- *
- * @param s Исходная строка для копирования.
- * @return Указатель на новую строку-копию, или NULL в случае ошибки
- */
-static char* my_strdup(const char* s);
 
 /* ======================================*/
 /* ===== Реализация приватных функций =====*/
 /* ======================================*/
-
-static char* my_strdup(const char* s) {
-    size_t len = strlen(s);
-    char* copy = malloc(len + 1);
-    if (!copy) return NULL;
-    memcpy(copy, s, len + 1);  // +1 для нулевого терминатора
-    return copy;
-}
 
 static void symtable_insert_rehash(Symtable* table, TableEntry* entry) {
     size_t hash_index = get_hash(entry->key, table->capacity);
@@ -108,6 +95,7 @@ bool symtable_init(Symtable* table) {
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
+    table->nesting_level = 0;
     return true;
 }
 
@@ -164,7 +152,10 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
             return false;  // Ошибка изменения размера, вставка не выполнена
         }
     }
-
+    data->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
+    if (data->local_table != NULL) {
+        data->local_table->nesting_level = table->nesting_level + 1;
+    }
     size_t hash_index = get_hash(key, table->capacity);
     size_t original_index = hash_index;
     TableEntry* entry = &table->entries[hash_index];
@@ -191,7 +182,7 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     }
 
     // Вставляем новую запись
-    entry->key = my_strdup(key);  // Копируем ключ
+    entry->key = strdup_c99(key);  // Копируем ключ
     if (entry->key == NULL) {
         return false;  // Ошибка выделения памяти для ключа
     }
@@ -214,6 +205,8 @@ void symtable_delete(Symtable* table, const char* key) {
         table->count--;                // Уменьшаем количество записей
         // Освобождение памяти для ключа и данных
         free(entry->key);
+        if (entry->data->local_table != NULL)
+            symtable_free(entry->data->local_table);
         free(entry->data);
         entry->key = NULL;
         entry->data = NULL;
@@ -231,6 +224,8 @@ void symtable_free(Symtable* table) {
                 entry->local_table = NULL;
             }
             free(entry->key);   // Освобождаем память для ключа
+            if (entry->data->local_table != NULL)
+                symtable_free(entry->data->local_table); // Рекурсивно освобождаем локальную таблицу
             free(entry->data);  // Освобождаем память для данных символа
         }
     }
@@ -238,6 +233,7 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
+    // table->parent_scope = NULL;
 }
 
 /* ===================================================*/
