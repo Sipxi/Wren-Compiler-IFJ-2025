@@ -1,13 +1,8 @@
-/** 
- * @file symtable.c
- * 
- * @brief Файл реализации для таблицы символов
- *
- * Author:
- *      - Serhij Čepil (253038)
+/* symtable.c
+ * Файл реализации для таблицы символов
+ * Автор: Serhij Čepil (253038)
  */
 #include "symtable.h"
-#include "utils.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,10 +38,28 @@ static bool check_load_factor(Symtable* table) {
            LOAD_FACTOR_THRESHOLD;
 }
 
+/**
+ * Копирует строку, выделяя для неё память.
+ *
+ * Сделано из-за того, что С99 не гарантирует наличие strdup в string.h
+ *? Нужно ли это?
+ *
+ * @param s Исходная строка для копирования.
+ * @return Указатель на новую строку-копию, или NULL в случае ошибки
+ */
+static char* my_strdup(const char* s);
 
 /* ======================================*/
 /* ===== Реализация приватных функций =====*/
 /* ======================================*/
+
+static char* my_strdup(const char* s) {
+    size_t len = strlen(s);
+    char* copy = malloc(len + 1);
+    if (!copy) return NULL;
+    memcpy(copy, s, len + 1);  // +1 для нулевого терминатора
+    return copy;
+}
 
 static void symtable_insert_rehash(Symtable* table, TableEntry* entry) {
     size_t hash_index = get_hash(entry->key, table->capacity);
@@ -95,7 +108,6 @@ bool symtable_init(Symtable* table) {
     }
     table->count = 0;
     table->capacity = INITIAL_CAPACITY;
-    table->nesting_level = 0;
     return true;
 }
 
@@ -109,7 +121,7 @@ size_t get_hash(const char* key, size_t capacity) {
 
     while (
         (c = *key++)) {  // Цикл по каждому символу строки до символа конца '\0'
-        // *key++ берёт текущий символ и сдвигает указатель на следующий
+        // *key+v+ берёт текущий символ и сдвигает указатель на следующий
         hash = ((hash << 5) + hash) + c;  // hash = hash * 33 + c
         // (hash << 5) + hash = hash * 32 + hash = hash * 33
         // Такая операция даёт хорошее распределение хеша для коротких строк
@@ -152,10 +164,7 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
             return false;  // Ошибка изменения размера, вставка не выполнена
         }
     }
-    data->nesting_level = table->nesting_level; // Устанавливаем уровень вложенности
-    if (data->local_table != NULL) {
-        data->local_table->nesting_level = table->nesting_level + 1;
-    }
+
     size_t hash_index = get_hash(key, table->capacity);
     size_t original_index = hash_index;
     TableEntry* entry = &table->entries[hash_index];
@@ -182,7 +191,7 @@ bool symtable_insert(Symtable* table, const char* key, SymbolData* data) {
     }
 
     // Вставляем новую запись
-    entry->key = strdup_c99(key);  // Копируем ключ
+    entry->key = my_strdup(key);  // Копируем ключ
     if (entry->key == NULL) {
         return false;  // Ошибка выделения памяти для ключа
     }
@@ -205,8 +214,6 @@ void symtable_delete(Symtable* table, const char* key) {
         table->count--;                // Уменьшаем количество записей
         // Освобождение памяти для ключа и данных
         free(entry->key);
-        if (entry->data->local_table != NULL)
-            symtable_free(entry->data->local_table);
         free(entry->data);
         entry->key = NULL;
         entry->data = NULL;
@@ -218,8 +225,6 @@ void symtable_free(Symtable* table) {
         TableEntry* entry = &table->entries[i];
         if (entry->status == SLOT_OCCUPIED) {
             free(entry->key);   // Освобождаем память для ключа
-            if (entry->data->local_table != NULL)
-                symtable_free(entry->data->local_table); // Рекурсивно освобождаем локальную таблицу
             free(entry->data);  // Освобождаем память для данных символа
         }
     }
@@ -227,7 +232,6 @@ void symtable_free(Symtable* table) {
     table->entries = NULL;
     table->count = 0;
     table->capacity = 0;
-    // table->parent_scope = NULL;
 }
 
 /* ===================================================*/
@@ -266,11 +270,13 @@ static const char* type_to_string(DataType type) {
         case TYPE_NUM:    return "Number";
         case TYPE_STR:    return "String";
         case TYPE_NIL:    return "Nil";
-        case TYPE_NULL:   return "Null";
+        case TYPE_BOOL:   return "Boolean";
         case TYPE_FLOAT:  return "Float";
+        default:          return "UNKNOWN_TYPE";
         // TODO: Добавьте другие типы, когда они у вас появятся
     }
-    return "UNKNOWN_TYPE";
+    
+   
 }
 
 /**
@@ -318,13 +324,17 @@ static void symtable_print_entry(TableEntry *entry, size_t index, int level) {
         printf("Тип:     %s\n", type_to_string(data->data_type));
         print_indent(level + 1);
         printf("Опред:   %s\n", data->is_defined ? "true" : "false");
+        print_indent(level + 1);
+        printf("Unique:  %s\n", data->unique_name ? data->unique_name : "-");
+       
 
-        // 4. Рекурсивный вызов для локальной таблицы (если это функция)
-        if (data->local_table != NULL) {
+        // 4. Рекурсивный вызов (ИСПРАВЛЕНО)
+        // Мы смотрим в 'entry', а не в 'data'!
+        if (entry->local_table != NULL) { 
             print_indent(level + 1);
             printf("Лок. таблица:\n");
-            // Вызываем главную рекурсивную функцию с большим отступом
-            symtable_print_internal(data->local_table, level + 2);
+            // Вызываем рекурсию для вложенной таблицы
+            symtable_print_internal(entry->local_table, level + 1);
         } else {
             print_indent(level + 1);
             printf("Лок. таблица: (NULL)\n");

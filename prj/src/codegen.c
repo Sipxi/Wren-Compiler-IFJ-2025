@@ -75,12 +75,7 @@ void gen_jumpifeq(TacInstruction *instr){
 }
 void gen_operand(Operand *op){
     if (op->type == OPERAND_TYPE_SYMBOL) {
-        int nesting_level = op->data.symbol_entry->data->nesting_level;
-        if (nesting_level == 0)
-            fprintf(stdout, "GF@");
-        else
-            fprintf(stdout, "LF@");
-        fprintf(stdout, "%s$%d", op->data.symbol_entry->key, nesting_level);
+        fprintf(stdout, "%s", op->data.symbol_entry->data->unique_name);
     } else if (op->type == OPERAND_TYPE_CONSTANT) {
         switch (op->data.constant.type)
         {
@@ -303,10 +298,9 @@ void gen_param(TACDLList *instructions){
             break;
         }
 
-        char *param_name = instr_param->result->data.symbol_entry->key;
-        int param_nesting = instr_param->result->data.symbol_entry->data->nesting_level;
-        fprintf(stdout, "DEFVAR TF@%s%i\n", param_name, param_nesting);
-        fprintf(stdout, "MOVE TF@%s%i ", param_name, param_nesting);
+        char *param_name = instr_param->result->data.symbol_entry->data->unique_name;
+        fprintf(stdout, "DEFVAR TF@%s\n", param_name);
+        fprintf(stdout, "MOVE TF@%s ", param_name);
         gen_operand(instr->arg1);
         fprintf(stdout, "\n");
 

@@ -418,6 +418,28 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
     exit(error_code);
 }
 
+static Token peeked_token;   // хранит "заглянутый" токен
+static bool has_peeked = false; // флаг, был ли уже сделан peek
+
+
+Token peek_token(Lexer *lexer, FILE *file) {
+    if (!has_peeked) {
+        peeked_token = get_next_token(lexer, file); // читаем токен, но не потребляем
+        has_peeked = true;
+    }
+    return peeked_token;
+}
+
+
+Token get_token(Lexer *lexer, FILE *file) {
+    if (has_peeked) {
+        has_peeked = false;  // сбрасываем состояние peek
+        return peeked_token; // возвращаем тот же токен
+    }
+    return get_next_token(lexer, file); // читаем новый токен
+}
+
+
 /*
  По сути я теперь сделал несколько функций, которые нам помогают
  легко читать и обработать токены.

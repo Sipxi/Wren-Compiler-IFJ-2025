@@ -59,8 +59,10 @@ typedef enum{
     TYPE_NUM,
     TYPE_STR,
     TYPE_NIL,
-    TYPE_NULL,
-    TYPE_FLOAT,
+    TYPE_BOOL, // Добавлено для поддержки сравнений
+    TYPE_UNKNOWN, // Для неинициализированных переменных и ошибок
+    TYPE_FLOAT, // Добавлено для поддержки float
+    
 
     //TODO Добавить другие типы данных по мере необходимости
 } DataType;
@@ -69,7 +71,7 @@ typedef enum{
 typedef enum{
     KIND_VAR,
     KIND_FUNC,
-    KIND_BLOCK,
+    KIND_BLOCK
 
     //TODO Добавить другие виды символов по мере необходимости
 } SymbolKind;
@@ -97,9 +99,8 @@ typedef struct{
     SymbolKind kind;    // Вид символа (переменная, функция и т.д)
     DataType data_type; // Тип данных символа
     bool is_defined; // Флаг, указывающий, определен ли символ (для функций)
-
-    struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
-    int nesting_level; // Уровень вложенности, на котором был объявлен символ
+    char* unique_name; // Уникальное имя для именования
+   
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
 
@@ -109,6 +110,7 @@ typedef struct{
     char *key;              // Ключ символа (имя)
     SymbolData *data;      // Указатель на данные символа
     SlotStatus status;     // Статус слота (занят, пуст, удален)
+    struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
 } TableEntry;
 
 // Таблица символов
