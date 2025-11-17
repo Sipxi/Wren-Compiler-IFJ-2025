@@ -164,6 +164,7 @@ GrammarSymbol token_to_grammar_symbol(Token token) {
         // Конец
         case TOKEN_EOL:
         case TOKEN_EOF:
+        case TOKEN_OPEN_BRACE:
             return GS_DOLLAR;
 
         // Ошибка

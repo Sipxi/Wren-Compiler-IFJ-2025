@@ -229,12 +229,10 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
             // Пустой return
             if (peek_token(lexer, file).type == TOKEN_EOL) {
-                if (peek_next_token(lexer, file).type != TOKEN_EOL) {
-                    printf("Expected token EOL 'return'.\n");
-                }
                 get_token(lexer, file); // consume EOL
-                return;
+                break;
             }
+
 
             // return null
             if (peek_token(lexer, file).type == TOKEN_KEYWORD &&
