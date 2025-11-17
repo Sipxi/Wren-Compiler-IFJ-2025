@@ -72,7 +72,7 @@ NodeType token_type_to_node(Token token) {
         case TOKEN_STRING:
             return NODE_LITERAL_STRING;
         default:
-            return -1; // Не оператор
+            exit(25); // Не оператор
     }
 }
 
@@ -89,7 +89,7 @@ NodeType grammar_symbol_to_node_type(GrammarSymbol symbol) {
         case GS_EQ:     return NODE_OP_EQ;
         case GS_NEQ:    return NODE_OP_NEQ;
         case GS_IS:     return NODE_OP_IS;
-        default:        return -1; // Ошибка
+        default:        exit(25); // Ошибка
     }
 }
 
