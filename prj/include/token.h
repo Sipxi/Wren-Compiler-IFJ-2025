@@ -64,6 +64,16 @@ typedef struct {
     int line;
 } Token;
 
+
+/**
+ * @brief Копирует данные из одного токена в другой.
+ * 
+ * @param dest Указатель на целевой токен.
+ * @param src Указатель на исходный токен.
+ * 
+ */
+void token_copy_data(Token* dest, const Token* src);
+
 /**
  * Инициализирует структуру Token.
  * Эта функция выделяет память для поля данных

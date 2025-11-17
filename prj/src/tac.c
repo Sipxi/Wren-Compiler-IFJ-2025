@@ -20,6 +20,8 @@
 
 #include "tac.h"
 #include "utils.h"
+#include "error_codes.h"
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,6 +36,7 @@ int global_label_counter = 0;
 /* ======================================*/
 /* ===== Прототипы приватных функций =====*/
 /* ======================================*/
+
 
 
 /**
@@ -144,13 +147,23 @@ static void generate_instruction(TACDLList *list, TacOperationCode op,
     Operand *res, Operand *arg1, Operand *arg2);
 
 
+    
+/**
+ * @brief Выводит "красивую" ошибку 3AC-генератора и завершает программу.
+ * @param message Описание ошибки (e.g., "Unimplemented NodeType")
+ * @param line_number Номер строки из AST-узла (для контекста)
+ * @param error_code Код ошибки (для exit())
+ */
+void raise_tac_error(const char *message, ErrorCode error_code);
+
+
 /* ======================================*/
 /* ===== Имплементация приватных функций TACDLList =====*/
 /* ======================================*/
 
- //! Переделать потом
 void TACDLL_Error(void) {
-    printf("*ERROR* The program has performed an illegal operation.\n");
+    fprintf(stderr, "TACDLList: Chyba alokace paměti\n");
+    exit(INTERNAL_ERROR);
 }
 
 /* ======================================*/
@@ -183,7 +196,6 @@ void TACDLL_InsertFirst(TACDLList *list, TacInstruction *tac_instruction) {
     TACDLLElementPtr newElement = (TACDLLElementPtr)malloc(sizeof(struct TACDLLElement));
     if (newElement == NULL) {
         TACDLL_Error();
-        return;
     }
 
     // Начинаем заполнять новый элемент
@@ -205,7 +217,6 @@ void TACDLL_InsertLast(TACDLList *list, TacInstruction *tac_intruction) {
     TACDLLElementPtr newElement = (TACDLLElementPtr)malloc(sizeof(struct TACDLLElement));
     if (newElement == NULL) {
         TACDLL_Error();
-        return;
     }
     newElement->tac_instruction = tac_intruction;
     newElement->next_element = NULL;
@@ -334,7 +345,6 @@ void TACDLL_InsertAfter(TACDLList *list, TacInstruction *tac_instruction) {
     TACDLLElementPtr newElement = (TACDLLElementPtr)malloc(sizeof(struct TACDLLElement));
     if (newElement == NULL) {
         TACDLL_Error();
-        return;
     }
     // Значение нового элемента
     newElement->tac_instruction = tac_instruction;
@@ -359,7 +369,6 @@ void TACDLL_InsertBefore(TACDLList *list, TacInstruction *tac_instruction) {
     TACDLLElementPtr newElement = (TACDLLElementPtr)malloc(sizeof(struct TACDLLElement));
     if (newElement == NULL) {
         TACDLL_Error();
-        return;
     }
 
     newElement->tac_instruction = tac_instruction;
@@ -375,7 +384,6 @@ void TACDLL_InsertBefore(TACDLList *list, TacInstruction *tac_instruction) {
 void TACDLL_GetValue(TACDLList *list, TacInstruction **tac_instruction_ptr) {
     if (list->active_element == NULL) {
         TACDLL_Error();
-        return;
     }
     *tac_instruction_ptr = list->active_element->tac_instruction;
 }
@@ -432,9 +440,8 @@ static Operand *create_operand(OperandType type) {
     // Выделяем память под операнд
     Operand *op = (Operand *)malloc(sizeof(Operand));
     if (!op) {
-        raise_tac_error("Memory allocation failed for operand", -1,
+        raise_tac_error("Memory allocation failed for operand",
             INTERNAL_ERROR);
-        return NULL;
     }
     op->type = type;
     return op;
@@ -446,7 +453,7 @@ static Operand *create_label_operand(const char *label_name) {
     // Копируем имя метки
     op->data.label_name = malloc(strlen(label_name) + 1);
     if (!op->data.label_name) {
-        raise_tac_error("Memory allocation failed for label operand", -1,
+        raise_tac_error("Memory allocation failed for label operand",
             INTERNAL_ERROR);
         return NULL;
     }
@@ -460,9 +467,6 @@ static Operand *create_temp_operand(TACDLList *tac_list) {
     // Присваиваем уникальный ID
     op->data.temp_id = global_temp_counter++;
     generate_instruction(tac_list, OP_DECLARE, op, NULL, NULL);
-
-
-
     return op;
 }
 
@@ -515,12 +519,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 
         // Получаем имя функции из записи таблицы символов
         TableEntry *func_entry = node->table_entry;
-        if (func_entry == NULL) {
-            // Ошибка: функция не найдена в таблице символов
-            raise_tac_error("Function not found in symbol table", -1,
-                INTERNAL_ERROR);
-            return NULL;
-        }
         // Генерируем метку функции
         // Имя функции как метка
         char *func_label = func_entry->key;
@@ -554,12 +552,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         // Параметр функции
         // Получаем запись таблицы символов параметра
         TableEntry *param_entry = node->table_entry;
-        if (param_entry == NULL) {
-            // Ошибка: параметр не найден в таблице символов
-            raise_tac_error("Parameter not found in symbol table", -1,
-                INTERNAL_ERROR);
-            return NULL;
-        }
         // Генерируем инструкцию передачи параметра
         Operand *param_op = create_symbol_operand(param_entry);
         generate_instruction(tac_list, OP_PARAM, param_op, NULL, NULL);
@@ -580,12 +572,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 
         // Получаем имя сеттера из записи таблицы символов
         TableEntry *setter_entry = node->table_entry;
-        if (!setter_entry) {
-            // Ошибка: сеттер не найден в таблице символов
-            raise_tac_error("Setter not found in symbol table", -1,
-                INTERNAL_ERROR);
-            return NULL;
-        }
         // Генерируем метку начала сеттера
         char *setter_label = setter_entry->key;  // Имя сеттера как метка
 
@@ -620,10 +606,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         AstNode *getter_body = node->child;
         // Получаем имя геттера из записи таблицы символов
         TableEntry *getter_entry = node->table_entry;
-        if (!getter_entry) {
-            // Ошибка: геттер не найден в таблице символов
-            return NULL;
-        }
 
         // Генерируем метку начала геттера
         char *getter_label = getter_entry->key;  // Имя геттера как метка
@@ -758,10 +740,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 
         //  Получаем 'id' переменной из symtable
         TableEntry *var_entry = node->table_entry;
-        if (var_entry == NULL) {
-            // Ошибка, семантика не отработала
-            return NULL;
-        }
 
         // Создаем операнд-символ для 'id'
         // Это будет 'result' (LHS - левая часть)
@@ -805,12 +783,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
 
         // Получаем 'id' переменной из symtable
         TableEntry *var_entry = lhs_node->table_entry;
-        if (var_entry == NULL) {
-            // Ошибка: переменная не найдена в таблице символов
-            raise_tac_error("Variable not found", -1, 99);
-
-            return NULL;
-        }
 
         // Генерируем код для выражения (RHS)
         Operand *rhs_op = tac_gen_recursive(expr_node, tac_list, symtable);
@@ -832,7 +804,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         AstNode *arg_list_node =
             node->child->sibling;
 
-        // Получаем функцию из symtable
         TableEntry *func_entry = func_name_node->table_entry;
         if (func_entry == NULL) {
             // Ошибка
@@ -978,7 +949,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         case NODE_OP_GTE: op_code = OP_GREATER_EQUAL; break;
         case NODE_OP_EQ: op_code = OP_EQUAL; break;
         case NODE_OP_NEQ: op_code = OP_NOT_EQUAL; break;
-        default: raise_tac_error("Unexpected node type", -1, INTERNAL_ERROR); return NULL;  // Сюда не должно попасть
+        default: raise_tac_error("Unexpected node type", INTERNAL_ERROR); return NULL;  // Сюда не должно попасть
         }
 
         // Генерируем инструкцию TAC
@@ -1040,7 +1011,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         }
         else {
             num_const.type = TYPE_NUM;
-            num_const.value.int_value = node->data.literal_num;
+            num_const.value.int_value = (int) node->data.literal_num;
         }
         return create_constant_operand(num_const);
     }
@@ -1072,14 +1043,13 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
     default:
         // Если мы попали сюда, значит, мы забыли
         // реализовать какой-то NodeType в этом switch'e.
-        raise_tac_error("Unimplemented AST node type in TAC generation",
-            node->line_number, INTERNAL_ERROR);
-        exit(99);
+        raise_tac_error("Unimplemented AST node type in TAC generation", INTERNAL_ERROR);
 
 
     }  // --- Конец 'switch' ---
 
     // Эта строка НИКОГДА не выполнится, если default делает exit().
+    raise_tac_error("Reached unreachable code in TAC generation", INTERNAL_ERROR);
     return NULL;
 }
 
@@ -1110,7 +1080,7 @@ Operand *create_constant_operand(TacConstant constant) {
     Operand *op = (Operand *)malloc(sizeof(Operand));
     if (op == NULL) {
         // Ошибка памяти
-        raise_tac_error("Memory allocation failed for constant operand", -1,
+        raise_tac_error("Memory allocation failed for constant operand",
             INTERNAL_ERROR);
         return NULL;
     }
@@ -1130,7 +1100,7 @@ Operand *create_constant_operand(TacConstant constant) {
         if (op->data.constant.value.str_value == NULL) {
             // Ошибка памяти при копировании строки
             free(op);
-            raise_tac_error("Memory allocation failed for constant string", -1,
+            raise_tac_error("Memory allocation failed for constant string",
                 INTERNAL_ERROR);
             return NULL;
         }
@@ -1141,7 +1111,6 @@ Operand *create_constant_operand(TacConstant constant) {
     return op;
 }
 
-
 void generate_tac(AstNode *ast_root, TACDLList *tac_list, Symtable *global_table) {
     // Сбрасываем счетчики на случай повторного вызова
     global_temp_counter = 0;
@@ -1151,7 +1120,7 @@ void generate_tac(AstNode *ast_root, TACDLList *tac_list, Symtable *global_table
     tac_gen_recursive(ast_root, tac_list, global_table);
 }
 
-void raise_tac_error(const char *message, int line_number,
+void raise_tac_error(const char *message,
     ErrorCode error_code) {
     // Печатаем шапку ошибки (Жирный, Красный)
     fprintf(stderr, "%s%s--- TAC GENERATION ERROR ---%s\n\n", ANSI_STYLE_BOLD,
@@ -1162,11 +1131,8 @@ void raise_tac_error(const char *message, int line_number,
         error_code, ANSI_COLOR_RESET);
     fprintf(stderr, "    Во время 3-Адресной Код-генерации:\n\n");
 
-    // Печатаем само сообщение (Жирный, Желтый)
-    fprintf(stderr, "    %s%s> %s (обнаружено на строке ~%d)%s\n\n",
-        ANSI_STYLE_BOLD, ANSI_COLOR_YELLOW, message, line_number,
-        ANSI_COLOR_RESET);
-
+    // Печатаем само сообщение об ошибке (Нормальный)
+    fprintf(stderr, "    %s\n\n", message);
     // Сообщение о выходе (Тусклый)
     fprintf(stderr, "%s    Завершаем программу.%s\n", ANSI_STYLE_DIM,
         ANSI_COLOR_RESET);

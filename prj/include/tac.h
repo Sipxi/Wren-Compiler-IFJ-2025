@@ -11,7 +11,6 @@
 
 #include "symtable.h"
 #include "ast.h"
-#include "error_codes.h"
 
 
 /* ======================================*/
@@ -417,14 +416,5 @@ void free_tac(TACDLList *tac_list);
  * @param tac_list Заполненный список инструкций.
  */
 void print_tac_list(TACDLList *tac_list);
-
-/**
- * ! Временная функция ошибки
- * @brief Выводит "красивую" ошибку 3AC-генератора и завершает программу.
- * @param message Описание ошибки (e.g., "Unimplemented NodeType")
- * @param line_number Номер строки из AST-узла (для контекста)
- * @param error_code Код ошибки (для exit())
- */
-void raise_tac_error(const char *message, int line_number, ErrorCode error_code);
 
 #endif // TAC_H

@@ -4,7 +4,6 @@
  * ШАГ 2A - сбор функций, проход по АСТ добавить в global_table
  * ШАГ 2Б - семантический анализ тела функций
  */
-// TODO Коды ошибок
 
 #include "symtable.h"
 #include "ast.h"
@@ -12,7 +11,6 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
-
 
 ///* =======================================================================================================*/
 /*
@@ -39,7 +37,7 @@ static void H_Stack_Init(ScopeStack* stack) {
 static bool H_Stack_Push(ScopeStack* stack, Symtable* table) {
     if (stack->topIndex >= HIERARCHY_STACK_SIZE - 1) {
         fprintf(stderr, "Internal Error: Scope stack overflow (too many nested blocks).\n");
-        return false; 
+        exit(99); 
     }
     stack->topIndex++;
     stack->array[stack->topIndex] = table;
@@ -84,13 +82,11 @@ static TableEntry* H_Stack_Find_Var(ScopeStack* stack, const char* name) {
 
 ///* =======================================================================================================*/
 
-
 static bool register_builtin_function(const char* name, int arity, DataType return_type);
 static bool process_function_declaration(AstNode* func_node);
 static bool analyze_function_body(AstNode* func_node);
 static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, int current_scope_id);
 static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* result_type);
-
 
 Symtable global_table; // Глобальная таблица символов
 
@@ -103,50 +99,49 @@ bool analyze_semantics(AstNode* root) {
     if (!symtable_init(&global_table)) {
         // Это внутренняя ошибка компилятора (Ошибка 99)
         fprintf(stderr, "Internal Compiler Error: Failed to init global_table.\n");
-        return false;
+        exit(99);
     }
 
     //* --- ШАГ 0: Регистрация Встроенных Функций ---
 
     // static Ifj.read_str() -> String | Null
-    if (!register_builtin_function("Ifj.read_str", 0, TYPE_STR)) return false;
+    if (!register_builtin_function("Ifj.read_str", 0, TYPE_STR)) exit(99);
     
     // static Ifj.read_num() -> Num | Null
-    if (!register_builtin_function("Ifj.read_num", 0, TYPE_NUM)) return false;
+    if (!register_builtin_function("Ifj.read_num", 0, TYPE_NUM)) exit(99);
 
     // static Ifj.write(term) -> Null
-    if (!register_builtin_function("Ifj.write", 1, TYPE_NIL)) return false;
+    if (!register_builtin_function("Ifj.write", 1, TYPE_NIL)) exit(99);
 
     // static Ifj.floor(term: Num) -> Num
-    if (!register_builtin_function("Ifj.floor", 1, TYPE_NUM)) return false;
+    if (!register_builtin_function("Ifj.floor", 1, TYPE_NUM)) exit(99);
 
     // static Ifj.substring(s: String, i: Num, j: Num) -> String | Null
-    if (!register_builtin_function("Ifj.substring", 3, TYPE_STR)) return false;
+    if (!register_builtin_function("Ifj.substring", 3, TYPE_STR)) exit(99);
 
     // static Ifj.strcmp(s1: String, s2: String) -> Num
-    if (!register_builtin_function("Ifj.strcmp", 2, TYPE_NUM)) return false;
+    if (!register_builtin_function("Ifj.strcmp", 2, TYPE_NUM)) exit(99);
 
     // static Ifj.ord(s: String, i: Num) -> Num
-    if (!register_builtin_function("Ifj.ord", 2, TYPE_NUM)) return false;
+    if (!register_builtin_function("Ifj.ord", 2, TYPE_NUM)) exit(99);
 
     // static Ifj.chr(i: Num) -> String
-    if (!register_builtin_function("Ifj.chr", 1, TYPE_STR)) return false;
+    if (!register_builtin_function("Ifj.chr", 1, TYPE_STR)) exit(99);
 
     // static Ifj.str(term) -> String
-    if (!register_builtin_function("Ifj.str", 1, TYPE_STR)) return false;
+    if (!register_builtin_function("Ifj.str", 1, TYPE_STR)) exit(99);
 
     // static Ifj.length(s: String) -> Num
-    if (!register_builtin_function("Ifj.length", 1, TYPE_NUM)) return false;
+    if (!register_builtin_function("Ifj.length", 1, TYPE_NUM)) exit(99);
 
     printf("DEBUG: Step 0 completed. Global tagit ble populated with ALL built-in functions.\n");
-
 
     //* --- ШАГ 2a: Сбор Пользовательских Функций ---
 
     if (root == NULL || root->type != NODE_PROGRAM) {
         fprintf(stderr, "Internal Error: AST root is not NODE_PROGRAM.\n");
         symtable_free(&global_table);
-        return false;
+        exit(99);
     }
 
     // 2. Идем по всем дочерним узлам NODE_PROGRAM
@@ -159,14 +154,12 @@ bool analyze_semantics(AstNode* root) {
             if (!process_function_declaration(node)) {
                 // Ошибка
                 symtable_free(&global_table);
-                return false;
+                exit(4);
             }
         }
     }
     
     printf("DEBUG: Step 2a completed. User functions collected.\n");
-
-
 
     //* --- ШАГ 2b: Анализ Тел Функций ---
 
@@ -179,7 +172,7 @@ bool analyze_semantics(AstNode* root) {
             // 2. Вызываем новую функцию для анализа ТЕЛА
             if (!analyze_function_body(node)) {
                 symtable_free(&global_table);
-                return false;
+                exit(10);
             }
         }
     }
@@ -194,23 +187,25 @@ bool analyze_semantics(AstNode* root) {
     if (main_entry == NULL) {
         fprintf(stderr, "Semantic Error: Function 'main()' is not defined.\n");
         symtable_free(&global_table);
-        return false;
+        exit(3);
     }
 
     // убедимся, что она была определена (т.е. у нее было тело)
     if (main_entry->data->is_defined == false) {
         fprintf(stderr, "Semantic Error: Function 'main()' is declared but not defined.\n");
         symtable_free(&global_table);
-        return false;
+        exit(3);
     }
 
     printf("DEBUG: Final check completed. 'main@0' found and defined.\n");
 
+<<<<<<< HEAD
     // В конце чистим
     // symtable_free(&global_table);
+=======
+>>>>>>> main
     return true;
 }
-
 
 /**
  * Вспомогательная функция для создания уникального имени.
@@ -255,7 +250,7 @@ static bool register_builtin_function(const char* name, int arity, DataType retu
     if (!symtable_insert(&global_table, mangled_name, &data)) {
         // Ошибка 99
         fprintf(stderr, "Internal Error: Failed to insert builtin '%s'\n", mangled_name);
-        return false;
+        exit(99);
     }
 
     // Явно указываем, что у встроенной функции нет таблицы
@@ -266,7 +261,6 @@ static bool register_builtin_function(const char* name, int arity, DataType retu
 
     return true;
 }
-
 
 /**
  * Вспомогательная функция для подсчета параметров функции.
@@ -298,7 +292,6 @@ static int count_parameters(AstNode* func_node) {
     return arity;
 }
 
-
 /**
  * (Шаг 2a) Обрабатывает одно объявление функции из AST.
  * (ПЕРЕПИСАНО для Иерархической Модели)
@@ -321,7 +314,7 @@ static bool process_function_declaration(AstNode* func_node) {
     const char* name = func_node->data.identifier;
     if (name == NULL) {
         fprintf(stderr, "Internal Error: Function node has no name.\n");
-        return false; // Ошибка 99
+        exit(99);
     }
 
     // 2. Считаем Арность
@@ -341,7 +334,7 @@ static bool process_function_declaration(AstNode* func_node) {
     if (symtable_lookup(&global_table, mangled_name) != NULL) {
         fprintf(stderr, "Semantic Error (Line %d): Redefinition of function '%s'.\n",
                 func_node->line_number, name);
-        return false; // Ошибка 4
+        exit(4);
     }
 
     // 5. Создаем SymbolData (БЕЗ local_table)
@@ -354,7 +347,7 @@ static bool process_function_declaration(AstNode* func_node) {
     // 6. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
         fprintf(stderr, "Internal Error: Failed to insert function '%s' into global_table.\n", name);
-        return false; // Ошибка 99
+        exit(99);
     }
     
     // 7. Создаем 'local_table' (Уровень 1) и привязываем к TableEntry
@@ -363,14 +356,14 @@ static bool process_function_declaration(AstNode* func_node) {
     TableEntry* func_entry = symtable_lookup(&global_table, mangled_name);
     if (func_entry == NULL) {
          fprintf(stderr, "Internal Error: Failed to re-lookup function '%s'.\n", name);
-        return false; // Ошибка 99
+        exit(99);
     }
 
     // 7b. malloc №1: Создаем Symtable (Уровень 1)
     func_entry->local_table = (Symtable*)malloc(sizeof(Symtable));
     if (func_entry->local_table == NULL) {
         fprintf(stderr, "Internal Error: Failed to malloc local_table for '%s'.\n", name);
-        return false; // Ошибка 99
+        exit(99);
     }
     
     // 7c. malloc №2: Инициализируем ее (она malloc'нет 'entries')
@@ -378,7 +371,7 @@ static bool process_function_declaration(AstNode* func_node) {
         fprintf(stderr, "Internal Error: Failed to init local_table for '%s'.\n", name);
         free(func_entry->local_table);
         func_entry->local_table = NULL;
-        return false; // Ошибка 99
+        exit(99);
     }
 
     // 8. Связываем узел AST
@@ -386,7 +379,6 @@ static bool process_function_declaration(AstNode* func_node) {
 
     return true;
 }
-
 
 /**
  * (Шаг 2b) Анализирует тело ОДНОЙ функции.
@@ -409,14 +401,14 @@ static bool analyze_function_body(AstNode* func_node)
     TableEntry* func_entry = func_node->table_entry;
     if (func_entry == NULL) {
         fprintf(stderr, "Internal Error: func_node->table_entry is NULL for '%s'.\n", func_node->data.identifier);
-        return false; // Ошибка 99
+        exit(99);
     }
 
     // 2. Получаем 'func_local_table' (Уровень 1)
     Symtable* func_local_table = func_entry->local_table;
     if (func_local_table == NULL) {
         fprintf(stderr, "Internal Error: func_local_table is NULL for '%s'.\n", func_node->data.identifier);
-        return false; // Ошибка 99
+        exit(99);
     }
 
     // 3. Создаем временный ScopeStack
@@ -425,7 +417,7 @@ static bool analyze_function_body(AstNode* func_node)
 
     // 4. Помещаем Уровень 1 в 'stack'
     if (!H_Stack_Push(&stack, func_local_table)) {
-        return false;
+        exit(99);
     }
 
     int local_block_cnt = 0; // Счетчик вложенных блоков
@@ -443,7 +435,7 @@ static bool analyze_function_body(AstNode* func_node)
         } else {
             fprintf(stderr, "Internal Error: NODE_FUNCTION_DEF has malformed children.\n");
             H_Stack_Pop(&stack);
-            return false;
+            exit(99);
         }
     }
     else if (func_node->type == NODE_SETTER_DEF) {
@@ -467,7 +459,7 @@ static bool analyze_function_body(AstNode* func_node)
             fprintf(stderr, "Semantic Error (Line %d): Duplicate parameter name '%s'.\n",
                     param->line_number, param_name);
             H_Stack_Pop(&stack); // Очищаем стек
-            return false; // Ошибка 4
+            exit(4);
         }
 
         // 6b. Создаем данные для Symtable
@@ -482,7 +474,7 @@ static bool analyze_function_body(AstNode* func_node)
         if (!symtable_insert(func_local_table, param_name, &data)) {
             H_Stack_Pop(&stack);
             fprintf(stderr, "Internal Error: Failed to insert param '%s'.\n", param_name);
-            return false; 
+            exit(99);
         }
 
         // 6d. (Устанавливаем local_table = NULL для TableEntry
@@ -490,7 +482,7 @@ static bool analyze_function_body(AstNode* func_node)
         if (entry == NULL) {
             H_Stack_Pop(&stack);
             fprintf(stderr, "Internal Error: Failed to re-lookup param '%s'.\n", param_name);
-            return false; // Ошибка 99
+            exit(99);
         }
         entry->local_table = NULL; // У параметра нет вложенной таблицы
 
@@ -502,13 +494,13 @@ static bool analyze_function_body(AstNode* func_node)
     if (body_node == NULL || body_node->type != NODE_BLOCK) {
         fprintf(stderr, "Internal Error: Function '%s' has no NODE_BLOCK body.\n", func_node->data.identifier);
         H_Stack_Pop(&stack);
-        return false; // Ошибка 99 (или 2)
+        exit(2);
     }
     
     // Запускаем рекурсивный анализ
     if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
         H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
-        return false; // Ошибка (3,4,5,6...) уже выведена
+        exit(10);
     }
 
     // 8. Если мы дошли сюда без ошибок:
@@ -520,6 +512,8 @@ static bool analyze_function_body(AstNode* func_node)
     
     return true;
 }
+
+
 
 
 /*
@@ -563,18 +557,18 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             Symtable* parent_table = H_Stack_Peek(stack);
             if (parent_table == NULL) {
                 fprintf(stderr, "Internal Error: Scope stack is empty inside NODE_BLOCK.\n");
-                return false; // Ошибка 99
+                exit(99);
             }
             
             // 2. Создаем НОВУЮ local_table (напр., Уровень 2)
             // malloc №1:
             Symtable* new_block_table = (Symtable*)malloc(sizeof(Symtable));
-            if (new_block_table == NULL) { return false; /* Ошибка 99 */ }
+            if (new_block_table == NULL) { exit(99); }
             
             // malloc №2:
             if (!symtable_init(new_block_table)) {
                 free(new_block_table);
-                return false; // Ошибка 99
+                exit(99);
             }
 
             // 3. Создаем "папку" (TableEntry) для этого блока
@@ -590,7 +584,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             if (!symtable_insert(parent_table, block_key, &data)) {
                 symtable_free(new_block_table);
                 free(new_block_table);
-                return false; // Ошибка 99
+                exit(99);
             }
             
             // 4. (КЛЮЧ) Привязываем Уровень 2 к Уровню 1
@@ -599,7 +593,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
             // 5. "Входим" в Уровень 2
             if (!H_Stack_Push(stack, new_block_table)) {
-                return false; // Ошибка 99
+                exit(99);
             }
 
             (*block_cnt)++; 
@@ -630,8 +624,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             // 1. Получаем текущую таблицу (вершина стека)
             Symtable* current_table = H_Stack_Peek(stack);
             if (current_table == NULL) {
-                // (Ошибка 99)
-                return false;
+                exit(99);
             }
 
             // 2. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
@@ -639,7 +632,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             if (symtable_lookup(current_table, name) != NULL) {
                 fprintf(stderr, "Semantic Error (Line %d): Redefinition of variable '%s' in the same scope.\n",
                         node->line_number, name);
-                return false; // Ошибка 4
+                exit(4);
             }
 
             // 3. Создаем данные
@@ -652,7 +645,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
             // 4. Вставляем в текущую таблицу (Без искажения имени!)
             if (!symtable_insert(current_table, name, &data)) {
-                return false; // Ошибка 99
+                exit(99);
             }
             
             // 5. Связываем AST
@@ -672,13 +665,13 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
             // 1. Анализируем правую часть
             DataType expr_type;
-            if (!analyze_expression(expr_node, stack, &expr_type)) { // Заметь: параметры сократились
-                return false;
+            if (!analyze_expression(expr_node, stack, &expr_type)) {
+                exit(10);
             }
 
             if (expr_type == TYPE_BOOL) {
                 // ... (Ошибка 6: нельзя присваивать Bool) ...
-                return false; 
+                exit(6);
             }
             
             const char* name = id_node->data.identifier; 
@@ -691,7 +684,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
                 // --- НАШЛИ ЛОКАЛЬНУЮ ПЕРЕМЕННУЮ ---
                 if (entry->data->kind == KIND_FUNC) {
                     // ... (Ошибка: присваивание функции) ...
-                    return false;
+                    exit(10);
                 }
                 id_node->table_entry = entry;
                 entry->data->data_type = expr_type; // Обновляем тип
@@ -719,7 +712,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
                     data.kind = KIND_VAR;
                     data.data_type = expr_type;
                     data.is_defined = true;
-                    // data.local_table нет
+                    data.unique_name = create_unique_name(name, 0); // Глобальные имеют scope_id = 0
                     
                     symtable_insert(&global_table, name, &data);
                     entry = symtable_lookup(&global_table, name);
@@ -727,7 +720,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
                 } 
                 else if (entry->data->kind == KIND_FUNC) {
                      // ... (Ошибка) ...
-                     return false;
+                     exit(10);
                 }
                 id_node->table_entry = entry;
                 entry->data->data_type = expr_type;
@@ -736,7 +729,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
             // 4. Ошибка 3
             fprintf(stderr, "Semantic Error: Undefined variable '%s'.\n", name);
-            return false; 
+            exit(3);
         }
 
        //* --- СЛУЧАЙ 4: Условие 'if (cond) { ... } else { ... }' ---
@@ -751,17 +744,17 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             DataType cond_type;
             // В новой модели мы передаем ТОЛЬКО 'stack' (и 'cond_type')
             if (!analyze_expression(cond_node, stack, &cond_type)) {
-                return false; // Ошибка в условии
+                exit(10);
             }
 
             // 2. Анализируем 'if' тело
             if (!analyze_statement(if_body, stack, block_cnt, current_scope_id)) {
-                return false;
+                exit(10);
             }
 
             // 3. Анализируем 'else' тело
             if (!analyze_statement(else_body, stack, block_cnt, current_scope_id)) {
-                return false;
+                exit(10);
             }
             
             return true;
@@ -777,12 +770,12 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             // 1. Анализируем Условие
             DataType cond_type;
             if (!analyze_expression(cond_node, stack, &cond_type)) {
-                return false; // Ошибка в условии
+                exit(10);
             }
 
             // 2. Анализируем Тело
             if (!analyze_statement(while_body, stack, block_cnt, current_scope_id)) {
-                return false;
+                exit(10);
             }
 
             return true;
@@ -797,7 +790,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             // 1. Анализируем возвращаемое выражение
             DataType return_type;
             if (!analyze_expression(expr_node, stack, &return_type)) {
-                return false; // Ошибка в выражении
+                exit(10);
             }
             
             return true;
@@ -814,7 +807,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             // Просто анализируем выражение, чтобы проверить его на ошибки
             // (Арность, типы аргументов и т.д.)
             if (!analyze_expression(node, stack, &return_type)) {
-                return false;
+                exit(10);
             }
             
             return true;
@@ -822,11 +815,9 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
         default:
             fprintf(stderr, "Internal Error (Line %d): Unexpected node type (%d) in statement list.\n", node->line_number, node->type);
-            return false; // Ошибка 99
+            exit(99);
     }
-
 }
-
 
 /**
  * (Шаг 2b) Рекурсивно анализирует узел-выражение.
@@ -882,14 +873,29 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             if (entry == NULL) {
                 if (strncmp(name, "__", 2) == 0) {
                     entry = symtable_lookup(&global_table, name);
+
+                    if (entry == NULL) {
+                    printf("DEBUG: Implicitly creating global '%s' on read (value=nil).\n", name);
+                    SymbolData data = { 
+                        .kind = KIND_VAR, 
+                        .data_type = TYPE_NIL, // Недефинированная глобальная = null 
+                        .is_defined = true,
+                        .unique_name = create_unique_name(name, 0) // scope_id = 0 
+                    };
+                    
+                    if (!symtable_insert(&global_table, name, &data)) exit(99);
+                    
+                    entry = symtable_lookup(&global_table, name);
+                    entry->local_table = NULL;
                 }
+            }
             }
 
             // 4. Проверка (Ошибка 3)
             if (entry == NULL) {
                 fprintf(stderr, "Semantic Error (Line %d): Use of undefined variable or getter '%s'.\n",
                         node->line_number, name);
-                return false; // Ошибка 3
+                exit(3);
             }
             
             // 5. Проверка (Использование ФУНКЦИИ или СЕТТЕРА?)
@@ -899,7 +905,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                 sprintf(getter_name, "%s@getter", name);
                 if (strcmp(entry->key, getter_name) != 0) {
                      fprintf(stderr, "Semantic Error (Line %d): Cannot use function or setter '%s' as a variable.\n", node->line_number, name);
-                    return false;
+                    exit(10);
                 }
             }
 
@@ -919,13 +925,13 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             // 1. Анализируем левую часть
             DataType left_type;
             if (!analyze_expression(node->child, stack, &left_type)) {
-                return false;
+                exit(10);
             }
 
             // 2. Анализируем правую часть
             DataType right_type;
             if (!analyze_expression(node->child->sibling, stack, &right_type)) {
-                return false;
+                exit(10);
             }
         
             
@@ -940,7 +946,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             // 3a. Проверка на NIL
             if (left_type == TYPE_NIL || right_type == TYPE_NIL) {
                  fprintf(stderr, "Semantic Error (Line %d): Cannot use 'null' in arithmetic/string ops.\n", node->line_number);
-                return false; // Ошибка 6
+                exit(6);
             }
         
             // 3b. Проверка для конкретного оператора
@@ -951,7 +957,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                     else if (left_type == TYPE_STR && right_type == TYPE_STR) *result_type = TYPE_STR;
                     else {
                         fprintf(stderr, "Error 6: Invalid operands for '+' (Line %d).\n", node->line_number);
-                        return false;
+                        exit(6);
                     }
                     break;
 
@@ -959,16 +965,32 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                     if (left_type == TYPE_NUM && right_type == TYPE_NUM) *result_type = TYPE_NUM;
                     else {
                         fprintf(stderr, "Error 6: Invalid operands for '-' (Line %d).\n", node->line_number);
-                        return false;
+                        exit(6);
                     }
                     break;
                 
                 case NODE_OP_MUL:
                     if (left_type == TYPE_NUM && right_type == TYPE_NUM) *result_type = TYPE_NUM;
-                    else if (left_type == TYPE_STR && right_type == TYPE_NUM) *result_type = TYPE_STR;
+                    else if (left_type == TYPE_STR && right_type == TYPE_NUM)
+                    {
+                        *result_type = TYPE_STR;
+                        // Мы проверяем, является ли правый операнд литералом с дробной частью.
+                        // Если это переменная, мы не можем проверить это сейчас (проверит Runtime).
+                        AstNode* r_node = node->child->sibling;
+                        if (r_node->type == NODE_LITERAL_NUM) {
+                            double val = r_node->data.literal_num;
+                            // Если число не равно своей целой части (напр. 2.5 != 2)
+                            if ((long long)val != val) {
+                                fprintf(stderr, "Error 6: String iteration requires integer operand (got %g) (Line %d).\n", 
+                                        val, node->line_number);
+                                exit(6);
+                            }
+                        }
+                    }
+                    
                     else {
                         fprintf(stderr, "Error 6: Invalid operands for '*' (Line %d).\n", node->line_number);
-                        return false;
+                        exit(6);
                     }
                     break;
 
@@ -976,15 +998,14 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                     if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
                         *result_type = TYPE_NUM;
                         
-                        // --- ПРОВЕРКА НА 0 (Статическая) ---
                         AstNode* r_node = node->child->sibling;
                         if (r_node->type == NODE_LITERAL_NUM && r_node->data.literal_num == 0.0) {
                             fprintf(stderr, "Error: Division by zero literal (Line %d).\n", node->line_number);
-                            return false; // Ошибка 10/57
+                            exit(6);
                         }
                     } else {
                         fprintf(stderr, "Error 6: Invalid operands for '/' (Line %d).\n", node->line_number);
-                        return false;
+                        exit(6);
                     }
                     break;
                 
@@ -1002,8 +1023,8 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
         case NODE_OP_GTE:
         {
             DataType l, r;
-            if (!analyze_expression(node->child, stack, &l)) return false;
-            if (!analyze_expression(node->child->sibling, stack, &r)) return false;
+            if (!analyze_expression(node->child, stack, &l)) exit(10);
+            if (!analyze_expression(node->child->sibling, stack, &r)) exit(10);
 
             if (l == TYPE_UNKNOWN || r == TYPE_UNKNOWN) {
                 *result_type = TYPE_BOOL; // Результат сравнения всегда Bool (даже если типы неизвестны)
@@ -1013,7 +1034,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             
             if (l != TYPE_NUM || r != TYPE_NUM) {
                  fprintf(stderr, "Error 6: Relational ops require NUM (Line %d).\n", node->line_number);
-                return false;
+                exit(6);
             }
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
@@ -1025,8 +1046,8 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
         case NODE_OP_NEQ:
         {
             DataType l, r;
-            if (!analyze_expression(node->child, stack, &l)) return false;
-            if (!analyze_expression(node->child->sibling, stack, &r)) return false;
+            if (!analyze_expression(node->child, stack, &l)) exit(10);
+            if (!analyze_expression(node->child->sibling, stack, &r)) exit(10);
             
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
@@ -1037,17 +1058,17 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
         case NODE_OP_IS:
         {
             DataType l;
-            if (!analyze_expression(node->child, stack, &l)) return false;
+            if (!analyze_expression(node->child, stack, &l)) exit(10);
 
             AstNode* type_name_node = node->child->sibling;
             if (type_name_node->type != NODE_TYPE_NAME) {
                  fprintf(stderr, "Error 6: Right side of 'is' must be Type (Line %d).\n", node->line_number);
-                return false;
+                exit(6);
             }
             const char* t_name = type_name_node->data.identifier; // С точкой!
             if (strcmp(t_name, "Num") != 0 && strcmp(t_name, "String") != 0 && strcmp(t_name, "Null") != 0) {
                  fprintf(stderr, "Error 6: Unknown type '%s' (Line %d).\n", t_name, node->line_number);
-                return false;
+                exit(6);
             }
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
@@ -1077,7 +1098,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
 
             if (!func_entry) {
                 fprintf(stderr, "Error 3/5: Undefined function '%s' with %d args (Line %d).\n", name, arity, node->line_number);
-                return false;
+                exit(3);
             }
 
             node->table_entry = func_entry;
@@ -1096,11 +1117,11 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                         // ID нужно найти и узнать тип
                         DataType id_type;
                         // Рекурсивно вызываем analyze_expression для ID (это безопасно, это не оператор)
-                        if (!analyze_expression(arg, stack, &id_type)) return false;
+                        if (!analyze_expression(arg, stack, &id_type)) exit(10);
                         arg_types[idx] = id_type;
                     } else {
                         fprintf(stderr, "Error 6: Expression in argument not allowed (Line %d).\n", arg->line_number);
-                        return false;
+                        exit(6);
                     }
                     idx++;
                 }
@@ -1124,7 +1145,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
 
                 if (!ok) {
                     fprintf(stderr, "Error 5: Invalid arg type for '%s' (Line %d).\n", name, node->line_number);
-                    return false;
+                    exit(5);
                 }
             }
 
@@ -1135,7 +1156,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
 
         default:
             fprintf(stderr, "Internal Error: Invalid expression node %d\n", node->type);
-            return false;
+            exit(99);
     }
 }
 
