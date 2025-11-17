@@ -1,4 +1,3 @@
-./test_playground
 --- [ AST DEBUG PRINT ] ---
 NODE_PROGRAM (line 4)
   NODE_FUNCTION_DEF (line 4)

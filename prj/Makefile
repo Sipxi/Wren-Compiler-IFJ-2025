@@ -59,5 +59,10 @@ test-pg: $(TEST_TARGET)
 test-pg-valgrind: $(TEST_TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TEST_TARGET)
 
+# Build the compiler binary
+build: $(LIB_OBJECTS) $(MAIN_OBJECT)
+	$(CC) $^ -o ifj_compiler
+
+
 # Phony targets
 .PHONY: all clean run test-pg test-pg-valgrind
