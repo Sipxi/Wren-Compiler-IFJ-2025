@@ -4,16 +4,93 @@
  * ШАГ 2A - сбор функций, проход по АСТ добавить в global_table
  * ШАГ 2Б - семантический анализ тела функций
  */
-// TODO Убрать всю хуйню которую я написал в перерывах
 // TODO Коды ошибок
 
 #include "symtable.h"
 #include "ast.h"
-#include "scopemap.h"
-#include "scopestack.h"
 #include "semantics.h"
 #include <stdio.h> 
 #include <stdlib.h>
+#include <string.h>
+
+
+///* =======================================================================================================*/
+/*
+  Простой стек для указателей Symtable* (для Pass 2b)
+*/
+
+#define HIERARCHY_STACK_SIZE 100
+
+typedef struct {
+    Symtable* array[HIERARCHY_STACK_SIZE];
+    int topIndex;
+} ScopeStack;
+
+/**
+ * @brief Инициализирует стек Symtable*
+ */
+static void H_Stack_Init(ScopeStack* stack) {
+    stack->topIndex = -1;
+}
+
+/**
+ * @brief Помещает Symtable* на вершину.
+ */
+static bool H_Stack_Push(ScopeStack* stack, Symtable* table) {
+    if (stack->topIndex >= HIERARCHY_STACK_SIZE - 1) {
+        fprintf(stderr, "Internal Error: Scope stack overflow (too many nested blocks).\n");
+        return false; 
+    }
+    stack->topIndex++;
+    stack->array[stack->topIndex] = table;
+    return true;
+}
+
+/**
+ * @brief Снимает Symtable* с вершины.
+ */
+static Symtable* H_Stack_Pop(ScopeStack* stack) {
+    if (stack->topIndex == -1) {
+        return NULL;
+    }
+    Symtable* table = stack->array[stack->topIndex];
+    stack->topIndex--;
+    return table;
+}
+
+/**
+ * @brief "Смотрит" на Symtable* на вершине.
+ */
+static Symtable* H_Stack_Peek(ScopeStack* stack) {
+    if (stack->topIndex == -1) {
+        return NULL;
+    }
+    return stack->array[stack->topIndex];
+}
+
+/**
+ * @brief (КЛЮЧЕВАЯ ФУНКЦИЯ) Ищет 'name' вниз по стеку.
+ */
+static TableEntry* H_Stack_Find_Var(ScopeStack* stack, const char* name) {
+    for (int i = stack->topIndex; i >= 0; i--) {
+        TableEntry* entry = symtable_lookup(stack->array[i], name);
+        if (entry != NULL) {
+            return entry; // Найдено!
+        }
+    }
+    // Если не нашли в стеке, ищем в global_table
+    return symtable_lookup(&global_table, name);
+}
+
+///* =======================================================================================================*/
+
+
+static bool register_builtin_function(const char* name, int arity, DataType return_type);
+static bool process_function_declaration(AstNode* func_node);
+static bool analyze_function_body(AstNode* func_node);
+static bool analyze_statement(AstNode* node, ScopeStack* stack);
+static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* result_type);
+
 
 Symtable global_table; // Глобальная таблица символов
 
@@ -155,13 +232,18 @@ static bool register_builtin_function(const char* name, int arity, DataType retu
     data.kind = KIND_FUNC;       // Это функция
     data.data_type = return_type; // Что она возвращает
     data.is_defined = true;      // Встроенные функции всегда "определены"
-    data.local_table = NULL;     // У них нет локальной таблицы IFJ25 
 
     // 3. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
         // Ошибка 99
         fprintf(stderr, "Internal Error: Failed to insert builtin '%s'\n", mangled_name);
         return false;
+    }
+
+    // Явно указываем, что у встроенной функции нет таблицы
+    TableEntry* entry = symtable_lookup(&global_table, mangled_name);
+    if (entry) {
+        entry->local_table = NULL;
     }
 
     return true;
@@ -201,8 +283,16 @@ static int count_parameters(AstNode* func_node) {
 
 /**
  * (Шаг 2a) Обрабатывает одно объявление функции из AST.
- * Находит имя, арность, проверяет на ре-дефиницию,
- * создает local_table и вставляет в global_table.
+ * (ПЕРЕПИСАНО для Иерархической Модели)
+ *
+ * 1. Создает 'mangled_name' (напр., "main@0").
+ * 2. Проверяет на ре-дефиницию (Ошибка 4) в 'global_table'.
+ * 3. Создает SymbolData (БЕЗ local_table).
+ * 4. Вставляет (SymbolData, "main@0") в 'global_table'.
+ * 5. Находит 'TableEntry' ("main@0") в 'global_table'.
+ * 6. Malloc'ает и init'ит НОВУЮ Symtable (Уровень 1).
+ * 7. Привязывает эту новую Symtable к 'func_entry->local_table'.
+ * 8. Связывает 'func_node->table_entry' с 'func_entry'.
  *
  * @param func_node Узел (NODE_FUNCTION_DEF, GETTER, SETTER).
  * @return true в случае успеха, false при ошибке.
@@ -213,7 +303,7 @@ static bool process_function_declaration(AstNode* func_node) {
     const char* name = func_node->data.identifier;
     if (name == NULL) {
         fprintf(stderr, "Internal Error: Function node has no name.\n");
-        return false;
+        return false; // Ошибка 99
     }
 
     // 2. Считаем Арность
@@ -222,243 +312,191 @@ static bool process_function_declaration(AstNode* func_node) {
     // 3. Создаем "Mangled Name" (Ключ)
     char mangled_name[256];
     if (func_node->type == NODE_SETTER_DEF) {
-        //Сеттер и геттер имеет внутри "="б поэтому что бы не путать с функцией которая может
-        // иметь такое же имя и арность дадим им уникальный суффикс 
-        sprintf(mangled_name, "%s@setter", name); // e.g., "myVar@setter"
+        sprintf(mangled_name, "%s@setter", name);
     } else if (func_node->type == NODE_GETTER_DEF){
-        sprintf(mangled_name, "%s@getter", name); // e.g., "myVar@getter"
+        sprintf(mangled_name, "%s@getter", name);
     } else {
-        sprintf(mangled_name, "%s@%d", name, arity); // e.g., "foo@1"
+        sprintf(mangled_name, "%s@%d", name, arity);
     }
 
     // 4. Проверка (Ошибка 4 - Ре-дефиниция)
     if (symtable_lookup(&global_table, mangled_name) != NULL) {
-        // Эта функция уже была определена.
-        fprintf(stderr, "Semantic Error (Line %d): Redefinition of function '%s' with %d parameters.\n",
-                func_node->line_number, name, arity);
-        return false; 
+        fprintf(stderr, "Semantic Error (Line %d): Redefinition of function '%s'.\n",
+                func_node->line_number, name);
+        return false; // Ошибка 4
     }
 
-    // 5. Создаем SymbolData
+    // 5. Создаем SymbolData (БЕЗ local_table)
     SymbolData data;
     data.kind = KIND_FUNC;
     data.data_type = TYPE_NIL; // По умолчанию, функция возвращает nil
-    data.is_defined = false;   // Мы еще НЕ анализировали тело (смотреть 2б)
+    data.is_defined = false;   // Мы еще НЕ анализировали тело (Шаг 2b)
     
-    // 6. Создаем 'local_table' для этой функции.
-    // Это *постоянное* хранилище для Pass 3.
-    data.local_table = (Symtable*)malloc(sizeof(Symtable));
-    if (data.local_table == NULL) {
-        fprintf(stderr, "Internal Error: Failed to malloc local_table for '%s'.\n", name);
-        return false;
-    }
-    if (!symtable_init(data.local_table)) {
-        fprintf(stderr, "Internal Error: Failed to init local_table for '%s'.\n", name);
-        free(data.local_table);
-        return false;
-    }
-
-    // 7. Вставляем в global_table
+    // 6. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
         fprintf(stderr, "Internal Error: Failed to insert function '%s' into global_table.\n", name);
-        symtable_free(data.local_table); // Очищаем то, что создали
-        free(data.local_table);
-        return false;
+        return false; // Ошибка 99
     }
     
-    // 8. Связываем узел AST с этой TableEntry
-    // 
-    // Мы только что вставили, так что можем сразу найти
-    func_node->table_entry = symtable_lookup(&global_table, mangled_name);
+    // 7. Создаем 'local_table' (Уровень 1) и привязываем к TableEntry
+    
+    // 7a. Находим TableEntry (Уровень 0), который мы только что создали
+    TableEntry* func_entry = symtable_lookup(&global_table, mangled_name);
+    if (func_entry == NULL) {
+         fprintf(stderr, "Internal Error: Failed to re-lookup function '%s'.\n", name);
+        return false; // Ошибка 99
+    }
+
+    // 7b. malloc №1: Создаем Symtable (Уровень 1)
+    func_entry->local_table = (Symtable*)malloc(sizeof(Symtable));
+    if (func_entry->local_table == NULL) {
+        fprintf(stderr, "Internal Error: Failed to malloc local_table for '%s'.\n", name);
+        return false; // Ошибка 99
+    }
+    
+    // 7c. malloc №2: Инициализируем ее (она malloc'нет 'entries')
+    if (!symtable_init(func_entry->local_table)) {
+        fprintf(stderr, "Internal Error: Failed to init local_table for '%s'.\n", name);
+        free(func_entry->local_table);
+        func_entry->local_table = NULL;
+        return false; // Ошибка 99
+    }
+
+    // 8. Связываем узел AST
+    func_node->table_entry = func_entry;
 
     return true;
 }
 
 
-
 /**
  * (Шаг 2b) Анализирует тело ОДНОЙ функции.
  *
- * Эта функция "подготавливает площадку" для рекурсивного семантического
- * анализа. Ее задачи:
- *
- * 1.  Получить Контекст: Взять `func_entry` (из `global_table`) и
- * `func_local_table` (напоминаю - постоянное хранилище для Pass 3),
- * которые были созданы в Шаге 2a.
- *
- * 2.  Инициализировать Инструменты: Создать временный `ScopeStack`
- * (для отслеживания областей видимости в Pass 2) и `mangling_counter`
- * (для создания хуйни-имен типа `a_1`, `a_2`).
- *
- * 3.  Войти в Область Функции: Создать `ScopeMap` для верхнего уровня
- * функции (параметров) и поместить (`Push`) его в `ScopeStack`.
- *
- * 4.  Найти Узлы: Найти два ключевых дочерних узла, основываясь
- * на `ast.h`:
- * - `param_iter`: Указатель на первый `NODE_PARAM` (или NULL).
- * - `body_node`: Указатель на `NODE_BLOCK` тела.
- * Логика поиска разная для `NODE_FUNCTION_DEF`, `NODE_SETTER_DEF`
- * и `NODE_GETTER_DEF`.
- *
- * 5.  Обработать Параметры (Цикл `for`):
- * - Проверка (Ошибка 4): Искать `param_name` в `scopemap_lookup(top_map, ...)`
- * (проверка на дубликат *только* в текущей области).
- * - Хранение (Pass 3): Вставить `param_name` (как `KIND_VAR`)
- * в *постоянную* `func_local_table`.
- * - Поиск (Pass 2): Вставить указатель на эту `TableEntry`
- * в *временный* `top_map` (`scopemap_insert`).
- * - Связывание AST Заполнить `param->table_entry`, чтобы узел AST
- * указывал на запись в `func_local_table`.
- *
- * 6.  Запустить Анализ Тела: Вызвать `analyze_statement(body_node, ...)`
- * для рекурсивного анализа — дальше бога нет.
- *
- * 7.  Пометить как "Определенную": Люто заебались но анализ прошел успешно,
- * установить `func_entry->data->is_defined = true`.
- *
- * 8.  очистка ну это и так понятно: Освободить временный `ScopeStack` (`ScopeStack_Free`).
+ * 1. Берет 'func_local_table' (Уровень 1), созданный в Шаге 2a.
+ * 2. Инициализирует H_Stack (стек Symtable*).
+ * 3. Помещает 'func_local_table' (Уровень 1) в стек.
+ * 4. Обрабатывает параметры и вставляет их в 'func_local_table'.
+ * 5. Вызывает 'analyze_statement' для тела (NODE_BLOCK).
+ * 6. Снимает 'func_local_table' со стека.
  *
  * @param func_node Узел (NODE_FUNCTION_DEF, GETTER, SETTER).
  * @return true в случае успеха, false при семантической ошибке.
  */
 static bool analyze_function_body(AstNode* func_node)
 {
-    printf("DEBUG: Analyzing body for '%s'...\n", func_node->data.identifier);
+    printf("DEBUG: Analyzing body for '%s' (Hierarchical)...\n", func_node->data.identifier);
 
     // 1. Получаем 'func_entry' (из Шага 2a)
     TableEntry* func_entry = func_node->table_entry;
     if (func_entry == NULL) {
-        // Этого не должно случиться, если Шаг 2a прошел успешно
         fprintf(stderr, "Internal Error: func_node->table_entry is NULL for '%s'.\n", func_node->data.identifier);
-        return false;
+        return false; // Ошибка 99
     }
 
-    // 2. Получаем 'func_local_table' (из Шага 2a)
-    Symtable* func_local_table = func_entry->data->local_table;
+    // 2. Получаем 'func_local_table' (Уровень 1)
+    Symtable* func_local_table = func_entry->local_table;
     if (func_local_table == NULL) {
         fprintf(stderr, "Internal Error: func_local_table is NULL for '%s'.\n", func_node->data.identifier);
-        return false;
+        return false; // Ошибка 99
     }
 
     // 3. Создаем временный ScopeStack
     ScopeStack stack;
-    if (!ScopeStack_Init(&stack)) {
-        fprintf(stderr, "Internal Error: Failed to init ScopeStack for '%s'.\n", func_node->data.identifier);
+    H_Stack_Init(&stack);
+
+    // 4. Помещаем Уровень 1 в 'stack'
+    if (!H_Stack_Push(&stack, func_local_table)) {
         return false;
     }
 
-    // Счетчик для "искаженных имен" (напр., a_1, a_2),
-    // сбрасывается для каждой функции.
-    int mangling_counter = 0;
+    // 5. Определяем, где начало списка параметров и где тело
+    AstNode* param_iter = NULL; 
+    AstNode* body_node = NULL;  
 
-    // 4. Создаем ScopeMap для этой (верхней) области видимости
-    ScopeMap* top_map = scopemap_create();
-    if (top_map == NULL) {
-        ScopeStack_Free(&stack);
-        return false;
-    }
-
-    // 5. Помещаем его в 'stack'
-    if (!ScopeStack_Push(&stack, top_map)) {
-        scopemap_free(top_map);
-        ScopeStack_Free(&stack);
-        return false;
-    }
-
-    // 6. Определяем, где начало списка параметров и где тело
-    AstNode* param_iter = NULL; // По умолчанию NULL (как для геттера)
-    AstNode* body_node = NULL;  // По умолчанию NULL
-
-    // --- СЛУЧАЙ 1: 'static foo(a,b) { ... }' ---
     if (func_node->type == NODE_FUNCTION_DEF) {
-        AstNode* param_list = func_node->child; // Это NODE_PARAM_LIST
-        
+        AstNode* param_list = func_node->child;
         if (param_list != NULL && param_list->type == NODE_PARAM_LIST) {
-            param_iter = param_list->child;   // Указатель на первый NODE_PARAM 
-            body_node = param_list->sibling;  // Указатель на NODE_BLOCK
+            param_iter = param_list->child;
+            body_node = param_list->sibling;
         } else {
             fprintf(stderr, "Internal Error: NODE_FUNCTION_DEF has malformed children.\n");
-            ScopeStack_Free(&stack);
+            H_Stack_Pop(&stack);
             return false;
         }
     }
-    // --- СЛУЧАЙ 2: 'static foo = (a) { ... }' ---
     else if (func_node->type == NODE_SETTER_DEF) {
-        param_iter = func_node->child;   // Указатель на NODE_PARAM 
-        body_node = func_node->child->sibling; // Указатель на NODE_BLOCK 
+        param_iter = func_node->child;
+        body_node = func_node->child->sibling;
     } 
-    // --- СЛУЧАЙ 3: 'static foo { ... }' ---
     else if (func_node->type == NODE_GETTER_DEF) {
-        param_iter = NULL; // Параметров нет
-        body_node = func_node->child; // Указатель на NODE_BLOCK
+        param_iter = NULL;
+        body_node = func_node->child;
     }
 
     // 6. (Часть 2) Обрабатываем параметры.
-    // Этот цикл корректно пропустится для геттеров (param_iter == NULL).
     for (AstNode* param = param_iter; param != NULL; param = param->sibling) {
         
-        if (param->type != NODE_PARAM) continue; // На всякий случай
+        if (param->type != NODE_PARAM) continue;
 
         const char* param_name = param->data.identifier;
 
         // 6a. Проверка (Ошибка 4 - дубликат параметра)
-        // Ищем *только* в верхнем Map (top_map)
-        if (scopemap_lookup(top_map, param_name) != NULL) {
+        if (symtable_lookup(func_local_table, param_name) != NULL) {
             fprintf(stderr, "Semantic Error (Line %d): Duplicate parameter name '%s'.\n",
                     param->line_number, param_name);
-            ScopeStack_Free(&stack); // Очистит top_map
-            return false;
+            H_Stack_Pop(&stack); // Очищаем стек
+            return false; // Ошибка 4
         }
 
         // 6b. Создаем данные для Symtable
         SymbolData data;
         data.kind = KIND_VAR;
-        data.data_type = TYPE_NIL; // Изначально тип неизвестен
-        data.is_defined = true;    // Параметры всегда "определены"
-        data.local_table = NULL;
+        data.data_type = TYPE_NIL;
+        data.is_defined = true;
 
-        // 6c. Вставляем в *постоянную* func_local_table (для Pass 3)
+        // 6c. Вставляем в 'func_local_table' (Уровень 1)
         if (!symtable_insert(func_local_table, param_name, &data)) {
-            fprintf(stderr, "Internal Error: Failed to insert param '%s' into func_local_table.\n", param_name);
-            ScopeStack_Free(&stack);
-            return false;
+            H_Stack_Pop(&stack);
+            fprintf(stderr, "Internal Error: Failed to insert param '%s'.\n", param_name);
+            return false; 
         }
 
-        // 6d. Связываем временный Map с постоянной TableEntry (для Pass 2)
+        // 6d. (Устанавливаем local_table = NULL для TableEntry
         TableEntry* entry = symtable_lookup(func_local_table, param_name);
-        if (!scopemap_insert(top_map, param_name, entry)) {
-            fprintf(stderr, "Internal Error: Failed to insert param '%s' into top_map.\n", param_name);
-            ScopeStack_Free(&stack);
-            return false;
+        if (entry == NULL) {
+            H_Stack_Pop(&stack);
+            fprintf(stderr, "Internal Error: Failed to re-lookup param '%s'.\n", param_name);
+            return false; // Ошибка 99
         }
+        entry->local_table = NULL; // У параметра нет вложенной таблицы
 
         // 6e. Связываем узел AST
         param->table_entry = entry;
     }
 
-
     // 7. Вызываем analyze_statement для ТЕЛА функции
     if (body_node == NULL || body_node->type != NODE_BLOCK) {
-         // Синтаксическая ошибка 2 (или 99), парсер не должен был этого допустить
         fprintf(stderr, "Internal Error: Function '%s' has no NODE_BLOCK body.\n", func_node->data.identifier);
-        ScopeStack_Free(&stack);
-        return false;
+        H_Stack_Pop(&stack);
+        return false; // Ошибка 99 (или 2)
     }
     
     // Запускаем рекурсивный анализ
-    if (!analyze_statement(body_node, func_local_table, &stack, &mangling_counter)) {
-        ScopeStack_Free(&stack);
-        return false;
+    if (!analyze_statement(body_node, &stack)) {
+        H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
+        return false; // Ошибка (3,4,5,6...) уже выведена
     }
 
     // 8. Если мы дошли сюда без ошибок:
     func_entry->data->is_defined = true;
     
-    // 9. Очищаем временный стек
-    ScopeStack_Free(&stack);
+    // 9. Очищаем стек
+    H_Stack_Pop(&stack);
+    // (стек теперь пуст)
     
     return true;
 }
+
 
 /*
         Young dope dealer, sellin' dope, is you like that? (If you like that, yeah, yeah)
@@ -473,113 +511,125 @@ static bool analyze_function_body(AstNode* func_node)
 */
 
 
+// Нам нужен счетчик для УНИКАЛЬНЫХ имен блоков (напр., "__block_0", "__block_1")
+// Мы можем сделать его глобальным для этого .c файла.
+static int block_counter = 0;
+
 /**
  * (Шаг 2b) Рекурсивно анализирует узел-оператор (statement).
  *
- * Как любит говорить джеминай "это СЕРДЦЕ (имя вашей хуйни)", в нашем случае Pass 2b. Она рекурсивно обходит
- * блоки, определяет переменные, обрабатывает присваивания, условия и вызывает analyze_expression для выражений.
- * Все через кейсы.
- *
- * @param node Узел AST для анализа (напр., NODE_BLOCK, NODE_VAR_DEF).
- * @param func_local_table *Постоянная* таблица символов функции (для Pass 3).
- * @param stack *Временный* стек областей видимости (для Pass 2).
- * @param mangling_counter Указатель на счетчик для уникальных имен (напр. a_1).
+ * @param node Узел AST для анализа.
+ * @param stack *Временный* стек Symtable* (H_Stack).
  * @return true в случае успеха, false при семантической ошибке.
  */
-static bool analyze_statement(AstNode* node, Symtable* func_local_table, ScopeStack* stack, int* mangling_counter)
+
+static bool analyze_statement(AstNode* node, ScopeStack* stack)
 {
-    // Узел не должен быть NULL, но если он есть это не семантическая ошибка, а просто конец списка.
     if (node == NULL) {
         return true;
     }
 
     switch (node->type) {
 
-        //* --- СЛУЧАЙ 1: Блок { ... } ---
-        // Его функция по сути ТУПА создать новую область видимости и рекурсивно вызвать другие кейсы
+        //* --- СЛУЧАЙ 1: Блок { ... } (Создает Уровень 2, 3...) ---
         case NODE_BLOCK: {
-            printf("DEBUG: Entering NODE_BLOCK.\n");
+            printf("DEBUG: Entering NODE_BLOCK (Hierarchical).\n");
             
-            // 1. Создаем новую область видимости
-            ScopeMap* new_scope = scopemap_create();
-            if (new_scope == NULL) {
-                return false;
+            // 1. Получаем родительскую таблицу (напр., Уровень 1)
+            Symtable* parent_table = H_Stack_Peek(stack);
+            if (parent_table == NULL) {
+                fprintf(stderr, "Internal Error: Scope stack is empty inside NODE_BLOCK.\n");
+                return false; // Ошибка 99
             }
             
-            // 2. Помещаем ее в стек
-            if (!ScopeStack_Push(stack, new_scope)) {
-                scopemap_free(new_scope);
-                return false;
+            // 2. Создаем НОВУЮ local_table (напр., Уровень 2)
+            // malloc №1:
+            Symtable* new_block_table = (Symtable*)malloc(sizeof(Symtable));
+            if (new_block_table == NULL) { return false; /* Ошибка 99 */ }
+            
+            // malloc №2:
+            if (!symtable_init(new_block_table)) {
+                free(new_block_table);
+                return false; // Ошибка 99
             }
 
-            // 3. Рекурсивно анализируем *все* операторы внутри блока
+            // 3. Создаем "папку" (TableEntry) для этого блока
+            //    внутри родительской таблицы
+            SymbolData data;
+            data.kind = KIND_BLOCK;
+            data.data_type = TYPE_NIL;
+            data.is_defined = true;
+            
+            char block_key[256];
+            sprintf(block_key, "__block_%d", block_counter++);
+            
+            if (!symtable_insert(parent_table, block_key, &data)) {
+                symtable_free(new_block_table);
+                free(new_block_table);
+                return false; // Ошибка 99
+            }
+            
+            // 4. (КЛЮЧ) Привязываем Уровень 2 к Уровню 1
+            TableEntry* block_entry = symtable_lookup(parent_table, block_key);
+            block_entry->local_table = new_block_table;
+
+            // 5. "Входим" в Уровень 2
+            if (!H_Stack_Push(stack, new_block_table)) {
+                return false; // Ошибка 99
+            }
+
+            // 6. Рекурсивно анализируем *все* операторы внутри блока
             bool result = true;
             for (AstNode* stmt = node->child; stmt != NULL; stmt = stmt->sibling) {
-                if (!analyze_statement(stmt, func_local_table, stack, mangling_counter)) {
+                if (!analyze_statement(stmt, stack)) { 
                     result = false;
-                    break; // Прерываем при первойошибке
+                    break; 
                 }
             }
 
-            // 4. Выходим из области видимости:
-            // Pop'аем нашу ScopeMap и уничтожаем ее.
-            ScopeMap* popped_map = ScopeStack_Pop(stack);
-            scopemap_free(popped_map);
+            // 7. "Выходим" из Уровня 2
+            H_Stack_Pop(stack);
 
-            printf("DEBUG: Exiting NODE_BLOCK.\n");
-            return result; // Возвращаем true/false в зависимости от успеха
+            printf("DEBUG: Exiting NODE_BLOCK (Hierarchical).\n");
+            return result;
         }
 
         //* --- СЛУЧАЙ 2: Определение 'var id' ---
         case NODE_VAR_DEF: {
-            printf("DEBUG: Entering NODE_VAR_DEF (%s).\n", node->data.identifier);
+            printf("DEBUG: Entering NODE_VAR_DEF (%s) [Hierarchical].\n", node->data.identifier);
             
-            // Берем имя (напр. 'b')
             const char* name = node->data.identifier;
-            ScopeMap* current_scope = ScopeStack_Peek(stack);
             
-            if (current_scope == NULL) {
-                // Этого не должно случиться, стек не должен быть пустым
+            // 1. Получаем текущую таблицу (вершина стека)
+            Symtable* current_table = H_Stack_Peek(stack);
+            if (current_table == NULL) {
+                // (Ошибка 99)
                 return false;
             }
 
-            // 1. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
-            if (scopemap_lookup(current_scope, name) != NULL) {
+            // 2. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
+            // Ищем только в текущей таблице уровня.
+            if (symtable_lookup(current_table, name) != NULL) {
                 fprintf(stderr, "Semantic Error (Line %d): Redefinition of variable '%s' in the same scope.\n",
                         node->line_number, name);
-                return false;
+                return false; // Ошибка 4
             }
 
-            // 2. Создаем "Искаженное Имя"
-            char mangled_name[256];
-            // Проверяем глубину стека. > 1 означает, что мы внутри { }
-            if (stack->topIndex > 0) { 
-                // Мы в блоке, создаем имя "name_N"
-                sprintf(mangled_name, "%s_%d", name, (*mangling_counter));
-                (*mangling_counter)++; // Увеличиваем счетчик
-            } else {
-                // Мы на верхнем уровне функции (topIndex == 0)
-                strcpy(mangled_name, name);
-            }
-
-            // 3. Хранение (Pass 3): Вставляем в *постоянную* таблицу
+            // 3. Создаем данные
             SymbolData data;
             data.kind = KIND_VAR;
-            data.data_type = TYPE_NIL; // По умолчанию 'var a' имеет значение 'null'
-            data.is_defined = true;    // Она определена
-            data.local_table = NULL;
+            data.data_type = TYPE_NIL; // По умолчанию null
+            data.is_defined = true;
+            // data.local_table НЕТ (это переменная)
 
-            if (!symtable_insert(func_local_table, mangled_name, &data)) {
-                return false;
+            // 4. Вставляем в текущую таблицу (Без искажения имени!)
+            if (!symtable_insert(current_table, name, &data)) {
+                return false; // Ошибка 99
             }
             
-            // 4. Поиск (Pass 2): Вставляем во *временную* карту
-            TableEntry* entry = symtable_lookup(func_local_table, mangled_name);
-            if (entry == NULL || !scopemap_insert(current_scope, name, entry)) {
-                return false;
-            }
-            
-            // 5. Связывание AST (для Pass 3)
+            // 5. Связываем AST
+            TableEntry* entry = symtable_lookup(current_table, name);
+            entry->local_table = NULL; // У переменной нет вложенной таблицы
             node->table_entry = entry;
 
             return true;
@@ -592,82 +642,76 @@ static bool analyze_statement(AstNode* node, Symtable* func_local_table, ScopeSt
             AstNode* id_node = node->child;
             AstNode* expr_node = node->child->sibling;
 
-            // 1. Анализируем правую часть (выражение)
+            // 1. Анализируем правую часть
             DataType expr_type;
-            if (!analyze_expression(expr_node, func_local_table, stack, mangling_counter, &expr_type)) {
+            if (!analyze_expression(expr_node, stack, &expr_type)) { // Заметь: параметры сократились
                 return false;
             }
 
-           if (expr_type == TYPE_BOOL) {
-                fprintf(stderr, "Semantic Error (Line %d): Cannot assign a truth value to a variable.\n",
-                        expr_node->line_number);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ 6
-                return false;
+            if (expr_type == TYPE_BOOL) {
+                // ... (Ошибка 6: нельзя присваивать Bool) ...
+                return false; 
             }
             
-            // 2. Ищем левую часть (КУДА присваивать).
             const char* name = id_node->data.identifier; 
             TableEntry* entry = NULL;
 
-            // 2a. Ищем в локальных областях (локальная 'a')
-            entry = ScopeStack_Find_Var(stack, name);
-
-            // 2b. Если не нашли, ищем СЕТТЕР ('a@setter')
-            if (entry == NULL) {
-                char mangled_name[256];
-                sprintf(mangled_name, "%s@setter", name);
-                entry = symtable_lookup(&global_table, mangled_name);
-            }
-
-            // 2c. Если не нашли, ищем Глобальную переменную ('__a')
-            if (entry == NULL) {
-                if (strncmp(name, "__", 2) == 0) {
-                    entry = symtable_lookup(&global_table, name);
-                }
-            }
-
-            // 3. Проверка (Ошибка 3)
-            if (entry == NULL) {
-                fprintf(stderr, "Semantic Error (Line %d): Cannot assign to undefined variable or setter '%s'.\n",
-                        id_node->line_number, name);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ
-                return false;
-            }
+            // 2. Ищем в стеке (Уровень N -> ... -> Уровень 1)
+            entry = H_Stack_Find_Var(stack, name);
             
-            // 4. Проверка (Присваивание ФУНКЦИИ или ГЕТТЕРУ?)
-            if (entry->data->kind == KIND_FUNC) {
-                char setter_name[256];
-                sprintf(setter_name, "%s@setter", name);
-                // Если 'kind' - функция, но ключ НЕ 'name@setter',
-                // значит, мы пытаемся присвоить Геттеру или Функции.
-                if (strcmp(entry->key, setter_name) != 0) {
-                    fprintf(stderr, "Semantic Error (Line %d): Cannot assign to read-only function or getter '%s'.\n", id_node->line_number, name);
+            if (entry != NULL) {
+                // --- НАШЛИ ЛОКАЛЬНУЮ ПЕРЕМЕННУЮ ---
+                if (entry->data->kind == KIND_FUNC) {
+                    // ... (Ошибка: присваивание функции) ...
                     return false;
                 }
+                id_node->table_entry = entry;
+                entry->data->data_type = expr_type; // Обновляем тип
+                return true;
             }
+
+            // 3. Если не нашли в стеке, проверяем Сеттеры и Глобальные (Уровень 0)
             
-            // 5. Связываем AST
-            id_node->table_entry = entry;
-
-            // 6. Обновляем Тип (Только для ПЕРЕМЕННЫХ)
-            // Мы НЕ обновляем тип для Сеттера
-            if (entry->data->kind == KIND_VAR) {
-                entry->data->data_type = expr_type;
+            // 3a. Сеттер
+            char mangled_setter[256];
+            sprintf(mangled_setter, "%s@setter", name);
+            entry = symtable_lookup(&global_table, mangled_setter);
+            if (entry != NULL) {
+                id_node->table_entry = entry;
+                return true;
             }
 
-            return true;
+            // 3b. Глобальная переменная ('__')
+            if (strncmp(name, "__", 2) == 0) {
+                entry = symtable_lookup(&global_table, name);
+                
+                if (entry == NULL) {
+                    // Создаем новую глобальную
+                    SymbolData data;
+                    data.kind = KIND_VAR;
+                    data.data_type = expr_type;
+                    data.is_defined = true;
+                    // data.local_table нет
+                    
+                    symtable_insert(&global_table, name, &data);
+                    entry = symtable_lookup(&global_table, name);
+                    entry->local_table = NULL;
+                } 
+                else if (entry->data->kind == KIND_FUNC) {
+                     // ... (Ошибка) ...
+                     return false;
+                }
+                id_node->table_entry = entry;
+                entry->data->data_type = expr_type;
+                return true;
+            }
+
+            // 4. Ошибка 3
+            fprintf(stderr, "Semantic Error: Undefined variable '%s'.\n", name);
+            return false; 
         }
 
-        // НЕ УДАЛЯТЬ ИНАЧЕ КОД НЕ РАБОТАЕТ
-        /*
-        Го́споди Иису́есе Христе́, Сы́не Бо́жий, молитв ра́ди Пречи́стыя Твоея́ Ма́тере и всех святы́х, поми́луй нас. Ами́нь.
-        Сла́ва Тебе́, Бо́же наш, сла́ва Тебе́.
-        Царю́ Небе́сный, Уте́шителю, Ду́ше и́стины, И́же везде́ сый и вся исполня́яй,
-        Сокро́вище благи́х и жи́зни Пода́телю, прииди́ и всели́ся в ны, и очи́сти ны
-        от вся́кия скве́рны, и спаси́, Бла́же, ду́ши на́ша.
-        */
-
-        //* --- СЛУЧАЙ 4: Условие 'if (cond) { ... } else { ... }' ---
+       //* --- СЛУЧАЙ 4: Условие 'if (cond) { ... } else { ... }' ---
         case NODE_IF: {
             printf("DEBUG: Entering NODE_IF.\n");
             
@@ -676,98 +720,99 @@ static bool analyze_statement(AstNode* node, Symtable* func_local_table, ScopeSt
             AstNode* else_body = node->child->sibling->sibling;
             
             // 1. Анализируем Условие
-            DataType cond_type; // Нам не важен тип, но мы должны проверить на ошибки
-            if (!analyze_expression(cond_node, func_local_table, stack, mangling_counter, &cond_type)) {
-                return false; // Ошибка
+            DataType cond_type;
+            // В новой модели мы передаем ТОЛЬКО 'stack' (и 'cond_type')
+            if (!analyze_expression(cond_node, stack, &cond_type)) {
+                return false; // Ошибка в условии
             }
 
             // 2. Анализируем 'if' тело
-            if (!analyze_statement(if_body, func_local_table, stack, mangling_counter)) {
+            if (!analyze_statement(if_body, stack)) {
                 return false;
             }
 
             // 3. Анализируем 'else' тело
-            // В базовом задании 'else' всегда есть
-            if (!analyze_statement(else_body, func_local_table, stack, mangling_counter)) {
+            if (!analyze_statement(else_body, stack)) {
+                return false;
+            }
+            
+            return true;
+        }
+        
+        //* --- СЛУЧАЙ 5: Цикл 'while (cond) { ... }' ---
+        case NODE_WHILE: {
+            printf("DEBUG: Entering NODE_WHILE.\n");
+
+            AstNode* cond_node = node->child;
+            AstNode* while_body = node->child->sibling;
+
+            // 1. Анализируем Условие
+            DataType cond_type;
+            if (!analyze_expression(cond_node, stack, &cond_type)) {
+                return false; // Ошибка в условии
+            }
+
+            // 2. Анализируем Тело
+            if (!analyze_statement(while_body, stack)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        //* --- СЛУЧАЙ 6: Возврат 'return ...' ---
+        case NODE_RETURN: {
+            printf("DEBUG: Entering NODE_RETURN.\n");
+
+            AstNode* expr_node = node->child;
+            
+            // 1. Анализируем возвращаемое выражение
+            DataType return_type;
+            if (!analyze_expression(expr_node, stack, &return_type)) {
+                return false; // Ошибка в выражении
+            }
+            
+            return true;
+        }
+
+        //* --- СЛУЧАЙ 7: Самостоятельный вызов 'id(...)' ---
+        case NODE_CALL_STATEMENT: {
+            // Получаем имя из ребенка (для дебага)
+            const char* name = (node->child) ? node->child->data.identifier : "invalid";
+            printf("DEBUG: Entering standalone NODE_CALL_STATEMENT (%s).\n", name);
+
+            DataType return_type; 
+
+            // Просто анализируем выражение, чтобы проверить его на ошибки
+            // (Арность, типы аргументов и т.д.)
+            if (!analyze_expression(node, stack, &return_type)) {
                 return false;
             }
             
             return true;
         }
 
-        //* --- СЛУЧАЙ 5: Цикл 'while (cond) { ... }' ---
-        case NODE_WHILE: {
-            printf("DEBUG: Entering NODE_WHILE.\n");
-
-            AstNode* cond_node = node->child;
-            AstNode* while_body = node->child->sibling; // 
-
-            // 1. Анализируем Условие
-            DataType cond_type;
-            if (!analyze_expression(cond_node, func_local_table, stack, mangling_counter, &cond_type)) {
-                return false; // Ошибка 
-            }
-
-            // 2. Анализируем Тело
-            if (!analyze_statement(while_body, func_local_table, stack, mangling_counter)) {
-                return false;
-            }
-
-            return true;
-        }
-
-        // --- СЛУЧАЙ 6: Возврат 'return ...' ---
-        case NODE_RETURN: {
-            printf("DEBUG: Entering NODE_RETURN.\n");
-
-            AstNode* expr_node = node->child;
-            // 1. Анализируем возвращаемое выражение
-            DataType return_type;
-            if (!analyze_expression(expr_node, func_local_table, stack, mangling_counter, &return_type)) {
-                // Ошибка
-                return false;
-            }
-            return true;
-        }
-
-        //* --- СЛУЧАЙ 7: Самостоятельный вызов 'id(...)' ---
-        case NODE_CALL_STATEMENT: {
-            printf("DEBUG: Entering standalone NODE_CALL_STATEMENT (%s).\n", node->data.identifier);
-
-            DataType return_type; // Мы не используем, но функция должна ее вернуть
-
-            // Просто анализируем выражение, чтобы проверить его на ошибки
-            // (Error 3, 5, 6)
-            if (!analyze_expression(node, func_local_table, stack, mangling_counter, &return_type)) {
-                return false;
-            }
-            return true;
-    }
-        
-        
         default:
-            return true;
+            fprintf(stderr, "Internal Error (Line %d): Unexpected node type (%d) in statement list.\n", node->line_number, node->type);
+            return false; // Ошибка 99
     }
+
 }
 
 
 /**
  * (Шаг 2b) Рекурсивно анализирует узел-выражение.
  *
- * Определяет тип выражения, проверяет на ошибки
+ * Определяет тип выражения, проверяет на ошибки (3, 5, 6, деление на 0)
  * и связывает узлы ID с их записями в TableEntry.
  *
- * @param node Узел AST (напр., NODE_OP_PLUS, NODE_ID, NODE_LITERAL_NUM).
- * @param func_local_table *Постоянная* таблица символов функции (для Pass 3).
- * @param stack *Временный* стек областей видимости (для Pass 2).
- * @param mangling_counter Указатель на счетчик для уникальных имен (напр., a_1).
+ * @param node Узел AST.
+ * @param stack Стек таблиц (H_Stack) для поиска переменных.
  * @param result_type [out] Указатель, куда будет записан тип результата.
- * @return true в случае успеха, false при семантической ошибке.
+ * @return true в случае успеха, false при ошибке.
  */
-static bool analyze_expression(AstNode* node, Symtable* func_local_table, ScopeStack* stack, int* mangling_counter, DataType* result_type)
+static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* result_type)
 {
-    // Если узел пустой (напр., 'return' без выражения)
-    //? это расширение, но в базе 'return' всегда с выражением
     if (node == NULL) {
         *result_type = TYPE_NIL;
         return true; 
@@ -793,11 +838,10 @@ static bool analyze_expression(AstNode* node, Symtable* func_local_table, ScopeS
 
         //* --- БАЗОВЫЙ СЛУЧАЙ (Идентификатор) ---
         case NODE_ID: {
-            printf("DEBUG: Analyzing NODE_ID (%s).\n", node->data.identifier);
-            const char* name = node->data.identifier;
-
-            // 1. Ищем в локальных областях (локальная 'a')
-            TableEntry* entry = ScopeStack_Find_Var(stack, name);
+            const char* name = node->data.identifier; // С точкой!
+            
+            // 1. Ищем в стеке (Локальные: Уровень N -> ... -> Уровень 1)
+            TableEntry* entry = H_Stack_Find_Var(stack, name);
 
             // 2. Если не нашли, ищем ГЕТТЕР ('a@getter')
             if (entry == NULL) {
@@ -817,337 +861,246 @@ static bool analyze_expression(AstNode* node, Symtable* func_local_table, ScopeS
             if (entry == NULL) {
                 fprintf(stderr, "Semantic Error (Line %d): Use of undefined variable or getter '%s'.\n",
                         node->line_number, name);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ
-                return false;
+                return false; // Ошибка 3
             }
             
             // 5. Проверка (Использование ФУНКЦИИ или СЕТТЕРА?)
             if (entry->data->kind == KIND_FUNC) {
+                // Разрешено только если это Геттер
                 char getter_name[256];
                 sprintf(getter_name, "%s@getter", name);
-                // Если 'kind' - функция, но ключ НЕ 'name@getter',
-                // значит, мы пытаемся прочитать Сеттер или Функцию.
                 if (strcmp(entry->key, getter_name) != 0) {
                      fprintf(stderr, "Semantic Error (Line %d): Cannot use function or setter '%s' as a variable.\n", node->line_number, name);
                     return false;
                 }
             }
 
-            // 6. Связываем AST
+            // 6. Связываем AST и возвращаем тип
             node->table_entry = entry;
-            
-            // 7. Устанавливаем и возвращаем тип
             node->data_type = entry->data->data_type;
             *result_type = entry->data->data_type;
-            
             return true;
         }
 
-        // ... (case'ы для Литералов и NODE_ID) ...
         //* --- РЕКУРСИВНЫЕ СЛУЧАИ (Операторы) ---
-        //! СДЕЛАТЬ ФЛОУТ И ПРОВЕРКУ НА ДЕЛЕНИЕ НА 0
         case NODE_OP_PLUS:
         case NODE_OP_MINUS:
         case NODE_OP_MUL:
         case NODE_OP_DIV:
         {
-            printf("DEBUG: Analyzing Binary Op (%d).\n", node->type);
-            //? Вынеси node->child и node->child->sibling в переменные для читаемости кода
             // 1. Анализируем левую часть
             DataType left_type;
-            if (!analyze_expression(node->child, func_local_table, stack, mangling_counter, &left_type)) {
-                return false; // Ошибка в левом под-выражении
+            if (!analyze_expression(node->child, stack, &left_type)) {
+                return false;
             }
 
             // 2. Анализируем правую часть
             DataType right_type;
-            if (!analyze_expression(node->child->sibling, func_local_table, stack, mangling_counter, &right_type)) {
-                return false; // Ошибка в правом под-выражении
+            if (!analyze_expression(node->child->sibling, stack, &right_type)) {
+                return false;
             }
         
-            // 3. Проверка Типов
-            // 3a. Проверка на NIL (нельзя использовать в арифметике)   
+            // 3. Проверка на NIL
             if (left_type == TYPE_NIL || right_type == TYPE_NIL) {
-                 fprintf(stderr, "Semantic Error (Line %d): Cannot use 'null' in arithmetic or string operations.\n",
-                        node->line_number);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ
-                return false;
+                 fprintf(stderr, "Semantic Error (Line %d): Cannot use 'null' in arithmetic/string ops.\n", node->line_number);
+                return false; // Ошибка 6
             }
         
             // 3b. Проверка для конкретного оператора
             switch (node->type)
             {
-                // --- Сложение / Конкатенация ---
                 case NODE_OP_PLUS:
-                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
-                        *result_type = TYPE_NUM; // Число + Число
-                    } 
-                    else if (left_type == TYPE_STR && right_type == TYPE_STR) {
-                        *result_type = TYPE_STR; // Строка + Строка 
-                    }
+                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) *result_type = TYPE_NUM;
+                    else if (left_type == TYPE_STR && right_type == TYPE_STR) *result_type = TYPE_STR;
                     else {
-                        // Все остальное (NUM + STR, STR + NUM) - ошибка
-                        fprintf(stderr, "Semantic Error (Line %d): Invalid operands for '+'. Must be Num+Num or String+String.\n", node->line_number);
-                        // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                        fprintf(stderr, "Error 6: Invalid operands for '+' (Line %d).\n", node->line_number);
                         return false;
                     }
                     break;
 
-                // --- Вычитание ---
                 case NODE_OP_MINUS:
-                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
-                        *result_type = TYPE_NUM; // Только Число - Число
-                    } else {
-                        fprintf(stderr, "Semantic Error (Line %d): Invalid operands for '-'. Must be Num-Num.\n", node->line_number);
-                        // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) *result_type = TYPE_NUM;
+                    else {
+                        fprintf(stderr, "Error 6: Invalid operands for '-' (Line %d).\n", node->line_number);
                         return false;
                     }
                     break;
                 
-                // --- Умножение / Итерация ---
                 case NODE_OP_MUL:
-                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
-                        *result_type = TYPE_NUM; // Число * Число
-                    }
-                    else if (left_type == TYPE_STR && right_type == TYPE_NUM) {
-                        *result_type = TYPE_STR; // Строка * Число (Итерация)
-                        // Здесь нужна проверка, что правый 'Num' - целое.
-                        // Это часть расширения STATICAN вроде
-                    }
+                    if (left_type == TYPE_NUM && right_type == TYPE_NUM) *result_type = TYPE_NUM;
+                    else if (left_type == TYPE_STR && right_type == TYPE_NUM) *result_type = TYPE_STR;
                     else {
-                        fprintf(stderr, "Semantic Error (Line %d): Invalid operands for '*'. Must be Num*Num or String*Num.\n", node->line_number);
-                        // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                        fprintf(stderr, "Error 6: Invalid operands for '*' (Line %d).\n", node->line_number);
                         return false;
                     }
                     break;
 
-                /* Шел 3 день написания семантического анализа. Алкоголь закончился где-то 4 часа назад. Ахуеть я на бутылку Джека Дениелса
-                   вьебал 500 крон. И это по скидке нахуй. Ну ладно, там не скидка, просто теско ублюдки завышают цену а потом 
-                   типа с клабкартой дешевле получается. Вообще пиздатая штука, только я еще ни одного бода не потратил с нее. Но, возращаясь
-                   к теме, я не знаю, смогу ли простить свою команду, за то что свалили эту хуйню на меня. Хотя кого я обманываю?
-                   Я сам виноват во всем, что даже нормально по клавиутуре не попадаю. Блядь, она была единственная, кого я по настоящему любил... пометка для себя на будующее: записаться к психотерапевту
-                */
-
-                // --- Деление ---
                 case NODE_OP_DIV:
                     if (left_type == TYPE_NUM && right_type == TYPE_NUM) {
-                        *result_type = TYPE_NUM; // Только Число / Число
+                        *result_type = TYPE_NUM;
+                        
+                        // --- ПРОВЕРКА НА 0 (Статическая) ---
+                        AstNode* r_node = node->child->sibling;
+                        if (r_node->type == NODE_LITERAL_NUM && r_node->data.literal_num == 0.0) {
+                            fprintf(stderr, "Error: Division by zero literal (Line %d).\n", node->line_number);
+                            return false; // Ошибка 10/57
+                        }
                     } else {
-                        fprintf(stderr, "Semantic Error (Line %d): Invalid operands for '/'. Must be Num/Num.\n", node->line_number);
-                        // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                        fprintf(stderr, "Error 6: Invalid operands for '/' (Line %d).\n", node->line_number);
                         return false;
                     }
                     break;
                 
-                default: break; // Невозможно
+                default: break;
             }
 
-            // 4. Устанавливаем тип узла
             node->data_type = *result_type;
             return true;
         }
 
-
-        // ... (case'ы для Литералов, NODE_ID, Арифметики) ...
-        // --- СЛУЧАЙ 3: Реляционные Операторы (<, >, <=, >=) ---
+        //* --- РЕЛЯЦИОННЫЕ ОПЕРАТОРЫ ---
         case NODE_OP_LT:
         case NODE_OP_GT:
         case NODE_OP_LTE:
         case NODE_OP_GTE:
         {
-            printf("DEBUG: Analyzing Relational Op (%d).\n", node->type);
+            DataType l, r;
+            if (!analyze_expression(node->child, stack, &l)) return false;
+            if (!analyze_expression(node->child->sibling, stack, &r)) return false;
 
-            // 1. Анализируем левую часть
-            DataType left_type;
-            if (!analyze_expression(node->child, func_local_table, stack, mangling_counter, &left_type)) {
-                return false; 
-            }
-
-            // 2. Анализируем правую часть
-            DataType right_type;
-            if (!analyze_expression(node->child->sibling, func_local_table, stack, mangling_counter, &right_type)) {
-                return false; 
-            }
-
-            // 3. Проверка Типов
-            // Оба обязаны быть Num
-            if (left_type != TYPE_NUM || right_type != TYPE_NUM) {
-                 fprintf(stderr, "Semantic Error (Line %d): Invalid operands for relational operator. Must be Num <> Num.\n", node->line_number);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ
+            if (l != TYPE_NUM || r != TYPE_NUM) {
+                 fprintf(stderr, "Error 6: Relational ops require NUM (Line %d).\n", node->line_number);
                 return false;
             }
-        
-            // 4. Устанавливаем тип результата
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
             return true;
         }
 
-        // --- СЛУЧАЙ 4: Операторы Равенства (==, !=) ---
+        //* --- РАВЕНСТВО ---
         case NODE_OP_EQ:
         case NODE_OP_NEQ:
         {
-            printf("DEBUG: Analyzing Equality Op (%d).\n", node->type);
-
-            // 1. Анализируем левую часть
-            DataType left_type;
-            if (!analyze_expression(node->child, func_local_table, stack, mangling_counter, &left_type)) {
-                return false; 
-            }
-
-            // 2. Анализируем правую часть
-            DataType right_type;
-            if (!analyze_expression(node->child->sibling, func_local_table, stack, mangling_counter, &right_type)) {
-                return false; 
-            }
-
-            // 3. Проверки типов
-            // ЛЮБЫЕ 2 ТИПА МОЖНО СРАВНИВАТЬ
-
-            // 4. Устанавливаем тип результата
+            DataType l, r;
+            if (!analyze_expression(node->child, stack, &l)) return false;
+            if (!analyze_expression(node->child->sibling, stack, &r)) return false;
+            
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
             return true;
         }
 
-        // --- СЛУЧАЙ 5: Проверка Типа 'is' ---
-
+        //* --- IS ---
         case NODE_OP_IS:
         {
-            printf("DEBUG: Analyzing Equality Op (%d).\n", node->type);
+            DataType l;
+            if (!analyze_expression(node->child, stack, &l)) return false;
 
-            // 1. Анализируем левую часть
-            DataType left_type;
-            if (!analyze_expression(node->child, func_local_table, stack, mangling_counter, &left_type)) {
-                return false; 
-            }
-
-            // 2. Анализируем правую часть
             AstNode* type_name_node = node->child->sibling;
             if (type_name_node->type != NODE_TYPE_NAME) {
-                 fprintf(stderr, "Semantic Error (Line %d): Right side of 'is' must be a type name (Num, String, Null).\n", node->line_number);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                 fprintf(stderr, "Error 6: Right side of 'is' must be Type (Line %d).\n", node->line_number);
                 return false;
             }
-
-            // 3. Проверяем, что это корректное имя типа
-            const char* type_name = type_name_node->data.identifier;
-            if (strcmp(type_name, "Num") != 0 &&
-                strcmp(type_name, "String") != 0 &&
-                strcmp(type_name, "Null") != 0)
-            {
-                 fprintf(stderr, "Semantic Error (Line %d): Unknown type name '%s' in 'is' expression.\n", node->line_number, type_name);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ 
+            const char* t_name = type_name_node->data.identifier; // С точкой!
+            if (strcmp(t_name, "Num") != 0 && strcmp(t_name, "String") != 0 && strcmp(t_name, "Null") != 0) {
+                 fprintf(stderr, "Error 6: Unknown type '%s' (Line %d).\n", t_name, node->line_number);
                 return false;
             }
-
-            // 4. Устанавливаем тип результата
             node->data_type = TYPE_BOOL;
             *result_type = TYPE_BOOL;
             return true;    
         }
 
-        // --- СЛУЧАЙ 6: Вызов Функции 'id(...)' ---
-
+        //* --- ВЫЗОВ ФУНКЦИИ ---
         case NODE_CALL_STATEMENT:
         {
-            printf("DEBUG: Analyzing NODE_CALL_STATEMENT (%s).\n", node->data.identifier);
+            // 1. Получаем имя и аргументы
+            AstNode* id_node = node->child;
+            const char* name = id_node->data.identifier; // С точкой!
+            AstNode* arg_list = id_node->sibling; 
+            
+            printf("DEBUG: Analyzing NODE_CALL_STATEMENT (%s).\n", name);
 
-            const char* name = node->data.identifier;
-            AstNode* arg_list = node->child->sibling;
-
-            // 1. Подсчитываем Аргументы
+            // 2. Считаем арность
             int arity = 0;
-            if (arg_list != NULL && arg_list->type == NODE_ARGUMENT_LIST) {
-                for (AstNode* arg = arg_list->child; arg != NULL; arg = arg->sibling) {
-                    arity++;
-                }
+            if (arg_list && arg_list->type == NODE_ARGUMENT_LIST) {
+                for (AstNode* a = arg_list->child; a; a = a->sibling) arity++;
             }
 
-            // 2. Создаем "Mangled Name"
+            // 3. Ищем функцию в GLOBAL TABLE
             char mangled_name[256];
             sprintf(mangled_name, "%s@%d", name, arity);
-
-            // 3. Ищем Функцию 
             TableEntry* func_entry = symtable_lookup(&global_table, mangled_name);
 
-            if (func_entry == NULL) {
-                // Это может быть Ошибка 3 (функция 'foo' не найдена)
-                // или Ошибка 5 (функция 'foo' найдена, но с другим числом
-                // аргументов, напр. 'foo@1' вместо 'foo@2')
-                fprintf(stderr, "Semantic Error (Line %d): Call to undefined function '%s' with %d arguments.\n", node->line_number, name, arity);
-                // ВОЗВРАЩАЕМ КОД ОШИБКИ 3 или 5
+            if (!func_entry) {
+                fprintf(stderr, "Error 3/5: Undefined function '%s' with %d args (Line %d).\n", name, arity, node->line_number);
                 return false;
             }
 
-            // 4. Связываем AST
             node->table_entry = func_entry;
 
-            // 5. Рекурсивно Анализируем Аргументы
-
-            // Временный массив для хранения типов
-            // (10 - произвольное безопасное число, макс. нужно 3)
-
+            // 4. Анализируем аргументы (ТОЛЬКО ТЕРМЫ)
             DataType arg_types[10];
-            int arg_index = 0;
+            int idx = 0;
 
-            if (arg_list != NULL) {
-                for (AstNode* arg = arg_list->child; arg != NULL; arg = arg->sibling) {
+            if (arg_list) {
+                for (AstNode* arg = arg_list->child; arg; arg = arg->sibling) {
                     
-                    if (!analyze_expression(arg, func_local_table, stack, mangling_counter, &arg_types[arg_index])) {
-                        // Ошибка внутри аргумента
-                        return false; 
+                    if (arg->type == NODE_LITERAL_NUM) arg_types[idx] = TYPE_NUM;
+                    else if (arg->type == NODE_LITERAL_STRING) arg_types[idx] = TYPE_STR;
+                    else if (arg->type == NODE_LITERAL_NULL) arg_types[idx] = TYPE_NIL;
+                    else if (arg->type == NODE_ID) {
+                        // ID нужно найти и узнать тип
+                        DataType id_type;
+                        // Рекурсивно вызываем analyze_expression для ID (это безопасно, это не оператор)
+                        if (!analyze_expression(arg, stack, &id_type)) return false;
+                        arg_types[idx] = id_type;
+                    } else {
+                        fprintf(stderr, "Error 6: Expression in argument not allowed (Line %d).\n", arg->line_number);
+                        return false;
                     }
-                    arg_index++;
+                    idx++;
                 }
             }
 
-            // проверяем нравится ли аргументы встроенным функциям
+            // 5. Проверка типов встроенных функций (Error 5)
             if (strncmp(name, "Ifj.", 4) == 0) {
-                bool types_ok = true;
-                
-                if (strcmp(name, "Ifj.floor") == 0) {
-                    if (arg_types[0] != TYPE_NUM) types_ok = false;
-                }
-                else if (strcmp(name, "Ifj.length") == 0) {
-                    if (arg_types[0] != TYPE_STR) types_ok = false;
-                }
+                bool ok = true;
+                if (strcmp(name, "Ifj.floor") == 0 && arg_types[0] != TYPE_NUM) ok = false;
+                else if (strcmp(name, "Ifj.length") == 0 && arg_types[0] != TYPE_STR) ok = false;
                 else if (strcmp(name, "Ifj.substring") == 0) {
-                    if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_NUM || arg_types[2] != TYPE_NUM) types_ok = false;
+                    if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_NUM || arg_types[2] != TYPE_NUM) ok = false;
                 }
                 else if (strcmp(name, "Ifj.strcmp") == 0) {
-                    if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_STR) types_ok = false;
+                     if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_STR) ok = false;
                 }
                 else if (strcmp(name, "Ifj.ord") == 0) {
-                    if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_NUM) types_ok = false;
+                     if (arg_types[0] != TYPE_STR || arg_types[1] != TYPE_NUM) ok = false;
                 }
-                else if (strcmp(name, "Ifj.chr") == 0) {
-                    if (arg_types[0] != TYPE_NUM) types_ok = false;
-                }
-                // 'Ifj.write' и 'Ifj.str' принимают любые 
-                // 'Ifj.read_...' не имеют арг-ов, прроверять не нужно
+                else if (strcmp(name, "Ifj.chr") == 0 && arg_types[0] != TYPE_NUM) ok = false;
 
-                if (!types_ok) {
-                    fprintf(stderr, "Semantic Error (Line %d): Invalid parameter type(s) for built-in function '%s'.\n",
-                            node->line_number, name);
-                    // ВОЗВРАЩАЕМ КОД ОШИБКИ
+                if (!ok) {
+                    fprintf(stderr, "Error 5: Invalid arg type for '%s' (Line %d).\n", name, node->line_number);
                     return false;
                 }
             }
 
-            // 6. Устанавливаем и возвращаем тип
-            // Тип выражения - это тип возвращаемого значения функции
             node->data_type = func_entry->data->data_type;
             *result_type = func_entry->data->data_type;
-            
             return true;
         }
 
-
         default:
-            // Мы получили узел, который не является выражением
-            // (напр., NODE_BLOCK или NODE_VAR_DEF)
-            fprintf(stderr, "Internal Error (Line %d): Unexpected node type (%d) in expression.\n", node->line_number, node->type);
+            fprintf(stderr, "Internal Error: Invalid expression node %d\n", node->type);
             return false;
     }
 }
+
+
+
+
+
+
+
+
+

@@ -68,6 +68,7 @@ typedef enum{
 typedef enum{
     KIND_VAR,
     KIND_FUNC,
+    KIND_BLOCK
 
     //TODO Добавить другие виды символов по мере необходимости
 } SymbolKind;
@@ -96,7 +97,7 @@ typedef struct{
     DataType data_type; // Тип данных символа
     bool is_defined; // Флаг, указывающий, определен ли символ (для функций)
 
-    struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
+   
     //! Обязательно добавить другие поля по мере необходимости!
 } SymbolData;
 
@@ -106,6 +107,7 @@ typedef struct{
     char *key;              // Ключ символа (имя)
     SymbolData *data;      // Указатель на данные символа
     SlotStatus status;     // Статус слота (занят, пуст, удален)
+    struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
 } TableEntry;
 
 // Таблица символов

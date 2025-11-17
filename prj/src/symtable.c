@@ -257,6 +257,7 @@ static const char* kind_to_string(SymbolKind kind) {
     switch (kind) {
         case KIND_VAR:    return "Variable";
         case KIND_FUNC:   return "Function";
+        case KIND_BLOCK:  return "Block";
     }
     return "UNKNOWN_KIND";
 }
@@ -322,12 +323,13 @@ static void symtable_print_entry(TableEntry *entry, size_t index, int level) {
         print_indent(level + 1);
         printf("Опред:   %s\n", data->is_defined ? "true" : "false");
 
-        // 4. Рекурсивный вызов для локальной таблицы (если это функция)
-        if (data->local_table != NULL) {
+        // 4. Рекурсивный вызов (ИСПРАВЛЕНО)
+        // Мы смотрим в 'entry', а не в 'data'!
+        if (entry->local_table != NULL) { 
             print_indent(level + 1);
             printf("Лок. таблица:\n");
-            // Вызываем главную рекурсивную функцию с большим отступом
-            symtable_print_internal(data->local_table, level + 1);
+            // Вызываем рекурсию для вложенной таблицы
+            symtable_print_internal(entry->local_table, level + 1);
         } else {
             print_indent(level + 1);
             printf("Лок. таблица: (NULL)\n");
