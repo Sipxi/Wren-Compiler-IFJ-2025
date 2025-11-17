@@ -1,45 +1,33 @@
 #include "expression.h"
-#include "stack_token.h"
+#include "stack_precedence.h"
 #include "token.h"
 #include "utils.h"
+#include <errno.h>
 
 #include "ast.h"
 #include "ast_printer.h"
 #include <string.h>
 #include <stdlib.h>
 
-static int get_precedence(Token token) {
-    switch (token.type) {
-        case TOKEN_MULTIPLY:      // *
-        case TOKEN_DIVISION:      // /
-            return 5; // P1 (высший)
+bool char_to_double(const char *str, double *out_value) {
+    if (!str || !out_value) return false;
 
-        case TOKEN_PLUS:     // +
-        case TOKEN_MINUS:    // -
-            return 4; // P2
+    errno = 0;
+    char *endptr = NULL;
+    double val = strtod(str, &endptr);
 
-        case TOKEN_LESS:       // <
-        case TOKEN_EQUAL_LESS:      // <=
-        case TOKEN_GREATER:       // >
-        case TOKEN_EQUAL_GREATER:      // >=
-            return 3; // P3
+    // Проверка ошибок
+    if (errno != 0) return false;              // ошибка конверсии
+    if (endptr == str) return false;           // ничего не распознано
+    while (*endptr == ' ' || *endptr == '\t')  // пропускаем пробелы
+        endptr++;
+    if (*endptr != '\0') return false;         // мусор после числа
 
-        case TOKEN_KEYWORD:       // is
-            if (strcmp(token.data, "is") == 0) {
-                return 2; // P4
-            }
-            return 0; // Не оператор
-
-        case TOKEN_EQUAL:       // ==
-        case TOKEN_NOT_EQUAL:      // !=
-            return 1; // P5 (низший)
-
-        default:
-            return 0; // Не оператор
-    }
+    *out_value = val;
+    return true;
 }
 
- NodeType token_type_to_node(Token token) {
+NodeType token_type_to_node(Token token) {
     switch (token.type) {
         case TOKEN_PLUS:
             return NODE_OP_PLUS;
@@ -87,221 +75,107 @@ static int get_precedence(Token token) {
     }
 }
 
-
-
-bool char_to_double(const char *str, double *out_value) {
-    if (!str || !out_value) return false;
-
-    int errno = 0;
-    char *endptr = NULL;
-    double val = strtod(str, &endptr);
-
-    // Проверка ошибок
-    if (errno != 0) return false;              // ошибка конверсии
-    if (endptr == str) return false;           // ничего не распознано
-    while (*endptr == ' ' || *endptr == '\t')  // пропускаем пробелы
-        endptr++;
-    if (*endptr != '\0') return false;         // мусор после числа
-
-    *out_value = val;
-    return true;
-}
-
-
-int counter = 0;
-AstNode *current_op;
-
-bool process_expression(Stack* op_stack, Stack* val_stack, AstNode *expr_node) {
-    
-    counter++;
-    
-    //! добавить проверку типов операторов после is
-    
-    Token right = Stack_Token_Top(val_stack);
-    AstNode *right_node;
-    AstNode *left_node;
-
-    if (right.type == TOKEN_IDENTIFIER && right.data == NULL) {
-        right_node = current_op;
-        Stack_Token_Pop(val_stack);
-        if (right.type == TOKEN_UNDEFINED) {
-            return false;
-        }
-    } else {
-        NodeType node_type_right = token_type_to_node(right);
-        right_node = ast_new_id_node(node_type_right, right.line, right.data);
-        Stack_Token_Pop(val_stack);
-        if (right.type == TOKEN_UNDEFINED) {
-            return false;
-        }
-    }
-
-    
-    Token left = Stack_Token_Top(val_stack);
-
-    if (left.type == TOKEN_IDENTIFIER && left.data == NULL) {
-        left_node = current_op;
-        Stack_Token_Pop(val_stack);
-        if (left.type == TOKEN_UNDEFINED) {
-            return false;
-        }
-    } else {
-        NodeType node_type_left = token_type_to_node(left);
-        left_node = ast_new_id_node(node_type_left, left.line, left.data);
-        Stack_Token_Pop(val_stack);
-        if (left.type == TOKEN_UNDEFINED) {
-            return false;
-        }
-    }
-
-
-    
-    Token op_token = Stack_Token_Top(op_stack);
-    Stack_Token_Pop(op_stack);
-    if (op_token.type == TOKEN_UNDEFINED) {
-        return false;
-    }
-    NodeType node_type_op = token_type_to_node(op_token);
-    AstNode *op_node = ast_new_bin_op(node_type_op, op_token.line, left_node, right_node); 
-
-    current_op = op_node;
-    
-    Stack_Token_Pop(op_stack);
-    if (op_token.type == TOKEN_UNDEFINED) {
-        return false;
-    }
-
-    Token placeholder;
-    placeholder.type = TOKEN_IDENTIFIER;
-    placeholder.data = NULL; // Значение не важно, т.к. это просто заполнитель
-
-    Stack_Token_Push(val_stack, placeholder);
-
-    return true;
-}
-
-
 bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
-    Stack op_stack;
-    Stack val_stack;
-    Stack_Token_Init(&op_stack);
-    Stack_Token_Init(&val_stack);
+    // Инициализация стека
+    PStack stack;
+    PSTACK_init(&stack);
 
-    int paren_depth = 0;
-    Token current = peek_token(lexer, file);
+    // Помещаем $ на стек
+    PStackItem dollar_item = { .symbol = GS_DOLLAR, .token = {0}, .ast_node = NULL };
+    PSTACK_push(&stack, dollar_item);
 
-    while (current.type != TOKEN_EOF && current.type != TOKEN_EOL && paren_depth >= 0 && current.type != TOKEN_OPEN_BRACE) {
-        if (is_term(current)) {
-            Token tok = get_token(lexer, file);       // получаем токен
-            Token *to_push = token_init();
-            token_copy_data(to_push, &tok);
-            Stack_Token_Push(&val_stack, *to_push);          // кладём в стек
+    // Читаем первый токен
+    Token current_token = peek_token(lexer, file);
+    
+    while (1) {
+        // Получаем верхний терминал стека
+        PStackItem *top_terminal_item = PSTACK_get_top_terminal(&stack);
+        if (top_terminal_item == NULL) return false; // Ошибка
+
+        // Преобразуем токен во входной терминал
+        TermIndex input_index = token_to_index(current_token);
+
+        TermIndex stack_index = token_to_index(top_terminal_item->token);
+
+        // Смотрим что пришло из таблицы прецедентов
+        char rule = get_precedence_rule(stack_index, input_index);
+
+        if (stack_index == T_DOLLAR && input_index == T_DOLLAR) {
+            break; // Успех!
         }
-        else if (current.type == TOKEN_OPEN_PAREN) {
-            paren_depth++;
-            Token tok = get_token(lexer, file);
-            Token *to_push = token_init();
-            token_copy_data(to_push, &tok);
-            Stack_Token_Push(&op_stack, *to_push);
-        }
-        else if (current.type == TOKEN_CLOSE_PAREN) {
-            paren_depth--;
-            get_token(lexer, file); // съели ')'
 
-            Token next = peek_token(lexer, file);
-            if (next.type == TOKEN_OPEN_PAREN) {
-                return false; // ошибка: лишняя открывающая скобка
+        if (rule == '<') {
+            // Сдвиг (Shift)
+            if (!PSTACK_insert_handle_start(&stack)) {
+                return false; // Ошибка
             }
+            PStackItem new_item;
+            new_item.token = current_token;
 
-            if (paren_depth < 0) break; // лишняя закрывающая скобка
+            if (input_index == T_TERM) {
+                // Создаем AST узел для терма
+                AstNode *leaf_node;
+                // Заполняем узел в зависимости от типа токена
 
-            // Свернуть стек операторов до ближайшей '('
-            while (!Stack_Token_IsEmpty(&op_stack)) {
-                Token top = Stack_Token_Top(&op_stack);
-                if (top.type == TOKEN_OPEN_PAREN) {
-                    Stack_Token_Pop(&op_stack);
-                    break;
+                NodeType node_type_term = token_type_to_node(current_token);
+                if (node_type_term == NODE_ID) {
+                    leaf_node = ast_new_id_node(node_type_term, current_token.line, current_token.data);
+                } else if (node_type_term == NODE_LITERAL_NUM) {
+                    double num_value;
+                    if (!char_to_double(current_token.data, &num_value)) {
+                        return false; // Ошибка конверсии
+                    }
+                    leaf_node = ast_new_num_node(num_value, current_token.line);
+                } else if (node_type_term == NODE_LITERAL_STRING) {
+                    leaf_node = ast_new_string_node(current_token.data, current_token.line);
+                } else if (node_type_term == NODE_LITERAL_NULL) {
+                    leaf_node = ast_new_null_node(current_token.line);
+                } else {
+                    return false; // Неизвестный тип терма
                 }
-                process_expression(&op_stack, &val_stack, expr_node);
+                if (leaf_node == NULL) {
+                    return false; // Ошибка аллокации
+                }
+                new_item.symbol = GS_E;
+                new_item.ast_node = leaf_node;
+
             }
-        }
-        else if (get_precedence(current) > 0) {
-            Token tok = get_token(lexer, file);
-            Token *to_push = token_init();
-            token_copy_data(to_push, &tok);
-
-
-            // Пока верхний оператор в стеке имеет **больший или равный приоритет**
-            while (!Stack_Token_IsEmpty(&op_stack)) {
-                Token top = Stack_Token_Top(&op_stack);
-                // Stack_Token_Pop(&op_stack);
-                if (get_precedence(top) >= get_precedence(tok)) {
-                    process_expression(&op_stack, &val_stack, expr_node);
-                } else break;
-            }
-
-            Stack_Token_Push(&op_stack, *to_push);
-        }
             else {
-                // Некорректный токен в выражении
-                return false;
+                // Оператор
+                new_item.symbol = token_to_grammar_symbol(current_token);
+                new_item.ast_node = NULL; // Операторы не создают узлы AST на данном этапе
             }
+            PSTACK_push(&stack, new_item);
+            get_token(lexer, file); // consume token
+            current_token = peek_token(lexer, file);
+        }
+        else if (rule == '=') {
+            // Сдвиг (Shift) для скобок
+            PStackItem new_item;
+            new_item.token = current_token;
+            new_item.symbol = token_to_grammar_symbol(current_token);
+            new_item.ast_node = NULL; // Скобки не создают узлы AST на данном этапе
+            PSTACK_push(&stack, new_item);
 
-        current = peek_token(lexer, file);
-    }
-    // Свернуть оставшиеся операторы
-    while (!Stack_Token_IsEmpty(&op_stack) && paren_depth >= 0) {
-        process_expression(&op_stack, &val_stack, expr_node);
-    }
-    bool success = (!Stack_Token_IsEmpty(&val_stack) && paren_depth == 0);
-
-    if (success) {
-        if (counter == 0) {
-            // Единственное значение в стеке - это корень выражения
-            Token final = Stack_Token_Top(&val_stack);
-            NodeType node_type_final = token_type_to_node(final);
-            if (node_type_final == NODE_ID) {
-                AstNode *final_node = ast_new_id_node(node_type_final, final.line, final.data);
-                ast_node_add_child(expr_node, final_node);
-            } else if (node_type_final == NODE_LITERAL_NUM) {
-                double num_value;
-                if (!char_to_double(final.data, &num_value)) {
-                    success = false;
-                }
-                AstNode *final_node = ast_new_num_node(num_value, final.line);
-                ast_node_add_child(expr_node, final_node);
-            } else if (node_type_final == NODE_LITERAL_STRING) {
-                AstNode *final_node = ast_new_string_node(final.data, final.line);
-                ast_node_add_child(expr_node, final_node);
-            } else if (node_type_final == NODE_LITERAL_NULL) {
-                AstNode *final_node = ast_new_null_node(final.line);
-                ast_node_add_child(expr_node, final_node);
-            } else {
-                // Ошибка: некорректный тип финального узла
-                success = false;
+            get_token(lexer, file); // consume token
+            current_token = peek_token(lexer, file);
+        }
+        else if (rule == '>') {
+            // Свёртка (Reduce)
+            if (!handle_reduce(&stack, expr_node)) {
+                PSTACK_free(&stack);
+                return false; // Ошибка синтаксиса
             }
         }
-        ast_node_add_child(expr_node, current_op);
+        else {
+            PSTACK_free(&stack);
+            return false; // Ошибка синтаксиса
+        }
     }
-
-    while (!Stack_Token_IsEmpty(&val_stack)) {
-        Token t = Stack_Token_Top(&val_stack);
-        if (t.data) free(t.data);
-        Stack_Token_Pop(&val_stack);
+    PStackItem final_item = PSTACK_pop(&stack); 
+    if (final_item.symbol != GS_E) {
+        // Если на верхушке не GS_E, это ошибка
+        PSTACK_free(&stack); 
+        return false; 
     }
-    while (!Stack_Token_IsEmpty(&op_stack)) {
-        Token t = Stack_Token_Top(&op_stack);
-        if (t.data) free(t.data);
-        Stack_Token_Pop(&op_stack);
-    }
-    
-
-    
-        
-    
-    
-    Stack_Token_Dispose(&op_stack);
-    Stack_Token_Dispose(&val_stack);
-
-    return success;
 }
