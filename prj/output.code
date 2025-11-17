@@ -1,0 +1,87 @@
+--- [ AST DEBUG PRINT ] ---
+NODE_PROGRAM (line 1)
+  NODE_FUNCTION_DEF (line 1)
+    NODE_PARAM_LIST (line 1)
+    NODE_BLOCK (line 1)
+  NODE_FUNCTION_DEF (line 2)
+    NODE_PARAM_LIST (line 2)
+      NODE_PARAM (line 2)
+    NODE_BLOCK (line 2)
+  NODE_FUNCTION_DEF (line 3)
+    NODE_PARAM_LIST (line 3)
+    NODE_BLOCK (line 4)
+      NODE_CALL_STATEMENT (line 5)
+        NODE_ID (line 5)
+        NODE_ARGUMENT_LIST (line 5)
+      NODE_CALL_STATEMENT (line 6)
+        NODE_ID (line 6)
+        NODE_ARGUMENT_LIST (line 6)
+          NODE_LITERAL_NUM (line 6)
+---------------------------
+.IFJcode25
+DEFVAR GF@$tmp_2
+DEFVAR GF@$tmp
+DEFVAR GF@$tmp_type_1
+DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_op_1
+DEFVAR GF@$tmp_op_2
+DEFVAR GF@ret_ifj_fun
+CREATEFRAME
+CALL $$main
+
+EXIT int@0
+LABEL $EXIT25
+EXIT int@25
+LABEL $EXIT26
+EXIT int@26
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | foo@0           | ____
+LABEL $foo@0
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | foo@0           | ____
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | foo@0           | ____
+MOVE LF@ret nil@nil
+POPFRAME
+RETURN
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | foo@1           | ____
+LABEL $foo@1
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | foo@1           | ____
+
+# ======================= NEW INSTRUCTION =======================
+#PARAM              | a               | ____            | ____
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | foo@1           | ____
+MOVE LF@ret nil@nil
+POPFRAME
+RETURN
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | main@0          | ____
+LABEL $$main
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | main@0          | ____
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | main@0          | ____
+MOVE LF@ret nil@nil
+POPFRAME
+RETURN

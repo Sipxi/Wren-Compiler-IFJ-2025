@@ -16,6 +16,9 @@
 #include "semantics.h" // Наш модуль, который мы тестируем
 #include "ast.h"        // Наш ast.h
 #include "symtable.h"   // Наша таблица символов
+#include "tac.h"   
+#include "optimizer.h"   
+#include "codegen.h"   
 
  // --- "Красивый визуал" (ANSI цвета) ---
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -163,25 +166,6 @@ AstNode *create_test_type_mismatch_error() {
 
     return root;
 }
-// void test_gen_code() {
-
-//     Symtable global_table;
-//     symtable_init(&global_table);
-//     TACDLList tac_list;
-//     TACDLL_Init(&tac_list);
-//     AstNode *ast_root = create_test_ast(&global_table);
-//     generate_tac(ast_root, &tac_list, &global_table);
-    
-//     printf("\n--- Generated Code ---\n");
-//     generate_code(&tac_list, &global_table);
-
-//     printf("\n3. Cleaning up resources...\n");
-//     ast_node_free_recursive(ast_root);
-//     symtable_free(&global_table);
-//     TACDLL_Dispose(&tac_list); // Это вызовет free_tac_instruction
-
-//     printf("Done.\n");
-// }
 
 /**
  * @brief Тест: Ошибка 5 (Неверное кол-во аргументов) [cite: 40]
@@ -276,44 +260,60 @@ AstNode *create_test_valid_program() {
 }
 
 /**
- * @brief Тест: OK (Правильное вложенное затенение - shadowing) [cite: 153]
+ * @brief Тест: OK (Правильное вложенное затенение - shadowing с выражением)
  * Код:
  * static main() {
  * var a
- * if (true) {
+ * if (5 == 10) {
  * var a // <-- OK, это новая 'a' в новой области видимости
  * }
  * }
  */
 AstNode *create_test_valid_shadowing() {
+    // Корень программы
     AstNode *root = ast_node_create(NODE_PROGRAM, 1);
 
     // static main()
     AstNode *func_main = ast_new_id_node(NODE_FUNCTION_DEF, 1, "main");
-    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1));
+    ast_node_add_child(func_main, ast_node_create(NODE_PARAM_LIST, 1)); // Пустой список параметров ()
     ast_node_add_child(root, func_main);
 
     // { ... } (Блок main)
     AstNode *main_block = ast_node_create(NODE_BLOCK, 2);
     ast_node_add_child(func_main, main_block);
 
-    // var a
-    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 3, "a"));
+    // var a (на 2-й строке)
+    ast_node_add_child(main_block, ast_new_id_node(NODE_VAR_DEF, 2, "a"));
 
-    // if (true)
-    AstNode *if_stmt = ast_node_create(NODE_IF, 4);
-    ast_node_add_child(if_stmt, ast_new_num_node(1.0, 4)); // Условие (true)
+    // if (5 == 10) (на 3-й строке)
+    AstNode *if_stmt = ast_node_create(NODE_IF, 3);
     ast_node_add_child(main_block, if_stmt);
 
-    // { ... } (Блок if)
-    AstNode *if_block = ast_node_create(NODE_BLOCK, 5);
+    // ---
+    // Создание узла условия (5 == 10)
+    // ---
+    // 1. Создаем узел для операции '=='
+    AstNode *condition_op = ast_node_create(NODE_OP_EQ, 3); // Предполагаемое имя узла
+
+    // 2. Создаем и добавляем левый операнд (10)
+    ast_node_add_child(condition_op, ast_new_num_node(10.0, 3));
+
+    // 3. Создаем и добавляем правый операнд (10)
+    ast_node_add_child(condition_op, ast_new_num_node(10.0, 3));
+
+    // 4. Добавляем узел '==' (со всем его поддеревом) как условие в if
+    ast_node_add_child(if_stmt, condition_op);
+    // --- Конец изменений ---
+
+    // { ... } (Блок if, на 4-й строке)
+    AstNode *if_block = ast_node_create(NODE_BLOCK, 4);
     ast_node_add_child(if_stmt, if_block);
 
-    // var a (внутри if)
-    ast_node_add_child(if_block, ast_new_id_node(NODE_VAR_DEF, 6, "a")); // <-- OK
+    // var a (внутри if, на 4-й строке)
+    ast_node_add_child(if_block, ast_new_id_node(NODE_VAR_DEF, 4, "a")); // <-- OK
 
-    // else { }
-    ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 7)); // Пустой else
+    // else { } (Пустой else, строка 5)
+    ast_node_add_child(if_stmt, ast_node_create(NODE_BLOCK, 5));
 
     return root;
 }
@@ -596,6 +596,7 @@ AstNode *create_test_valid_overloading() {
     ast_node_add_child(arg_list2, ast_new_num_node(1.0, 6));
     ast_node_add_child(call2, arg_list2);
     ast_node_add_child(main_block, call2);
+    ast_print_debug(root);
 
     return root;
 }
@@ -2275,8 +2276,20 @@ AstNode *create_test_valid_division_by_zero_variable() {
 /* ==================== ГЛАВНАЯ ФУНКЦИЯ ТЕСТА ======================= */
 /* ================================================================== */
 
-int main() {
-    printf("============================================================\n");
+void test_gen_code(){
+    AstNode *root = create_test_valid_overloading();
+    analyze_semantics(root);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
+    generate_tac(root, &tac_list, &global_table);
+    optimize_tac(&tac_list);
+    print_tac_list(&tac_list);
+    generate_code(&tac_list, &global_table);
+    TACDLL_Dispose(&tac_list);
+    symtable_free(&global_table);
+}
+void semantics_test_run_all() {
+     printf("============================================================\n");
     printf(" Запуск тестов для Семантического Анализатора (Pass 2)...\n");
     printf("============================================================\n");
 
@@ -2369,7 +2382,10 @@ int main() {
     else {
         printf(ANSI_COLOR_RED "Провалено %d из %d тестов.\n" ANSI_COLOR_RESET, total_tests - passed_tests, total_tests);
     }
-    printf("============================================================\n");
+}
+int main() {
+   test_gen_code();
+    // printf("============================================================\n");
 
     return (passed_tests == total_tests) ? 0 : 1;
 }
