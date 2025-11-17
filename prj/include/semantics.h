@@ -7,8 +7,10 @@
 #define SEMANTICS_H
 
 #include <stdbool.h>
+#include <string.h>
 #include "ast.h"
 #include "symtable.h"
+
 
 // Глобальная таблица символов.
 // Мы делаем её extern, чтобы main.c (или тесты) могли её видеть/печатать,

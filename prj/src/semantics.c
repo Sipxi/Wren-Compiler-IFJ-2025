@@ -88,7 +88,7 @@ static TableEntry* H_Stack_Find_Var(ScopeStack* stack, const char* name) {
 static bool register_builtin_function(const char* name, int arity, DataType return_type);
 static bool process_function_declaration(AstNode* func_node);
 static bool analyze_function_body(AstNode* func_node);
-static bool analyze_statement(AstNode* node, ScopeStack* stack);
+static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, int current_scope_id);
 static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* result_type);
 
 
@@ -213,6 +213,23 @@ bool analyze_semantics(AstNode* root) {
 
 
 /**
+ * Вспомогательная функция для создания уникального имени.
+ * @param original_name Оригинальное имя (напр., "a").
+ * @param scope_id Идентификатор области видимости (напр., 2).
+ * @return Новое уникальное имя (напр., "a$2").
+ */
+static char* create_unique_name(const char* original_name, int scope_id) {
+    // Длина = имя + '$' + число + '\0'
+    // int (2 млрд) занимает макс 10 цифр.
+    size_t len = strlen(original_name) + 1 + 10 + 1;
+    char* new_name = (char*)malloc(len);
+    if (new_name) {
+        sprintf(new_name, "%s$%d", original_name, scope_id);
+    }
+    return new_name;
+}
+
+/**
  * Вспомогательная функция для регистрации встроенной функции в global_table.
  *
  * @param name Имя функции (напр. "Ifj.write")
@@ -232,6 +249,7 @@ static bool register_builtin_function(const char* name, int arity, DataType retu
     data.kind = KIND_FUNC;       // Это функция
     data.data_type = return_type; // Что она возвращает
     data.is_defined = true;      // Встроенные функции всегда "определены"
+    data.unique_name = NULL;     // Встроенные функции не нуждаются в уникальном имени
 
     // 3. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
@@ -331,6 +349,7 @@ static bool process_function_declaration(AstNode* func_node) {
     data.kind = KIND_FUNC;
     data.data_type = TYPE_UNKNOWN; // По умолчанию, функция возвращает unknown
     data.is_defined = false;   // Мы еще НЕ анализировали тело (Шаг 2b)
+    data.unique_name = NULL;   // Функции не нуждаются в уникальном имени
     
     // 6. Вставляем в global_table
     if (!symtable_insert(&global_table, mangled_name, &data)) {
@@ -409,6 +428,9 @@ static bool analyze_function_body(AstNode* func_node)
         return false;
     }
 
+    int local_block_cnt = 0; // Счетчик вложенных блоков
+    int current_scope_id = 0; // Идентификатор текущей области видимости
+
     // 5. Определяем, где начало списка параметров и где тело
     AstNode* param_iter = NULL; 
     AstNode* body_node = NULL;  
@@ -454,6 +476,8 @@ static bool analyze_function_body(AstNode* func_node)
         data.data_type = TYPE_UNKNOWN;;
         data.is_defined = true;
 
+        data.unique_name = create_unique_name(param_name, 0); // Параметры функции имеют scope_id = 0
+
         // 6c. Вставляем в 'func_local_table' (Уровень 1)
         if (!symtable_insert(func_local_table, param_name, &data)) {
             H_Stack_Pop(&stack);
@@ -482,7 +506,7 @@ static bool analyze_function_body(AstNode* func_node)
     }
     
     // Запускаем рекурсивный анализ
-    if (!analyze_statement(body_node, &stack)) {
+    if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
         H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
         return false; // Ошибка (3,4,5,6...) уже выведена
     }
@@ -523,7 +547,7 @@ static int block_counter = 0;
  * @return true в случае успеха, false при семантической ошибке.
  */
 
-static bool analyze_statement(AstNode* node, ScopeStack* stack)
+static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, int current_scope_id)
 {
     if (node == NULL) {
         return true;
@@ -578,10 +602,13 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack)
                 return false; // Ошибка 99
             }
 
+            (*block_cnt)++; 
+            int new_scope_id = *block_cnt;
+
             // 6. Рекурсивно анализируем *все* операторы внутри блока
             bool result = true;
             for (AstNode* stmt = node->child; stmt != NULL; stmt = stmt->sibling) {
-                if (!analyze_statement(stmt, stack)) { 
+                if (!analyze_statement(stmt, stack, block_cnt, new_scope_id)) { 
                     result = false;
                     break; 
                 }
@@ -621,6 +648,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack)
             data.data_type = TYPE_NIL; // По умолчанию null
             data.is_defined = true;
             // data.local_table НЕТ (это переменная)
+            data.unique_name = create_unique_name(name, current_scope_id);
 
             // 4. Вставляем в текущую таблицу (Без искажения имени!)
             if (!symtable_insert(current_table, name, &data)) {
@@ -727,12 +755,12 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack)
             }
 
             // 2. Анализируем 'if' тело
-            if (!analyze_statement(if_body, stack)) {
+            if (!analyze_statement(if_body, stack, block_cnt, current_scope_id)) {
                 return false;
             }
 
             // 3. Анализируем 'else' тело
-            if (!analyze_statement(else_body, stack)) {
+            if (!analyze_statement(else_body, stack, block_cnt, current_scope_id)) {
                 return false;
             }
             
@@ -753,7 +781,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack)
             }
 
             // 2. Анализируем Тело
-            if (!analyze_statement(while_body, stack)) {
+            if (!analyze_statement(while_body, stack, block_cnt, current_scope_id)) {
                 return false;
             }
 
