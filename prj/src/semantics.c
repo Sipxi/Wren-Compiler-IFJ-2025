@@ -182,7 +182,7 @@ bool analyze_semantics(AstNode* root) {
     //* --- Финальная Проверка: main@0 ---
     
     // 3. Проверяем, что 'main' без параметров существует
-    TableEntry* main_entry = symtable_lookup(&global_table, "main@0");
+    TableEntry* main_entry = symtable_lookup(&global_table, "main$0");
 
     if (main_entry == NULL) {
         fprintf(stderr, "Semantic Error: Function 'main()' is not defined.\n");
@@ -197,7 +197,7 @@ bool analyze_semantics(AstNode* root) {
         exit(3);
     }
 
-    printf("DEBUG: Final check completed. 'main@0' found and defined.\n");
+    printf("DEBUG: Final check completed. 'main$0' found and defined.\n");
 
     return true;
 }
@@ -231,7 +231,7 @@ static bool register_builtin_function(const char* name, int arity, DataType retu
     // 1. Создаем "искаженное имя"
     //? Подумать про маллок
     char mangled_name[256];
-    sprintf(mangled_name, "%s@%d", name, arity);
+    sprintf(mangled_name, "%s$%d", name, arity);
 
     //? Symbol data create_symbol_data(KIND_FUNC, return_type, true, NULL);
     // 2. Создаем SymbolData для этой функции
@@ -318,11 +318,11 @@ static bool process_function_declaration(AstNode* func_node) {
     // 3. Создаем "Mangled Name" (Ключ)
     char mangled_name[256];
     if (func_node->type == NODE_SETTER_DEF) {
-        sprintf(mangled_name, "%s@setter", name);
+        sprintf(mangled_name, "%s$setter", name);
     } else if (func_node->type == NODE_GETTER_DEF){
-        sprintf(mangled_name, "%s@getter", name);
+        sprintf(mangled_name, "%s$getter", name);
     } else {
-        sprintf(mangled_name, "%s@%d", name, arity);
+        sprintf(mangled_name, "%s$%d", name, arity);
     }
 
     // 4. Проверка (Ошибка 4 - Ре-дефиниция)
@@ -690,7 +690,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             
             // 3a. Сеттер
             char mangled_setter[256];
-            sprintf(mangled_setter, "%s@setter", name);
+            sprintf(mangled_setter, "%s$setter", name);
             entry = symtable_lookup(&global_table, mangled_setter);
             if (entry != NULL) {
                 id_node->table_entry = entry;
@@ -860,7 +860,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             // 2. Если не нашли, ищем ГЕТТЕР ('a@getter')
             if (entry == NULL) {
                 char mangled_name[256];
-                sprintf(mangled_name, "%s@getter", name);
+                sprintf(mangled_name, "%s$getter", name);
                 entry = symtable_lookup(&global_table, mangled_name);
             }
             
@@ -897,7 +897,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             if (entry->data->kind == KIND_FUNC) {
                 // Разрешено только если это Геттер
                 char getter_name[256];
-                sprintf(getter_name, "%s@getter", name);
+                sprintf(getter_name, "%s$getter", name);
                 if (strcmp(entry->key, getter_name) != 0) {
                      fprintf(stderr, "Semantic Error (Line %d): Cannot use function or setter '%s' as a variable.\n", node->line_number, name);
                     exit(10);
@@ -1088,7 +1088,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
 
             // 3. Ищем функцию в GLOBAL TABLE
             char mangled_name[256];
-            sprintf(mangled_name, "%s@%d", name, arity);
+            sprintf(mangled_name, "%s$%d", name, arity);
             TableEntry* func_entry = symtable_lookup(&global_table, mangled_name);
 
             if (!func_entry) {
