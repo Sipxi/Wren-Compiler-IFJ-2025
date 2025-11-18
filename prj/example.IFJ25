@@ -3,7 +3,10 @@ class Program {
     static main(){
         var a
         var b
-        var c 
+        var c
+        a = 10
+        b = 10
         c = a + b
+        a = Ifj.write(c)
     }
 }

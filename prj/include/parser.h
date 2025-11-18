@@ -3,7 +3,6 @@
 
 #include "lexer.h"
 #include "ast.h"
-
 typedef struct {
     Lexer* lexer;       // Указатель на Лексер
     FILE* file;         // Указатель на исходный файл
