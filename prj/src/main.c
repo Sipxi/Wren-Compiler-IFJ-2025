@@ -1,6 +1,11 @@
 #include <stdio.h>
 
 #include "lexer.h"
+#include "parser.h"
+#include "semantics.h"
+#include "tac.h"
+#include "optimizer.h"
+#include "codegen.h"
 /*
 Основной файл который будет запускать сам проект пока что
 Если хотите запустить этот файл:
@@ -9,34 +14,25 @@ make run
 */
 
 int main() {
-    //TODO - нужно изменить с файла на stdin
-    FILE *file = fopen("example.wren", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
+
+	// Напрямую используем stdin, как того требует задание
+    FILE *file = stdin;
+
+	// Запускаем парсер, передавая ему стандартный ввод
+    AstNode *program = parser_run(file);
+    if (program == NULL) {
+        fprintf(stderr, "Parsing failed.\n");
         return 1;
     }
-
-    Lexer *lexer = lexer_init();
-
-    if (lexer == NULL) {
-        fprintf(stderr, "Error initializing lexer.\n");
-        fclose(file);
-        return 1;
-    }
-    get_next_token(lexer, file);
-
-    if (lexer->current_token->type != TOKEN_NULL) {
-        printf("Token Type: %d, Data: %s, Line: %d\n",
-               lexer->current_token->type, lexer->current_token->data,
-               lexer->current_token->line);
-    } else {
-        printf(
-            "\033[1;31mLexical error.\nError code: 1\nUnexpected character at "
-            "line %d, position %d\033[0m\n",
-            lexer->line, lexer->position);
-    }
-
-    fclose(file);
-    lexer_free(lexer);
+    analyze_semantics(program);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
+    generate_tac(program, &tac_list, &global_table);
+    optimize_tac(&tac_list);
+    // print_tac_list(&tac_list);
+    generate_code(&tac_list, &global_table);
+    TACDLL_Dispose(&tac_list);
+    symtable_free(&global_table);
+    ast_node_free_recursive(program);
     return 0;
 }

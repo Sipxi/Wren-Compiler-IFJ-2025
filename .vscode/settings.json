@@ -7,6 +7,15 @@
         "codegen.h": "c",
         "symtable.h": "c",
         "stdlib.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "bit": "c",
+        "compare": "c",
+        "cstddef": "c",
+        "string": "c",
+        "optional": "c",
+        "limits": "c",
+        "memory": "c",
+        "new": "c",
+        "functional": "c"
     }
 }

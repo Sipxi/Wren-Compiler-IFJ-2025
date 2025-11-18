@@ -10,6 +10,7 @@
 #define AST_H
 
 #include "symtable.h"
+#include "utils.h"
 
 typedef enum {
     // * --- 1. Структурные Узлы (Program structure) ---
@@ -283,17 +284,6 @@ void ast_node_add_child(AstNode *parent, AstNode *new_child);
 void ast_print_debug(AstNode *node);
 
 
-/* ======================================*/
-/* ===== 2. ПАРСЕР-ПОМОЩНИКИ (API) =====*/
-/* ======================================*/
-
-AstNode *ast_new_id_node(NodeType type, int line, const char *id);
-
-AstNode *ast_new_num_node(double value, int line);
-
-AstNode *ast_new_string_node(const char *value, int line);
-
-AstNode *ast_new_null_node(int line);
 
 /* ======================================*/
 /* ===== 2. ПАРСЕР-ПОМОЩНИКИ (API) =====*/

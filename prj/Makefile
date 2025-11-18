@@ -49,7 +49,10 @@ clean:
 
 # Run the main program
 run: $(MAIN_TARGET)
-	./$(MAIN_TARGET)
+	@./$(MAIN_TARGET) < example.IFJ25 > code.out
+
+run-valgrind: $(MAIN_TARGET)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(MAIN_TARGET) < example.IFJ25
 
 # Run the test playground
 test-pg: $(TEST_TARGET)
@@ -58,6 +61,11 @@ test-pg: $(TEST_TARGET)
 # Run the test playground with valgrind
 test-pg-valgrind: $(TEST_TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TEST_TARGET)
+
+# Build the compiler binary
+build: $(LIB_OBJECTS) $(MAIN_OBJECT)
+	$(CC) $^ -o ifj_compiler
+
 
 # Phony targets
 .PHONY: all clean run test-pg test-pg-valgrind

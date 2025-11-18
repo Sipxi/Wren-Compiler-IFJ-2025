@@ -1,0 +1,58 @@
+.IFJcode25
+DEFVAR GF@$tmp_2
+DEFVAR GF@$tmp
+DEFVAR GF@$tmp_type_1
+DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_op_1
+DEFVAR GF@$tmp_op_2
+DEFVAR GF@$ret_ifj_fun
+CREATEFRAME
+CALL $$main
+
+EXIT int@0
+LABEL $EXIT25
+EXIT int@25
+LABEL $EXIT26
+EXIT int@26
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | main$0          | ____
+LABEL $$main
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+DEFVAR LF@a$1
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | main$0          | ____
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | a               | ____            | ____
+MOVE LF@a$1 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | 5               | ____
+MOVE LF@a$1 int@5
+
+# ======================= NEW INSTRUCTION =======================
+#CALL               | ____            | Ifj.write$1     | ____
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp LF@a$1
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@bool
+ISINT GF@$tmp_type_1 LF@a$1
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 bool@true
+INT2FLOAT GF@$tmp LF@a$1
+LABEL $WRITE_0
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | Ifj.write$1     | ____
+MOVE LF@a$1 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | main$0          | ____
+POPFRAME
+RETURN

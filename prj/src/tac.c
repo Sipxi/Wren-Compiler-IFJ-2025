@@ -805,10 +805,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
             node->child->sibling;
 
         TableEntry *func_entry = func_name_node->table_entry;
-        if (func_entry == NULL) {
-            // Ошибка
-            return NULL;
-        }
 
         // Генерируем инструкцию вызова функции
         Operand *func_op = create_label_operand(func_entry->key);
