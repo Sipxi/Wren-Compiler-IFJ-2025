@@ -58,8 +58,7 @@ void gen_return(TacInstruction *instr){
         fprintf(stdout, "MOVE LF@ret ");
         gen_operand(instr->result);
         fprintf(stdout, "\n");
-    } else 
-        fprintf(stdout, "MOVE LF@ret nil@nil\n");
+    }
     gen_pop_frame();
     fprintf(stdout, "RETURN\n");
 }
@@ -442,7 +441,7 @@ void gen_declare(Operand *result){
 void gen_function_begin(TACDLList  *instructions){
     TacInstruction *instr;
     TACDLL_GetValue(instructions, &instr);
-    if (strcmp(instr->arg1->data.label_name, "main@0") == 0) {
+    if (strcmp(instr->arg1->data.label_name, "main$0") == 0) {
         fprintf(stdout, "LABEL $$main\n");        
     } else
         gen_label(instr->arg1->data.label_name);

@@ -2,6 +2,7 @@
 #define PARSER_H
 
 #include "lexer.h"
+#include "ast.h"
 
 typedef struct {
     Lexer* lexer;       // Указатель на Лексер
@@ -9,7 +10,7 @@ typedef struct {
 
 } Parser;
 
-void parser_run(FILE *file);
+AstNode *parser_run(FILE *file);
 void parser_prolog(Lexer *lexer, FILE *file);
 
 #endif // PARSER_H

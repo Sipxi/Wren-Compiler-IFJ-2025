@@ -49,7 +49,7 @@ clean:
 
 # Run the main program
 run: $(MAIN_TARGET)
-	./$(MAIN_TARGET)
+	./$(MAIN_TARGET) < example.IFJ25
 
 # Run the test playground
 test-pg: $(TEST_TARGET)

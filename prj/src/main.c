@@ -13,18 +13,25 @@
 make run
 */
 
-int main(int argc, char *argv[]) {
-    //TODO - нужно изменить с файла на stdin
-    FILE *file = stdin;
-    if (argc == 2) {
-        file = fopen(argv[1], "r");
-        if (!file) {
-            fprintf(stderr, "Error opening file: %s\n", argv[1]);
-            return 1;
-        }
-    }
+int main() {
 
-    parser_run(file);
-    
-    return 0;
+	// Напрямую используем stdin, как того требует задание
+	FILE *file = stdin;
+
+	// Запускаем парсер, передавая ему стандартный ввод
+    AstNode *program = parser_run(file);
+    if (program == NULL) {
+        fprintf(stderr, "Parsing failed.\n");
+        return 1;
+    }
+    analyze_semantics(program);
+    TACDLList tac_list;
+    TACDLL_Init(&tac_list);
+    generate_tac(program, &tac_list, &global_table);
+    optimize_tac(&tac_list);
+    generate_code(&tac_list, &global_table);
+    TACDLL_Dispose(&tac_list);
+    symtable_free(&global_table);
+    ast_node_free_recursive(program);
+	return 0;
 }

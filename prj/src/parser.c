@@ -618,12 +618,13 @@ void parser_kostra(Lexer *lexer, FILE *file) {
     get_token(lexer, file);
 }
 
-void parser_run(FILE *file) {
+// void parser_run(FILE *file) {
+AstNode *parser_run(FILE *file) {
 
     Lexer *lexer = lexer_init();
     if (lexer == NULL) {
         fprintf(stderr, "Error initializing lexer.\n");
-        return;
+        return NULL;
     }
 
     // Для первой фразы import "ifj25" for Ifj
@@ -638,11 +639,11 @@ void parser_run(FILE *file) {
     // Основной парсер
     parser_kostra(lexer, file);
 
-    ast_print_debug(program);
-    ast_node_free_recursive(program);
+    // ast_print_debug(program);
+    // ast_node_free_recursive(program);
 
     lexer_free(lexer);
 
     // ❗ don't fclose(stdin)
-    return;
+    return program;
 }

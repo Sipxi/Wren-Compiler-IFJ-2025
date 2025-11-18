@@ -10,6 +10,7 @@
 #define AST_H
 
 #include "symtable.h"
+#include "utils.h"
 
 typedef enum {
     // * --- 1. Структурные Узлы (Program structure) ---
