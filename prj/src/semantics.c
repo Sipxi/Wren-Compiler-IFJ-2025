@@ -1096,7 +1096,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                 exit(3);
             }
 
-            node->table_entry = func_entry;
+            id_node->table_entry = func_entry;
 
             // 4. Анализируем аргументы (ТОЛЬКО ТЕРМЫ)
             DataType arg_types[10];

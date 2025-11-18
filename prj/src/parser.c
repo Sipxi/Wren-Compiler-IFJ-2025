@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "expression.h"
 #include "ast.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -16,6 +17,7 @@ static void parser_function_list(Lexer *lexer, FILE *file);
 static void right_side_expression(Lexer *lexer, FILE *file, AstNode *parent_node);
 static void operations_function(Lexer *lexer, FILE *file, AstNode *block_node);
 static AstNode *list_of_tersms(Lexer *lexer, FILE *file);
+
 
 // Проверяет, является ли токен терминальным (term)
 bool is_term(Token token) {
@@ -60,6 +62,7 @@ AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
             }
             if (is_term(peek_token(lexer, file)) == false) {
                 printf("Expected parameter identifier after ','.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             get_token(lexer, file); // consume parameter identifier
@@ -100,6 +103,51 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
         if (peek_token(lexer, file).type == TOKEN_DOT) {
             get_token(lexer, file); // consume '.'
             if (peek_token(lexer, file).type == TOKEN_EOL) {
+                    get_token(lexer, file); // consume EOL
+                }
+                get_token(lexer, file); // consume method name
+                // Проверяем, что это действительно встроенная функция
+                if (!is_builtin(lexer->current_token->data)) {
+                    printf("Unknown method name: %s\n", lexer->current_token->data);
+                    exit(25);
+                }
+                //! Исправить эту хрень
+                // Формируем полное имя встроенной функции, для красивой записи в AST
+                char full_function_name[100];
+                snprintf(full_function_name, 
+                    sizeof(full_function_name), 
+                    "Ifj.%s", 
+                    lexer->current_token->data);
+                
+                AstNode *builtin_func_name = ast_new_id_node(NODE_ID, lexer->current_token->line, full_function_name);
+
+                if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
+                    printf("Expected '(' after method name.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume '('
+
+                // Здесь обработка параметров метода
+                AstNode *list_args = list_of_tersms(lexer, file);
+                
+
+
+                if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+                    printf("Expected ')' after method parameters.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume ')'
+                // Создаем узлы для вызова встроенной функции
+                ast_node_add_child(assignment_node, builtin_func_name);
+                ast_node_add_child(assignment_node, list_args);
+
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after method call.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
                 get_token(lexer, file); // consume EOL
             }
             get_token(lexer, file); // consume method name
@@ -145,39 +193,49 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
             get_token(lexer, file); // consume EOL
             return;
         }
-    }
-    if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
-        // Token identifier = get_token(lexer, file); // consume identifier
-        if (peek_next_token(lexer, file).type == TOKEN_OPEN_PAREN) {
-            get_token(lexer, file); // consume identifier
-            AstNode *builtin_func_name = ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data);
-            // Здесь можно добавить обработку параметров функции
-            if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
-                printf("Expected '(' after function name.\n");
-                exit(25);
-            }
-            get_token(lexer, file); // consume '('
-            AstNode *list_args = list_of_tersms(lexer, file);
-
-            if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
-                printf("Expected ')' after function parameters.\n");
-                exit(25);
-            }
-            get_token(lexer, file); // consume ')'
-            ast_node_add_child(assignment_node, builtin_func_name);
-            ast_node_add_child(assignment_node, list_args);
-            if (peek_token(lexer, file).type != TOKEN_EOL) {
-                printf("Expected end of line after function call.\n");
-                exit(25);
-            }
-            get_token(lexer, file); // consume EOL
-            return;
-        }
-        // выражение, которое начинается с идентификатора
-        else {
-            if (!parser_expression(lexer, file, assignment_node)) {
+        if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
+            // Token identifier = get_token(lexer, file); // consume identifier
+            if (peek_next_token(lexer, file).type == TOKEN_OPEN_PAREN) {
+                get_token(lexer, file); // consume identifier
+                AstNode *builtin_func_name = ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data);
+                // Здесь можно добавить обработку параметров функции
+                if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
+                    printf("Expected '(' after function name.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume '('
+                AstNode *list_args = list_of_tersms(lexer, file);
+    
+                if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
+                    printf("Expected ')' after function parameters.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume ')'
+                ast_node_add_child(assignment_node, builtin_func_name);
+                ast_node_add_child(assignment_node, list_args);
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after function call.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume EOL
+                return;
+            }  
+            // выражение, которое начинается с идентификатора
+            else  {
+                if (!parser_expression(lexer, file, assignment_node)) {
                 printf("Invalid expression on right side of assignment.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
+                }
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after expression.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(25);
+                }
+                get_token(lexer, file); // consume EOL
             }
             if (peek_token(lexer, file).type != TOKEN_EOL) {
                 printf("Expected end of line after expression.\n");
@@ -185,15 +243,16 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
             }
             get_token(lexer, file); // consume EOL
         }
-    }
     // обычное выражение
     else {
         if (!parser_expression(lexer, file, assignment_node)) {
             printf("Invalid expression on right side of assignment.\n");
+            get_token(lexer, file); // consume invalid token
             exit(25);
         }
         if (peek_token(lexer, file).type != TOKEN_EOL) {
             printf("Expected end of line after expression.\n");
+            get_token(lexer, file); // consume invalid token
             exit(25);
         }
         get_token(lexer, file); // consume EOL
@@ -205,13 +264,16 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
         // вместо 
     case TOKEN_IDENTIFIER:
     case TOKEN_GLOBAL_IDENTIFIER: {
-        Token identifier = get_token(lexer, file); // consume identifier
+        Token identifier = peek_token(lexer, file);
+        // Копируем данные токена перед его потреблением
+        char *identifier_data = strdup_c99(identifier.data);
+        get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
             // создаем узел присваивания
             AstNode *assignment_node = ast_node_create(NODE_ASSIGNMENT, lexer->current_token->line);
             ast_node_add_child(block_node, assignment_node);
             // создаем узел идентификатора для левой части
-            AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier.data);
+            AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier_data);
             ast_node_add_child(assignment_node, id_node);
 
             get_token(lexer, file); // consume '='
@@ -222,8 +284,11 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
         }
         else {
             printf("Expected '=' after identifier in assignment.\n");
+            get_token(lexer, file); // consume invalid token
             exit(25);
         }
+        // Освободить скопированную память
+        free(identifier_data);
         break;
     }
     case TOKEN_KEYWORD:
@@ -251,6 +316,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
                 if (peek_token(lexer, file).type != TOKEN_EOL) {
                     printf("Expected end of line after 'return null'.\n");
+                    get_token(lexer, file); // consume invalid token
                     exit(25);
                 }
                 get_token(lexer, file); // consume EOL
@@ -262,10 +328,12 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             }
             else {
                 printf("Invalid expression after 'return' keyword.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             if (peek_token(lexer, file).type != TOKEN_EOL) {
                 printf("Expected end of line after return expression.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             get_token(lexer, file); // consume EOL
@@ -279,12 +347,14 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
             if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
                 printf("Expected '(' after 'if' keyword.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
 
             // скобки обрабатываются в parser_expression
             if (!parser_expression(lexer, file, if_node)) {
                 printf("Invalid expression in 'if' condition.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
 
@@ -295,6 +365,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
                 strcmp(lexer->current_token->data, "else") != 0) {
                 printf("Expected 'else' keyword after 'if' block.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             else {
@@ -312,11 +383,13 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
             if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
                 printf("Expected '(' after 'while' keyword.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             // скобки обрабатываются в parser_expression
             if (!parser_expression(lexer, file, while_node)) {
                 printf("Invalid expression in 'while' condition.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
 
@@ -329,6 +402,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             // Проверяем чтобы была id
             if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
                 printf("Expected variable name after 'var' keyword.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
 
@@ -339,6 +413,7 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 
             if (peek_token(lexer, file).type != TOKEN_EOL) {
                 printf("Expected end of line after variable declaration.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             get_token(lexer, file); // consume EOL
@@ -366,12 +441,14 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
 void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
     if (peek_token(lexer, file).type != TOKEN_OPEN_BRACE) {
         printf("Expected '{' to open function body.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     get_token(lexer, file); // consume '{'
     //! расширение EOL после {
     if (peek_token(lexer, file).type != TOKEN_EOL) {
         printf("Expected end of line after '{' in function body.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     get_token(lexer, file); // consume EOL
@@ -388,6 +465,7 @@ void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
 
     if (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
         printf("Expected '}' to close function body.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     get_token(lexer, file); // consume '}'
@@ -414,6 +492,7 @@ void parameters_function(Lexer *lexer, FILE *file, AstNode *param_list) {
             }
             if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
                 printf("Expected parameter identifier after ','.\n");
+                get_token(lexer, file); // consume invalid token
                 exit(25);
             }
             get_token(lexer, file); // consume parameter identifier
@@ -439,12 +518,14 @@ void tail_function(Lexer *lexer, FILE *file, AstNode *func_node) {
 
         if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
             printf("Expected ')' after function parameters.\n");
+            get_token(lexer, file); // consume invalid token
             exit(25);
         }
         get_token(lexer, file); // consume ')'
     }
     if (peek_token(lexer, file).type == TOKEN_EOL) {
         printf("Unexpected end of line after function header.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     // Здесь переходим к обработке тела функции
@@ -457,31 +538,37 @@ AstNode *name_function(Lexer *lexer, FILE *file) {
     // Проверяем чтобы была id
     if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
         printf("Expected function name identifier after 'function' keyword.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     AstNode *func_name_node;
     //! Проверка на malloc
-    Token func_name_token = get_token(lexer, file); // consume function name    
-
+    Token func_name_token = peek_token(lexer, file);
+    // Копируем данные токена перед его потреблением
+    char *func_name = strdup_c99(func_name_token.data);
+    get_token(lexer, file); // consume function name
     // Определяем тип функции по следующему токену
     if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
-        func_name_node = ast_new_id_node(NODE_FUNCTION_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_FUNCTION_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
     }
     else if (peek_token(lexer, file).type == TOKEN_OPEN_BRACE) {
-        func_name_node = ast_new_id_node(NODE_GETTER_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_GETTER_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
     }
     else if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
-        func_name_node = ast_new_id_node(NODE_SETTER_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_SETTER_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
         get_token(lexer, file); // consume '='
     }
     // Ошибка, если не один из ожидаемых токенов
     else {
         printf("Expected '(' or '{' or '=' after function name.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
+    // Освободить скопированную память
+    free(func_name);
     return func_name_node;
 }
 
@@ -494,6 +581,7 @@ void parser_function_definition(Lexer *lexer, FILE *file) {
 
     if (peek_token(lexer, file).type != TOKEN_EOL) {
         printf("Expected end of line after function definition.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 }
@@ -510,6 +598,7 @@ void parser_function_list(Lexer *lexer, FILE *file) {
             return;
         }
         printf("Expected static or }\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     case TOKEN_EOL:
         get_token(lexer, file); // пропустить пустые строки
@@ -517,7 +606,8 @@ void parser_function_list(Lexer *lexer, FILE *file) {
         break;
     default:
         printf("Unexpected token in function list: %s\n",
-            lexer->current_token->data);
+               lexer->current_token->data);
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 }
@@ -526,11 +616,13 @@ void parser_function_list(Lexer *lexer, FILE *file) {
 void parser_prolog(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type == TOKEN_EOF) {
         printf("Empty file.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "import") != 0) {
         printf("Expected 'import' keyword at the beginning.");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -539,6 +631,7 @@ void parser_prolog(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type != TOKEN_STRING ||
         strcmp(lexer->current_token->data, "\"ifj25\"") != 0) {
         printf("Expected string literal after 'import' keyword.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -546,12 +639,14 @@ void parser_prolog(Lexer *lexer, FILE *file) {
 
     if (peek_token(lexer, file).type == TOKEN_EOL) {
         printf("Expected 'for' keyword after import string literal.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "for") != 0) {
         printf("Expected 'for' keyword after import string literal.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -560,6 +655,7 @@ void parser_prolog(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "Ifj") != 0) {
         printf("Expected identifier 'Ifj' after 'for' keyword.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -571,7 +667,8 @@ void parser_kostra(Lexer *lexer, FILE *file) {
     // Здесь будет дальнейшая реализация парсинга основной структуры программы
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "class") != 0) {
-        printf("Expected 'class' keyword to start class definition.\n");
+        printf("Expected 'class' keyword to start class definition.\n"); 
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -580,6 +677,7 @@ void parser_kostra(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type != TOKEN_IDENTIFIER ||
         strcmp(lexer->current_token->data, "Program") != 0) {
         printf("Expected 'Program' identifier after 'class' keyword.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 
@@ -587,12 +685,14 @@ void parser_kostra(Lexer *lexer, FILE *file) {
 
     if (peek_token(lexer, file).type != TOKEN_OPEN_BRACE) {
         printf("Expected '{' to open class body.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     get_token(lexer, file);
 
     if (peek_token(lexer, file).type != TOKEN_EOL) {
         printf("Expected end of line after class body.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
     get_token(lexer, file);
@@ -629,8 +729,10 @@ AstNode *parser_run(FILE *file) {
 
     // Для первой фразы import "ifj25" for Ifj
     parser_prolog(lexer, file);
-    if (peek_token(lexer, file).type != TOKEN_EOL) {
+    Token current = peek_token(lexer, file);
+    if (current.type != TOKEN_EOL) {
         printf("Expected end of line after import statement.\n");
+        get_token(lexer, file); // consume invalid token
         exit(25);
     }
 

@@ -19,6 +19,8 @@
 #include "error_codes.h"
 #include "utils.h"
 
+
+
 /* ======================================*/
 /* ===== FSM (Finite State Machine) =====*/
 /* ======================================*/
@@ -420,21 +422,25 @@ static void ensure_buffer_has(Lexer* lexer, int needed_count, FILE* file) {
     while (lexer->buffered_count < needed_count &&
            lexer->buffered_count < TOKEN_BUFFER_SIZE) {
         // читаем новый токен и добавляем его в конец буфера
-        Token *to_add = token_init();
+        Token to_add;
         scan_token(lexer, file);
-        token_copy_data(to_add, lexer->current_token);
-        lexer->buffered_tokens[lexer->buffered_count] = *to_add;
+        token_copy_data(&to_add, lexer->current_token);
+        lexer->buffered_tokens[lexer->buffered_count] = to_add;
         lexer->buffered_count++;
         // НЕ освобождаем to_add, так как data теперь принадлежит токену в буфере
         // Освобождаем только саму структуру токена, но не данные
-        free(to_add);
     }
 }
 
 static void shift_buffer(Lexer* lexer) {
+    // Освободить данные первого токена (который удаляется)
+    if (lexer->buffered_count > 0) {
+        free(lexer->buffered_tokens[0].data);
+    }
+    
+    // Сдвинуть остальные токены
     for (int i = 1; i < lexer->buffered_count; i++) {
-        Token temp = lexer->buffered_tokens[i];
-        lexer->buffered_tokens[i - 1] = temp;
+        lexer->buffered_tokens[i - 1] = lexer->buffered_tokens[i];
     }
     lexer->buffered_count--;
 }
@@ -466,11 +472,10 @@ void lexer_free(Lexer* lexer) {
     // Освободить память для текущего токена
     token_free(lexer->current_token);
     // Освободить память для всех токенов в буфере
-    if (lexer->buffered_count > 0) {
-        for (int i = 0; i < lexer->buffered_count; i++) {
-            token_free(&lexer->buffered_tokens[i]);
-        }
+    for (int i = 0; i < lexer->buffered_count; i++) {
+        free(lexer->buffered_tokens[i].data);
     }
+
     // Освободить память для структуры Lexer
     free(lexer);
 }
@@ -497,16 +502,13 @@ Token peek_next_token(Lexer* lexer, FILE* file) {
     return lexer->buffered_tokens[1];
 }
 
-Token get_token(Lexer* lexer, FILE* file) {
+void get_token(Lexer* lexer, FILE* file) {
     if (lexer->buffered_count > 0) {
         // (Твой код буфера)
-        Token token = lexer->buffered_tokens[0];
         shift_buffer(lexer);
-        return token;
     } else {
         // Буфер пуст. Просто сканируем и возвращаем копию
-        scan_token(lexer, file);
-        return *lexer->current_token; 
+        scan_token(lexer, file);        
     }
 }
 

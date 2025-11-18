@@ -111,7 +111,7 @@ Token peek_next_token(Lexer *lexer, FILE *file);
  * @param file Указатель на файл, содержащий исходный код.
  * @return Следующая структура Token.
  */
-Token get_token(Lexer *lexer, FILE *file);
+void get_token(Lexer *lexer, FILE *file);
 
 
 /*=======================================*/
