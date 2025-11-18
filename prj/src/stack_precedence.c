@@ -3,6 +3,7 @@
 #include <assert.h> // для отладочных проверок
 
 #include "stack_precedence.h"
+#include "utils.h" // для strdup_c99
 
 // Начальная емкость стека по умолчанию
 #define PSTACK_INITIAL_CAPACITY 8
@@ -44,6 +45,12 @@ void PSTACK_init(PStack *s) {
 
 void PSTACK_free(PStack *s) {
     if (s->items != NULL) {
+        // Освобождаем данные всех оставшихся токенов в стеке
+        for (int i = 0; i <= s->top; i++) {
+            if (s->items[i].token.data != NULL) {
+                free(s->items[i].token.data);
+            }
+        }
         free(s->items);
     }
     s->items = NULL;
@@ -64,16 +71,35 @@ bool PSTACK_push(PStack *s, PStackItem item) {
         }
     }
     
-    // Место есть, добавляем элемент
+    // Место есть, копируем токен с его данными
     s->top++;
     s->items[s->top] = item;
+    
+    // Копируем данные токена, если они есть
+    if (item.token.data != NULL) {
+        s->items[s->top].token.data = strdup_c99(item.token.data);
+        if (s->items[s->top].token.data == NULL) {
+            // Ошибка выделения памяти, откатываем
+            s->top--;
+            return false;
+        }
+    }
+    
     return true;
 }
 
 PStackItem PSTACK_pop(PStack *s) {
     // В реальном коде стоит проверять на пустоту перед вызовом pop
-    // assert(!PSTACK_is_empty(s)); 
-    return s->items[s->top--];
+    // assert(!PSTACK_is_empty(s));
+    PStackItem item = s->items[s->top--];
+    
+    // Освобождаем скопированные данные токена
+    if (item.token.data != NULL) {
+        free(item.token.data);
+        item.token.data = NULL; // Обнуляем указатель для безопасности
+    }
+    
+    return item;
 }
 
 PStackItem PSTACK_top(PStack *s) {
@@ -82,7 +108,13 @@ PStackItem PSTACK_top(PStack *s) {
 }
 
 void PSTACK_empty(PStack *s) {
-    // Просто сбрасываем верхушку, не освобождая память
+    // Освобождаем данные всех токенов в стеке
+    for (int i = 0; i <= s->top; i++) {
+        if (s->items[i].token.data != NULL) {
+            free(s->items[i].token.data);
+        }
+    }
+    // Просто сбрасываем верхушку
     s->top = -1; 
 }
 

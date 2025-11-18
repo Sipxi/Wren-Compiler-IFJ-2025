@@ -1,6 +1,7 @@
 #include "parser.h"
 #include "expression.h"
 #include "ast.h"
+#include "utils.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -16,6 +17,7 @@ static void parser_function_list(Lexer *lexer, FILE *file);
 static void right_side_expression(Lexer *lexer, FILE *file, AstNode *parent_node);
 static void operations_function(Lexer *lexer, FILE *file, AstNode *block_node);
 static AstNode *list_of_tersms(Lexer *lexer, FILE *file);
+
 
 // Проверяет, является ли токен терминальным (term)
 bool is_term(Token token) {
@@ -217,13 +219,15 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
     case TOKEN_IDENTIFIER:
     case TOKEN_GLOBAL_IDENTIFIER: {
         Token identifier = peek_token(lexer, file);
+        // Копируем данные токена перед его потреблением
+        char *identifier_data = strdup_c99(identifier.data);
         get_token(lexer, file); // consume identifier
         if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
             // создаем узел присваивания
             AstNode *assignment_node = ast_node_create(NODE_ASSIGNMENT, lexer->current_token->line);
             ast_node_add_child(block_node, assignment_node);
             // создаем узел идентификатора для левой части
-            AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier.data);
+            AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier_data);
             ast_node_add_child(assignment_node, id_node);
 
             get_token(lexer, file); // consume '='
@@ -236,6 +240,8 @@ void operations_function(Lexer *lexer, FILE *file, AstNode *block_node) {
             get_token(lexer, file); // consume invalid token
             exit(25);
         }
+        // Освободить скопированную память
+        free(identifier_data);
         break;
     }
     case TOKEN_KEYWORD:
@@ -488,19 +494,21 @@ AstNode *name_function(Lexer *lexer, FILE *file) {
     }
     AstNode *func_name_node;
     //! Проверка на malloc
-    Token func_name_token = peek_token(lexer, file);    
+    Token func_name_token = peek_token(lexer, file);
+    // Копируем данные токена перед его потреблением
+    char *func_name = strdup_c99(func_name_token.data);
     get_token(lexer, file); // consume function name
     // Определяем тип функции по следующему токену
     if (peek_token(lexer, file).type == TOKEN_OPEN_PAREN) {
-        func_name_node = ast_new_id_node(NODE_FUNCTION_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_FUNCTION_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
     }
     else if (peek_token(lexer, file).type == TOKEN_OPEN_BRACE) {
-        func_name_node = ast_new_id_node(NODE_GETTER_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_GETTER_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
     }
     else if (peek_token(lexer, file).type == TOKEN_ASSIGN) {
-        func_name_node = ast_new_id_node(NODE_SETTER_DEF, lexer->current_token->line, func_name_token.data);
+        func_name_node = ast_new_id_node(NODE_SETTER_DEF, lexer->current_token->line, func_name);
         ast_node_add_child(program, func_name_node);
         get_token(lexer, file); // consume '='
     }
@@ -510,6 +518,8 @@ AstNode *name_function(Lexer *lexer, FILE *file) {
         get_token(lexer, file); // consume invalid token
         exit(25);
     }
+    // Освободить скопированную память
+    free(func_name);
     return func_name_node;
 }
 
@@ -675,7 +685,8 @@ void parser_run() {
 
     // Для первой фразы import "ifj25" for Ifj
     parser_prolog(lexer, file);
-    if (peek_token(lexer, file).type != TOKEN_EOL) {
+    Token current = peek_token(lexer, file);
+    if (current.type != TOKEN_EOL) {
         printf("Expected end of line after import statement.\n");
         get_token(lexer, file); // consume invalid token
         exit(25);
