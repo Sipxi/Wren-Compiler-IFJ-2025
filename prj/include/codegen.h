@@ -58,5 +58,9 @@ void gen_is(TacInstruction *instr);
 int generate_code(TACDLList *instructions, Symtable *table);
 void gen_ifj_fun(TACDLList *instructions);
 void gen_read_str();
+void gen_read_num();
+void gen_write(TACDLList *instructions);
+void gen_floor(TACDLList *instructions);
+void gen_str(TACDLList *instructions);
 
 #endif // CODEGEN_H

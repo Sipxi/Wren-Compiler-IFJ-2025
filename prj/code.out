@@ -5,7 +5,7 @@ DEFVAR GF@$tmp_type_1
 DEFVAR GF@$tmp_type_2
 DEFVAR GF@$tmp_op_1
 DEFVAR GF@$tmp_op_2
-DEFVAR GF@ret_ifj_fun
+DEFVAR GF@$ret_ifj_fun
 CREATEFRAME
 CALL $$main
 
@@ -22,9 +22,6 @@ PUSHFRAME
 DEFVAR LF@ret
 MOVE LF@ret nil@nil
 DEFVAR LF@a$1
-DEFVAR LF@b$1
-DEFVAR LF@c$1
-DEFVAR LF@$t$0
 
 # ======================= NEW INSTRUCTION =======================
 #FUNC_BEGIN         | ____            | main$0          | ____
@@ -34,64 +31,26 @@ DEFVAR LF@$t$0
 MOVE LF@a$1 nil@nil
 
 # ======================= NEW INSTRUCTION =======================
-#DECLARE            | b               | ____            | ____
-MOVE LF@b$1 nil@nil
-
-# ======================= NEW INSTRUCTION =======================
-#DECLARE            | c               | ____            | ____
-MOVE LF@c$1 nil@nil
-
-# ======================= NEW INSTRUCTION =======================
-#ASSIGN             | a               | 10              | ____
-MOVE LF@a$1 int@10
-
-# ======================= NEW INSTRUCTION =======================
-#ASSIGN             | b               | 10              | ____
-MOVE LF@b$1 int@10
-
-# ======================= NEW INSTRUCTION =======================
-#DECLARE            | $t0             | ____            | ____
-MOVE LF@$t$0 nil@nil
-
-# ======================= NEW INSTRUCTION =======================
-#ADD                | $t0             | a               | b
-TYPE GF@$tmp_type_1 LF@a$1
-TYPE GF@$tmp_type_2 LF@b$1
-JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
-JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
-JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
-JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
-JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
-JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
-MOVE GF@$tmp_op_1 LF@a$1
-MOVE GF@$tmp_op_2 LF@b$1
-JUMPIFEQ $START_OPERATION_0 GF@$tmp_type_1 GF@$tmp_type_2
-JUMPIFEQ $ARG2_TO_FLOAT_1 GF@$tmp_type_2 string@int
-INT2FLOAT GF@$tmp_op_1 LF@a$1
-LABEL $ARG2_TO_FLOAT_1
-INT2FLOAT GF@$tmp_op_2 LF@b$1
-LABEL $START_OPERATION_0
-ADD LF@$t$0 GF@$tmp_op_1 GF@$tmp_op_2
-ISINT GF@$tmp LF@$t$0
-JUMPIFEQ $END_CONVERT_2 GF@$tmp bool@false
-TYPE GF@$tmp_type_1 LF@$t$0
-JUMPIFEQ $END_CONVERT_2 GF@$tmp_type_1 string@int
-FLOAT2INT LF@$t$0 LF@$t$0
-LABEL $END_CONVERT_2
-
-# ======================= NEW INSTRUCTION =======================
-#ASSIGN             | c               | $t0             | ____
-MOVE LF@c$1 LF@$t$0
+#ASSIGN             | a               | 5               | ____
+MOVE LF@a$1 int@5
 
 # ======================= NEW INSTRUCTION =======================
 #CALL               | ____            | Ifj.write$1     | ____
-
-# ======================= NEW INSTRUCTION =======================
-#PARAM              | ____            | c               | ____
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp LF@a$1
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 string@bool
+ISINT GF@$tmp_type_1 LF@a$1
+JUMPIFEQ $WRITE_0 GF@$tmp_type_1 bool@true
+INT2FLOAT GF@$tmp LF@a$1
+LABEL $WRITE_0
+WRITE GF@$tmp
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | a               | Ifj.write$1     | ____
-MOVE LF@a$1 TF@ret
+MOVE LF@a$1 GF@$ret_ifj_fun
 
 # ======================= NEW INSTRUCTION =======================
 #FUNC_END           | ____            | main$0          | ____

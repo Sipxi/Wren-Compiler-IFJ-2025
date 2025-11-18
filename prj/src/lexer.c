@@ -742,7 +742,6 @@ void scan_token(Lexer* lexer, FILE* file) {
                 if (current_char == '_') {
                     // Если второй символ тоже '_', переходим в состояние с
                     // двумя '_'
-                    characters_read++;
                     change_state(file, lexer, &state, STATE_TWO_UNDERSCORE,
                                  current_char);
                 } else {
