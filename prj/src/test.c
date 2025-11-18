@@ -2377,7 +2377,7 @@ int test_semantics() {
 }
 
 void test_gen_code(){
-    AstNode *root = create_test_valid_program();
+    AstNode *root = create_test_valid_main_overload();
     analyze_semantics(root);
     TACDLList tac_list;
     TACDLL_Init(&tac_list);
