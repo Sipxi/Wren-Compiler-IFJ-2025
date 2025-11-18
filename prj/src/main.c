@@ -2,6 +2,10 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "semantics.h"
+#include "tac.h"
+#include "optimizer.h"
+#include "codegen.h"
 /*
 Основной файл который будет запускать сам проект пока что
 Если хотите запустить этот файл:
