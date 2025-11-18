@@ -134,7 +134,7 @@ bool analyze_semantics(AstNode* root) {
     // static Ifj.length(s: String) -> Num
     if (!register_builtin_function("Ifj.length", 1, TYPE_NUM)) exit(99);
 
-    printf("DEBUG: Step 0 completed. Global tagit ble populated with ALL built-in functions.\n");
+    //printf("DEBUG: Step 0 completed. Global tagit ble populated with ALL built-in functions.\n");
 
     //* --- ШАГ 2a: Сбор Пользовательских Функций ---
 
@@ -159,7 +159,7 @@ bool analyze_semantics(AstNode* root) {
         }
     }
     
-    printf("DEBUG: Step 2a completed. User functions collected.\n");
+    //printf("DEBUG: Step 2a completed. User functions collected.\n");
 
     //* --- ШАГ 2b: Анализ Тел Функций ---
 
@@ -177,7 +177,7 @@ bool analyze_semantics(AstNode* root) {
         }
     }
 
-    printf("DEBUG: Step 2b completed. All function bodies analyzed.\n");
+    //printf("DEBUG: Step 2b completed. All function bodies analyzed.\n");
 
     //* --- Финальная Проверка: main@0 ---
     
@@ -197,7 +197,7 @@ bool analyze_semantics(AstNode* root) {
         exit(3);
     }
 
-    printf("DEBUG: Final check completed. 'main$0' found and defined.\n");
+    //printf("DEBUG: Final check completed. 'main$0' found and defined.\n");
 
     return true;
 }
@@ -390,7 +390,7 @@ static bool process_function_declaration(AstNode* func_node) {
  */
 static bool analyze_function_body(AstNode* func_node)
 {
-    printf("DEBUG: Analyzing body for '%s' (Hierarchical)...\n", func_node->data.identifier);
+    //printf("DEBUG: Analyzing body for '%s' (Hierarchical)...\n", func_node->data.identifier);
 
     // 1. Получаем 'func_entry' (из Шага 2a)
     TableEntry* func_entry = func_node->table_entry;
@@ -546,7 +546,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
         //* --- СЛУЧАЙ 1: Блок { ... } (Создает Уровень 2, 3...) ---
         case NODE_BLOCK: {
-            printf("DEBUG: Entering NODE_BLOCK (Hierarchical).\n");
+            //printf("DEBUG: Entering NODE_BLOCK (Hierarchical).\n");
             
             // 1. Получаем родительскую таблицу (напр., Уровень 1)
             Symtable* parent_table = H_Stack_Peek(stack);
@@ -606,13 +606,13 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
             // 7. "Выходим" из Уровня 2
             H_Stack_Pop(stack);
 
-            printf("DEBUG: Exiting NODE_BLOCK (Hierarchical).\n");
+            //printf("DEBUG: Exiting NODE_BLOCK (Hierarchical).\n");
             return result;
         }
 
         //* --- СЛУЧАЙ 2: Определение 'var id' ---
         case NODE_VAR_DEF: {
-            printf("DEBUG: Entering NODE_VAR_DEF (%s) [Hierarchical].\n", node->data.identifier);
+            //printf("DEBUG: Entering NODE_VAR_DEF (%s) [Hierarchical].\n", node->data.identifier);
             
             const char* name = node->data.identifier;
             
@@ -653,7 +653,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
         //* --- СЛУЧАЙ 3: Присваивание 'id = ...' ---
         case NODE_ASSIGNMENT: {
-            printf("DEBUG: Entering NODE_ASSIGNMENT.\n");
+            //printf("DEBUG: Entering NODE_ASSIGNMENT.\n");
 
             AstNode* id_node = node->child;
             AstNode* expr_node = node->child->sibling;
@@ -729,7 +729,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
        //* --- СЛУЧАЙ 4: Условие 'if (cond) { ... } else { ... }' ---
         case NODE_IF: {
-            printf("DEBUG: Entering NODE_IF.\n");
+            //printf("DEBUG: Entering NODE_IF.\n");
             
             AstNode* cond_node = node->child;
             AstNode* if_body = node->child->sibling;
@@ -757,7 +757,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
         
         //* --- СЛУЧАЙ 5: Цикл 'while (cond) { ... }' ---
         case NODE_WHILE: {
-            printf("DEBUG: Entering NODE_WHILE.\n");
+            //printf("DEBUG: Entering NODE_WHILE.\n");
 
             AstNode* cond_node = node->child;
             AstNode* while_body = node->child->sibling;
@@ -778,7 +778,7 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
 
         //* --- СЛУЧАЙ 6: Возврат 'return ...' ---
         case NODE_RETURN: {
-            printf("DEBUG: Entering NODE_RETURN.\n");
+            //printf("DEBUG: Entering NODE_RETURN.\n");
 
             AstNode* expr_node = node->child;
             
@@ -794,8 +794,8 @@ static bool analyze_statement(AstNode* node, ScopeStack* stack, int* block_cnt, 
         //* --- СЛУЧАЙ 7: Самостоятельный вызов 'id(...)' ---
         case NODE_CALL_STATEMENT: {
             // Получаем имя из ребенка (для дебага)
-            const char* name = (node->child) ? node->child->data.identifier : "invalid";
-            printf("DEBUG: Entering standalone NODE_CALL_STATEMENT (%s).\n", name);
+            // const char* name = (node->child) ? node->child->data.identifier : "invalid";
+            //printf("DEBUG: Entering standalone NODE_CALL_STATEMENT (%s).\n", name);
 
             DataType return_type; 
 
@@ -870,7 +870,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
                     entry = symtable_lookup(&global_table, name);
 
                     if (entry == NULL) {
-                    printf("DEBUG: Implicitly creating global '%s' on read (value=nil).\n", name);
+                    //printf("DEBUG: Implicitly creating global '%s' on read (value=nil).\n", name);
                     SymbolData data = { 
                         .kind = KIND_VAR, 
                         .data_type = TYPE_NIL, // Недефинированная глобальная = null 
@@ -1078,7 +1078,7 @@ static bool analyze_expression(AstNode* node, ScopeStack* stack, DataType* resul
             const char* name = id_node->data.identifier; // С точкой!
             AstNode* arg_list = id_node->sibling; 
             
-            printf("DEBUG: Analyzing NODE_CALL_STATEMENT (%s).\n", name);
+            //printf("DEBUG: Analyzing NODE_CALL_STATEMENT (%s).\n", name);
 
             // 2. Считаем арность
             int arity = 0;
