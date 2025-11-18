@@ -144,6 +144,7 @@ bool analyze_semantics(AstNode* root) {
         exit(99);
     }
 
+
     // 2. Идем по всем дочерним узлам NODE_PROGRAM
     for (AstNode* node = root->child; node != NULL; node = node->sibling) {
         // Нас интересуют только определения функций

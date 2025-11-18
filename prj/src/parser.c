@@ -119,6 +119,8 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                     "Ifj.%s", 
                     lexer->current_token->data);
                 
+                AstNode *node_statement = ast_node_create(NODE_CALL_STATEMENT, lexer->current_token->line);
+                
                 AstNode *builtin_func_name = ast_new_id_node(NODE_ID, lexer->current_token->line, full_function_name);
 
                 if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
@@ -140,8 +142,9 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                 }
                 get_token(lexer, file); // consume ')'
                 // Создаем узлы для вызова встроенной функции
-                ast_node_add_child(assignment_node, builtin_func_name);
-                ast_node_add_child(assignment_node, list_args);
+                ast_node_add_child(node_statement, builtin_func_name);
+                ast_node_add_child(node_statement, list_args);
+                ast_node_add_child(assignment_node, node_statement);
 
                 if (peek_token(lexer, file).type != TOKEN_EOL) {
                     printf("Expected end of line after method call.\n");
