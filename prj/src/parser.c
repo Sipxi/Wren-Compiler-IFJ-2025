@@ -42,6 +42,22 @@ bool is_term(Token token) {
     }
 }
 
+NodeType token_to_node(Token token) {
+    switch (token.type) {
+        case TOKEN_IDENTIFIER:
+        case TOKEN_GLOBAL_IDENTIFIER:
+            return NODE_ID; // not an operator, but a term
+        case TOKEN_INT:
+        case TOKEN_FLOAT:
+        case TOKEN_EXP:
+        case TOKEN_HEX:
+            return NODE_LITERAL_NUM;
+        case TOKEN_STRING:
+            return NODE_LITERAL_STRING;
+        default:
+            exit(25); // Не оператор
+    }
+}
 
 // Парсит список term функции
 AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
@@ -51,7 +67,27 @@ AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
     }
     if (is_term(peek_token(lexer, file))) {
         get_token(lexer, file); // consume parameter
-        ast_node_add_child(arg_list, ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data));
+        NodeType node_type_term = token_to_node(*lexer->current_token);
+        AstNode *leaf_node;
+            if (node_type_term == NODE_ID) {
+                leaf_node = ast_new_id_node(node_type_term, lexer->current_token->line, lexer->current_token->data);
+            } else if (node_type_term == NODE_LITERAL_NUM) {
+                double num_value;
+                if (!char_to_double(lexer->current_token->data, &num_value)) {
+                    return false; // Ошибка конверсии
+                }
+                leaf_node = ast_new_num_node(num_value, lexer->current_token->line);
+            } else if (node_type_term == NODE_LITERAL_STRING) {
+                leaf_node = ast_new_string_node(lexer->current_token->data, lexer->current_token->line);
+            } else if (node_type_term == NODE_LITERAL_NULL) {
+                leaf_node = ast_new_null_node(lexer->current_token->line);
+            } else {
+                return false; // Неизвестный тип терма
+            }
+            if (leaf_node == NULL) {
+                return false; // Ошибка аллокации
+            }
+        ast_node_add_child(arg_list, leaf_node);
         if (peek_token(lexer, file).type == TOKEN_EOL) {
             get_token(lexer, file); // consume EOL
         }
@@ -66,7 +102,27 @@ AstNode *list_of_tersms(Lexer *lexer, FILE *file) {
                 exit(25);
             }
             get_token(lexer, file); // consume parameter identifier
-            ast_node_add_child(arg_list, ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data));
+            NodeType node_type_term = token_to_node(*lexer->current_token);
+        AstNode *leaf_node;
+            if (node_type_term == NODE_ID) {
+                leaf_node = ast_new_id_node(node_type_term, lexer->current_token->line, lexer->current_token->data);
+            } else if (node_type_term == NODE_LITERAL_NUM) {
+                double num_value;
+                if (!char_to_double(lexer->current_token->data, &num_value)) {
+                    return false; // Ошибка конверсии
+                }
+                leaf_node = ast_new_num_node(num_value, lexer->current_token->line);
+            } else if (node_type_term == NODE_LITERAL_STRING) {
+                leaf_node = ast_new_string_node(lexer->current_token->data, lexer->current_token->line);
+            } else if (node_type_term == NODE_LITERAL_NULL) {
+                leaf_node = ast_new_null_node(lexer->current_token->line);
+            } else {
+                return false; // Неизвестный тип терма
+            }
+            if (leaf_node == NULL) {
+                return false; // Ошибка аллокации
+            }
+            ast_node_add_child(arg_list, leaf_node);
         }
     }
     return arg_list;
@@ -156,10 +212,15 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
             }
         }
         if (peek_token(lexer, file).type == TOKEN_IDENTIFIER || peek_token(lexer, file).type == TOKEN_GLOBAL_IDENTIFIER) {
-            // Token identifier = get_token(lexer, file); // consume identifier
+           
             if (peek_next_token(lexer, file).type == TOKEN_OPEN_PAREN) {
+                Token identifier = peek_token(lexer, file);
+
+
+                AstNode *node_statement = ast_node_create(NODE_CALL_STATEMENT, lexer->current_token->line);
+
+                AstNode *node_id = ast_new_id_node(NODE_ID, lexer->current_token->line, identifier.data);
                 get_token(lexer, file); // consume identifier
-                AstNode *builtin_func_name = ast_new_id_node(NODE_ID, lexer->current_token->line, lexer->current_token->data);
                 // Здесь можно добавить обработку параметров функции
                 if (peek_token(lexer, file).type != TOKEN_OPEN_PAREN) {
                     printf("Expected '(' after function name.\n");
@@ -175,8 +236,13 @@ void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_node) {
                     exit(25);
                 }
                 get_token(lexer, file); // consume ')'
-                ast_node_add_child(assignment_node, builtin_func_name);
-                ast_node_add_child(assignment_node, list_args);
+                
+
+                ast_node_add_child(node_statement, node_id);
+                ast_node_add_child(node_statement, list_args);
+                ast_node_add_child(assignment_node, node_statement);
+
+
                 if (peek_token(lexer, file).type != TOKEN_EOL) {
                     printf("Expected end of line after function call.\n");
                     get_token(lexer, file); // consume invalid token
@@ -572,6 +638,9 @@ void parser_prolog(Lexer *lexer, FILE *file) {
         printf("Empty file.\n");
         get_token(lexer, file); // consume invalid token
         exit(25);
+    }
+    while (peek_token(lexer, file).type == TOKEN_EOL) {
+        get_token(lexer, file); // consume EOL
     }
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(lexer->current_token->data, "import") != 0) {

@@ -29,7 +29,6 @@ int main() {
     TACDLL_Init(&tac_list);
     generate_tac(program, &tac_list, &global_table);
     optimize_tac(&tac_list);
-    // print_tac_list(&tac_list);
     generate_code(&tac_list, &global_table);
     TACDLL_Dispose(&tac_list);
     symtable_free(&global_table);

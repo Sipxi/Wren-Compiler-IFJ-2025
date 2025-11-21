@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <symtable.h>
+#include "symtable.h"
 #include <string.h>
 #include "tac.h"
 

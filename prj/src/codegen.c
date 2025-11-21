@@ -7,6 +7,8 @@
 #include "printer.h"
 #include <stdlib.h>
 
+Symtable gen_global_table;
+
 
 void gen_init(Symtable *table){
     fprintf(stdout, ".IFJcode25\n");
@@ -22,7 +24,8 @@ void gen_init(Symtable *table){
         if (entry->status == SLOT_OCCUPIED) {
             // Определяем переменную в GF
             if (entry->data->kind == KIND_VAR) {
-                fprintf(stdout, "DEFVAR GF@%s\n", entry->key);
+                fprintf(stdout, "DEFVAR GF@%s\n", entry->data->unique_name);
+                fprintf(stdout, "MOVE GF@%s nil@nil\n", entry->data->unique_name);
             }
         }
     }
@@ -72,9 +75,72 @@ void gen_jumpifeq(TacInstruction *instr){
     fprintf(stdout, " bool@false\n");
 
 }
+// Функция принимает "сырую" строку и возвращает новую, экранированную для IFJcode25
+// ВАЖНО: Возвращаемая строка аллоцируется динамически, не забудьте сделать free()!
+char* string_to_ifjcode(const char *original) {
+    if (original == NULL) return NULL;
+
+    // 1. Проход: Вычисляем необходимый размер буфера
+    size_t length = 0;
+    for (int i = 0; original[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)original[i];
+        
+        // Условия экранирования согласно спецификации IFJcode25 (раздел 10.3):
+        // - ASCII 000-032 (управляющие и пробел)
+        // - ASCII 035 (#)
+        // - ASCII 092 (\)
+        if (c <= 32 || c == 35 || c == 92) {
+            length += 4; // \xyz -> 4 символа
+        } else {
+            length += 1; // Обычный символ
+        }
+    }
+
+    // Выделяем память (+1 для нуль-терминатора)
+    char *escaped = (char *)malloc(length + 1);
+    if (escaped == NULL) {
+        // Обработка ошибки выделения памяти (например, вызов вашей функции error_exit)
+        fprintf(stderr, "Internal compiler error: memory allocation failed\n");
+        exit(99); // Код 99 для внутренней ошибки [cite: 43]
+    }
+
+    // 2. Проход: Заполнение новой строки
+    size_t pos = 0;
+    for (int i = 0; original[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)original[i];
+
+        if (c == 10) {
+            // Специальный случай для новой строки
+            sprintf(escaped + pos, "\\010");
+            pos += 4;
+        } else if (c == 13) {
+            // Специальный случай для новой строки
+            sprintf(escaped + pos, "\\013");
+            pos += 4;
+        
+        } else if (c <= 32 || c == 35 || c == 92) {
+            // Записываем escape-последовательность
+            // %03d гарантирует 3 цифры (например, \010, а не \10)
+            sprintf(escaped + pos, "\\%03d", c);
+            pos += 4;
+        } else {
+            // Копируем символ как есть
+            escaped[pos] = c;
+            pos += 1;
+        }
+    }
+
+    escaped[pos] = '\0'; // Завершаем строку
+    return escaped;
+}
+
 void gen_operand(Operand *op){
     if (op->type == OPERAND_TYPE_SYMBOL) {
-        fprintf(stdout, "LF@%s", op->data.symbol_entry->data->unique_name);
+        if (symtable_lookup(&gen_global_table, op->data.symbol_entry->key) != NULL) 
+            fprintf(stdout, "GF@");
+        else 
+            fprintf(stdout, "LF@");
+        fprintf(stdout, "%s", op->data.symbol_entry->data->unique_name);
     } else if (op->type == OPERAND_TYPE_CONSTANT) {
         switch (op->data.constant.type)
         {
@@ -82,11 +148,15 @@ void gen_operand(Operand *op){
             fprintf(stdout, "int@%i", op->data.constant.value.int_value);
             break;
         case TYPE_FLOAT:
-            fprintf(stdout, "float@%f", op->data.constant.value.float_value);
+            fprintf(stdout, "float@%a", op->data.constant.value.float_value);
             break;
         case TYPE_STR:
-            fprintf(stdout, "string@%s", op->data.constant.value.str_value);
+        {
+            char *escaped_str = string_to_ifjcode(op->data.constant.value.str_value);
+            fprintf(stdout, "string@%s", escaped_str);
+            free(escaped_str);
             break;
+        }
         case TYPE_NIL:
             fprintf(stdout, "nil@nil");
             break;
@@ -122,9 +192,44 @@ void gen_divide(TacInstruction *instr){
     char *label_div = create_unique_label("DIV");
     char *label_idiv = create_unique_label("IDIV");
     char *label_end = create_unique_label("END_DIV");
+    char *label_arg_1_float= create_unique_label("ARG1_TO_FLOAT");
+    char *label_arg_2_float= create_unique_label("ARG2_TO_FLOAT");
+    char *label_arg_2_check= create_unique_label("ARG2_CHECK");
+    char *label_start_operation= create_unique_label("START_OPERATION");
     // Проверка типов
     gen_type_check(instr);
-    gen_same_operand_check(instr);
+    
+
+
+    // Проверка на операнды nil и bool
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string\n");
+    fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string\n");
+    fprintf(stdout, "MOVE GF@$tmp_op_1 ");
+    gen_operand(instr->arg1);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "MOVE GF@$tmp_op_2 ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@int\n", label_arg_1_float);
+    gen_label(label_arg_2_check);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_arg_2_float);
+    fprintf(stdout, "JUMP $%s\n", label_start_operation);
+    gen_label(label_arg_1_float);
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 ");
+    gen_operand(instr->arg1);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "JUMP $%s\n", label_arg_2_check);
+    gen_label(label_arg_2_float);
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_2 ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, "\n");
+
+
+    gen_label(label_start_operation);
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
     // разделение на деление float и int 
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@float\n", label_div);
@@ -139,7 +244,7 @@ void gen_divide(TacInstruction *instr){
     gen_operand(instr->result);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
     // прыжок в конец
-    fprintf(stdout, "JUMP %s\n", label_end);
+    fprintf(stdout, "JUMP $%s\n", label_end);
 
     // деление int
     gen_label(label_idiv);
@@ -153,6 +258,10 @@ void gen_divide(TacInstruction *instr){
     free(label_div);
     free(label_idiv);
     free(label_end);
+    free(label_arg_1_float);
+    free(label_arg_2_float);
+    free(label_arg_2_check);
+    free(label_start_operation);
 }
 void gen_same_operand_check(TacInstruction *instr){
     
@@ -197,6 +306,7 @@ void gen_same_operand_check(TacInstruction *instr){
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
+    gen_jump(label_start_operation);
 
     gen_label(label_arg_2_float);
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_2 ");
@@ -317,7 +427,6 @@ void gen_param(TACDLList *instructions){
         TACDLL_Next(instructions);
         TACDLL_Next(&instrs_fun);
     }
-    free(label_name);
 }
 
 void gen_mul_str(TacInstruction *instr){
@@ -335,14 +444,19 @@ void gen_mul_str(TacInstruction *instr){
     
     char *label_loop = create_unique_label("MUL_STR_LOOP");
     char *label_loop_end = create_unique_label("MUL_STR_LOOP_END");
+    char *label_end_convert = create_unique_label("END_CONVERT");
     // Перевод на инт
-    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_loop);
+    fprintf(stdout, "MOVE GF@$tmp ");
+    gen_operand(instr->arg2);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_2 string@int\n", label_end_convert);
     fprintf(stdout, "FLOAT2INT GF@$tmp ");
     gen_operand(instr->arg2);
     fprintf(stdout, "\n");
     // Проверка на неотрицательность
     fprintf(stdout, "LT GF@$tmp_2 GF@$tmp int@0\n");
     fprintf(stdout, "JUMPIFEQ $EXIT26 GF@$tmp_2 bool@true\n");
+    gen_label(label_end_convert);
     // Инициализация счетчика и результата
     fprintf(stdout, "MOVE ");
     gen_operand(instr->result);
@@ -354,16 +468,19 @@ void gen_mul_str(TacInstruction *instr){
     fprintf(stdout, "CONCAT ");
     gen_operand(instr->result);
     fprintf(stdout, " ");
+    gen_operand(instr->result);
+    fprintf(stdout, " ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
     // Декремент счетчика
     fprintf(stdout, "SUB GF@$tmp GF@$tmp int@1\n");
     // Переход к началу цикла
-    fprintf(stdout, "JUMP %s\n", label_loop);
+    fprintf(stdout, "JUMP $%s\n", label_loop);
     // Конец цикла
     gen_label(label_loop_end);
     free(label_loop);
     free(label_loop_end);
+    free(label_end_convert);
 }
 
 void gen_comprasion(TacInstruction *instr){
@@ -511,9 +628,9 @@ void gen_is(TacInstruction *instr){
     fprintf(stdout, " GF@$tmp_type_1 ");
     if (strcmp(type, "String") == 0)
         fprintf(stdout, "string@string\n");
-    else if (strcmp(type, "NULL") == 0)
+    else if (strcmp(type, "Null") == 0)
         fprintf(stdout, "string@nil\n");
-    else if (strcmp(type, "NUM") == 0){
+    else if (strcmp(type, "Num") == 0){
         fprintf(stdout, "string@int\n");
         fprintf(stdout, "EQ GF@$tmp_type_1 GF@$tmp_type_1 string@float\n");
         fprintf(stdout, "OR ");
@@ -530,6 +647,8 @@ void gen_read_str(){
 void gen_read_num(){
     char *label_end = create_unique_label("READ_NUM_END");
     fprintf(stdout, "READ GF@$ret_ifj_fun float\n");
+    fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$ret_ifj_fun\n");
+    fprintf(stdout, "JUMPIFNEQ $%s GF@$tmp_type_1 string@float\n", label_end);
     fprintf(stdout, "ISINT GF@$tmp GF@$ret_ifj_fun\n");
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp bool@false\n", label_end);
     fprintf(stdout, "FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun\n");
@@ -548,12 +667,13 @@ void gen_write(TACDLList *instructions){
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@nil\n", label_write);
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@string\n", label_write);
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@bool\n", label_write);
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@int\n", label_write);
 
     fprintf(stdout, "ISINT GF@$tmp_type_1 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@true\n", label_write);
-    fprintf(stdout, "INT2FLOAT GF@$tmp ");
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@false\n", label_write);
+    fprintf(stdout, "FLOAT2INT GF@$tmp ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
     gen_label(label_write);
@@ -747,15 +867,17 @@ void gen_strcmp(TACDLList *instructions){
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg1);
     fprintf(stdout, "\n");
+    // Проверка типов
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
     fprintf(stdout, "TYPE GF@$tmp_type_2 GF@$tmp_op_2\n");
     fprintf(stdout, "JUMPIFNEQ $EXIT25 GF@$tmp_type_1 string@string\n");
     fprintf(stdout, "JUMPIFNEQ $EXIT25 GF@$tmp_type_2 string@string\n");
 
+    // Нахождение минимальной длины
     fprintf(stdout, "STRLEN GF@$tmp GF@$tmp_op_1\n");
     fprintf(stdout, "STRLEN GF@$tmp_2 GF@$tmp_op_2\n");
-    fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp_2 GF@$tmp_1\n");
-    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@false\n", label_min_len);
+    fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp_2 GF@$tmp\n");
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@true\n", label_min_len);
     fprintf(stdout, "MOVE GF@$tmp GF@$tmp_2\n");
     gen_label(label_min_len);
     fprintf(stdout, "MOVE GF@$tmp_2 int@-1\n");
@@ -766,23 +888,23 @@ void gen_strcmp(TACDLList *instructions){
     fprintf(stdout, "GETCHAR GF@$tmp_type_1 GF@$tmp_op_1 GF@$tmp_2\n");
     fprintf(stdout, "GETCHAR GF@$tmp_type_2 GF@$tmp_op_2 GF@$tmp_2\n");
     fprintf(stdout, "JUMPIFNEQ $%s GF@$tmp_type_1 GF@$tmp_type_2\n", label_gt_lt);
-    fprintf(stdout, "JUMP %s\n", label_while);
+    fprintf(stdout, "JUMP $%s\n", label_while);
 
     gen_label(label_longer);
     fprintf(stdout, "MOVE GF@$ret_ifj_fun int@0\n");
-    fprintf(stdout, "STRLEN GF@$tmp_1 GF@$tmp_op_1\n");
+    fprintf(stdout, "STRLEN GF@$tmp GF@$tmp_op_1\n");
     fprintf(stdout, "STRLEN GF@$tmp_2 GF@$tmp_op_2\n");
-    fprintf(stdout, "LT GF@$tmp_type_1 GF@$tmp_1 GF@$tmp_2\n");
+    fprintf(stdout, "LT GF@$tmp_type_1 GF@$tmp GF@$tmp_2\n");
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@true\n", label_longer_1);
-    fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp_1 GF@$tmp_2\n");
+    fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp GF@$tmp_2\n");
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@true\n", label_longer_2);
-    fprintf(stdout, "JUMP %s\n", label_end);
+    fprintf(stdout, "JUMP $%s\n", label_end);
     gen_label(label_longer_1);
     fprintf(stdout, "MOVE GF@$ret_ifj_fun int@-1\n");
-    fprintf(stdout, "JUMP %s\n", label_end);
+    fprintf(stdout, "JUMP $%s\n", label_end);
     gen_label(label_longer_2);
     fprintf(stdout, "MOVE GF@$ret_ifj_fun int@1\n");
-    fprintf(stdout, "JUMP %s\n", label_end);
+    fprintf(stdout, "JUMP $%s\n", label_end);
 
     gen_label(label_gt_lt);
     fprintf(stdout, "MOVE GF@$ret_ifj_fun int@-1\n");
@@ -837,7 +959,7 @@ void gen_ord(TACDLList *instructions){
 
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp int@0\n", label_end);
 
-    fprintf(stdout, "STRI2INT GF@$ret_ifj_fun GF@$tmp_2 GF@$tmp_op_2\n");
+    fprintf(stdout, "STRI2INT GF@$ret_ifj_fun GF@$tmp_op_1 GF@$tmp_op_2\n");
     
     
     gen_label(label_end);
@@ -879,14 +1001,14 @@ void gen_ifj_fun(TACDLList *instructions){
         gen_write(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.floor") != NULL) {
         gen_floor(instructions);
+    } else if (strstr(instr->arg1->data.label_name, "Ifj.strcmp") != NULL) {
+        gen_strcmp(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.str") != NULL) {
         gen_str(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.length") != NULL) {
         gen_length(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.substring") != NULL) {
         gen_substring(instructions);
-    } else if (strstr(instr->arg1->data.label_name, "Ifj.strcmp") != NULL) {
-        gen_strcmp(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.ord") != NULL) {
         gen_ord(instructions);
     } else if (strstr(instr->arg1->data.label_name, "Ifj.chr") != NULL) {
@@ -895,14 +1017,15 @@ void gen_ifj_fun(TACDLList *instructions){
 }
 
 int generate_code(TACDLList *instructions, Symtable *table) {
+    gen_global_table = *table;
     gen_init(table);
     TACDLL_First(instructions);
     while (TACDLL_IsActive(instructions)) {
         TacInstruction *instr;
         TACDLL_GetValue(instructions, &instr);
 
-        fprintf(stdout, "\n# ======================= NEW INSTRUCTION =======================\n#");
-        print_single_tac_instruction(instr);
+        fprintf(stdout, "\n# ======================= NEW INSTRUCTION =======================\n");
+        // fprintf(stdout, "#"); print_single_tac_instruction(instr);
 
         switch (instr->operation_code) {
         case OP_JUMP:

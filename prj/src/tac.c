@@ -38,6 +38,21 @@ int global_label_counter = 0;
 /* ======================================*/
 
 
+/**
+ * @brief Нормализует строку, удаляя одну ведущую и/или одну завершающую 
+ * двойную кавычку ("). Модификация выполняется на месте.
+ * * Эта функция обрабатывает четыре основных случая:
+ * 1. "text"   -> text
+ * 2. text"    -> text
+ * 3. "text    -> text
+ * 4. text     -> text (без изменений)
+ * * Она также правильно обрабатывает конкретный случай пользователя:
+ * 5. " "a " " -> a " (Удаляет ведущую ", обрезает завершающую ')
+ *
+ * @param s Строка для нормализации. Она должна быть доступна для записи (не строковый литерал).
+ * @return char* Указатель на потенциально новое начало строки (если была удалена ведущая кавычка).
+ */
+static char *normalize_string(char *s);
 
 /**
  * @brief Главная рекурсивная функция. Обходит AST и генерирует TAC.
@@ -411,6 +426,75 @@ bool TACDLL_IsActive(TACDLList *list) {
 /* ===== Имплементация приватных функций =====*/
 /* ======================================*/
 
+
+char* normalize_string(char *str) {
+    if (str == NULL || *str == '\0') return str;
+
+    size_t len = strlen(str);
+
+    // --- 1. Remove Leading Quotes ---
+    size_t lead = 0;
+    while (str[lead] == '"') lead++;
+    if (lead > 0) {
+        memmove(str, str + lead, len - lead + 1);
+        len -= lead;
+    }
+
+    // --- 2. Remove Trailing Quotes ---
+    while (len > 0 && str[len - 1] == '"') {
+        str[len - 1] = '\0';
+        len--;
+    }
+
+    // --- 3. CONVERT ESCAPE SEQUENCES (\n -> Enter) ---
+    // We use two pointers (read/write) to modify the string in-place.
+    char *read = str;
+    char *write = str;
+
+    while (*read) {
+        if (*read == '\\' && *(read + 1) != '\0') {
+            // We found a backslash! Check the next character.
+            switch (*(read + 1)) {
+                case 'n':
+                    *write = '\n'; // Convert to real Newline (Enter)
+                    read++;        // Skip the 'n'
+                    break;
+                case 't':
+                    *write = '\t'; // Convert to real Tab
+                    read++;        // Skip the 't'
+                    break;
+                case '"':
+                    *write = '"';  // Unescape quote \" -> "
+                    read++;
+                    break;
+                case '\\':
+                    *write = '\\'; // Unescape backslash
+                    read++;
+                    break;
+                case 'r':
+                    *write = '\r'; // Carriage Return (Moves cursor to start of line)
+                    read++;
+                    break;
+                // Add specific octal cases (like \032) here if IFJ requires it
+                default:
+                    // If it's a backslash followed by something unknown,
+                    // usually we just keep the backslash literal.
+                    *write = *read; 
+                    break;
+            }
+        } else {
+            // Normal character, just copy it
+            *write = *read;
+        }
+        read++;
+        write++;
+    }
+    
+    *write = '\0'; // Null-terminate the new shorter string
+
+    return str;
+}
+
 static void tac_gen_children_list(AstNode *node, TACDLList *tac_list,
     Symtable *symtable) {
     // Проходим по всем детям узла
@@ -496,14 +580,16 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
     case NODE_PARAM_LIST: {
 
         // Сохраняем текущее значение глобального счетчика временных
-        int temp = global_temp_counter;
-        global_temp_counter = 0;
+        // ! потом переделать
+        // int temp = global_temp_counter;
+        // global_temp_counter = 0;
 
         // Обработка корневого узла блока
         // Просто обрабатываем всех детей
         tac_gen_children_list(node, tac_list, symtable);
         // Восстанавливаем глобальный счетчик временных
-        global_temp_counter = temp;
+        // ! потом переделать
+        // global_temp_counter = temp;
 
         // Не возвращает значения
         return NULL;
@@ -720,7 +806,7 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         tac_gen_recursive(while_body, tac_list, symtable);
         // Генерируем прыжок обратно к началу условия
         Operand *jump_at_beginning = create_label_operand(condition_label);
-        generate_instruction(tac_list, OP_JUMP, NULL, jump_at_beginning, NULL);
+        generate_instruction(tac_list, OP_JUMP, NULL, NULL, jump_at_beginning);
         // Генерируем метку конца цикла
         Operand *end_while_op = create_label_operand(endwhile_label);
         generate_instruction(tac_list, OP_LABEL, NULL, end_while_op, NULL);
@@ -1023,7 +1109,8 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         // Литерал строки
         TacConstant str_const;
         str_const.type = TYPE_STR;
-        str_const.value.str_value = node->data.literal_string;
+        // Нормализуем строку, убирая кавычки
+        str_const.value.str_value = normalize_string(node->data.literal_string);
         return create_constant_operand(str_const);
     }
 

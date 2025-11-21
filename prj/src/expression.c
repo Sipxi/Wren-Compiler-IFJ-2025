@@ -6,7 +6,6 @@
 #include <errno.h>
 
 #include "ast.h"
-#include "ast_printer.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -155,7 +154,7 @@ bool handle_reduce(PStack *stack) {
             else if (i == 10) {
                 // E -> E is k
                 AstNode *left_node = handle[2].ast_node;
-                Token type_token = handle[0].token; // Токен "Num", "String", "Null"
+                AstNode *type_node = handle[0].ast_node; // Токен "Num", "String", "Null"
                 Token is_token = handle[1].token;
 
                 NodeType node_type = NODE_OP_IS;
@@ -164,10 +163,7 @@ bool handle_reduce(PStack *stack) {
                     return false; // Ошибка аллокации
                 }
                 ast_node_add_child(new_ast_node, left_node);
-                AstNode *type_node = ast_new_id_node(NODE_TYPE_NAME, type_token.line, type_token.data);
-                if (type_node == NULL) {
-                    return false; // Ошибка аллокации
-                }
+                
                 ast_node_add_child(new_ast_node, type_node);
             }
             else if (i == 11) {
@@ -256,6 +252,15 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                 new_item.symbol = GS_E;
                 new_item.ast_node = leaf_node;
 
+            }
+            else if (input_index == T_TYPE) {
+                // Типы не создают узлы AST на данном этапе
+                new_item.symbol = GS_TYPE;
+                AstNode *type_node = ast_new_id_node(NODE_TYPE_NAME, current_token.line, current_token.data);
+                if (type_node == NULL) {
+                    return false; // Ошибка аллокации
+                }
+                new_item.ast_node = type_node;
             }
             else {
                 // Оператор
