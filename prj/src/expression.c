@@ -81,7 +81,9 @@ static NodeType token_type_to_node(Token token) {
             if (strcmp(token.data, "is") == 0) {
                 return NODE_OP_IS;
             }
-            if (strcmp(token.data, "Num") == 0 || strcmp(token.data, "String") == 0 || strcmp(token.data, "Null") == 0) {
+            if (strcmp(token.data, "Num") == 0 || 
+                strcmp(token.data, "String") == 0 || 
+                strcmp(token.data, "Null") == 0) {
                 return NODE_TYPE_NAME; 
             }
             if (strcmp(token.data, "null") == 0) {
@@ -131,7 +133,7 @@ AstNode *create_leaf_node (Token token) {
     } else if (node_type_term == NODE_LITERAL_NUM) {
         double num_value;
         if (!char_to_double(token.data, &num_value)) {
-            return false; // Ошибка конверсии
+            return NULL; // Ошибка конверсии
         }
         leaf_node = ast_new_num_node(num_value, token.line);
     } else if (node_type_term == NODE_LITERAL_STRING) {
@@ -139,10 +141,7 @@ AstNode *create_leaf_node (Token token) {
     } else if (node_type_term == NODE_LITERAL_NULL) {
         leaf_node = ast_new_null_node(token.line);
     } else {
-        return false; // Неизвестный тип терма
-    }
-    if (leaf_node == NULL) {
-        return false; // Ошибка аллокации
+        return NULL; // Неизвестный тип терма
     }
     return leaf_node;
 }
@@ -189,7 +188,7 @@ static bool handle_reduce(PStack *stack) {
         }
         if (match) {
             rule_found = true;
-            if (rule_pos >=0 && rule_pos <= 9) {
+            if (rule_pos >= GR_RULE_E_OP_E_START && rule_pos <= GR_RULE_E_OP_E_END) {
                 // E -> E op E
                 AstNode *right_node = handle[0].ast_node;
                 AstNode *left_node = handle[2].ast_node;
@@ -198,7 +197,7 @@ static bool handle_reduce(PStack *stack) {
                 new_ast_node = ast_new_bin_op(node_type, op_token.line, left_node, right_node);
                 
             }
-            else if (rule_pos == 10) {
+            else if (rule_pos == GR_RULE_E_IS_K) {
                 // E -> E is k
                 AstNode *left_node = handle[2].ast_node;
                 AstNode *type_node = handle[0].ast_node; // Токен "Num", "String", "Null"
@@ -213,7 +212,7 @@ static bool handle_reduce(PStack *stack) {
                 
                 ast_node_add_child(new_ast_node, type_node);
             }
-            else if (rule_pos == 11) {
+            else if (rule_pos == GR_RULE_PAREN_E) {
                 // E -> ( E )
                 new_ast_node = handle[1].ast_node;
             }
@@ -273,7 +272,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                 // Создаем AST узел для терма
                 AstNode *leaf_node = create_leaf_node(current_token);
                 if (leaf_node == NULL) {
-                    return false; // Ошибка аллокации
+                    exit(INTERNAL_ERROR); // Ошибка аллокации
                 }
                 new_item.symbol = GS_E;
                 new_item.ast_node = leaf_node;

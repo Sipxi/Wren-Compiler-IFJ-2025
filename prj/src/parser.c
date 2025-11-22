@@ -9,6 +9,15 @@
 
 static AstNode *program = NULL;
 
+/**
+ * @brief Обрабатывает пролог программы (проверяет наличие 'class Program {')
+ * 
+ * @param lexer Указатель на лексер
+ * @param file Указатель на файл
+ */
+static void parser_prolog(Lexer *lexer, FILE *file);
+
+
 
 static void parameters_function(Lexer *lexer, FILE *file, AstNode *param_list);
 static void function_block(Lexer *lexer, FILE *file, AstNode *func_node);

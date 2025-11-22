@@ -9,7 +9,13 @@ typedef struct {
 
 } Parser;
 
+/**
+ * @brief Запускает парсер для анализа входного файла и построения AST.
+ * 
+ * @param file Указатель на входной файл для парсинга.
+ * @return AstNode* Указатель на корневой узел построенного AST.
+ */
 AstNode *parser_run(FILE *file);
-void parser_prolog(Lexer *lexer, FILE *file);
+
 
 #endif // PARSER_H
