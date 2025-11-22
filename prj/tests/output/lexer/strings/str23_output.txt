@@ -1,0 +1,6 @@
+Input:
+"VeryLongStringWithLotsOfCharactersToTestTheBufferCapacityAndHandling"
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: VeryLongStringWithLotsOfCharactersToTestTheBufferCapacityAndHandling, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

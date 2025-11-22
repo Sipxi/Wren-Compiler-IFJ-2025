@@ -1,0 +1,15 @@
+Input:
+func(0x1A2B,3.14e+5,"test",null)//call function
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: func, Line: 1
+Token Type: TOKEN_OPEN_PAREN, Data: (, Line: 1
+Token Type: TOKEN_HEX, Data: 0x1A2B, Line: 1
+Token Type: TOKEN_COMMA, Data: ,, Line: 1
+Token Type: TOKEN_EXP, Data: 3.14e+5, Line: 1
+Token Type: TOKEN_COMMA, Data: ,, Line: 1
+Token Type: TOKEN_STRING, Data: test, Line: 1
+Token Type: TOKEN_COMMA, Data: ,, Line: 1
+Token Type: TOKEN_KEYWORD, Data: null, Line: 1
+Token Type: TOKEN_CLOSE_PAREN, Data: ), Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

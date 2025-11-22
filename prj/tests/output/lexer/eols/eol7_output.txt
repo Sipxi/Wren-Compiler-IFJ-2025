@@ -1,0 +1,6 @@
+Input:
+start_with_newline
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: start_with_newline, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

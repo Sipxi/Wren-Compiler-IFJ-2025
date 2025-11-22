@@ -1,0 +1,6 @@
+Input:
+"hello world with spaces"
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: hello world with spaces, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

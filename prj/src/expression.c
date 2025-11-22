@@ -3,10 +3,10 @@
 #include "precedence.h"
 #include "token.h"
 #include "utils.h"
-#include <errno.h>
-
 #include "ast.h"
+
 #include <string.h>
+#include <errno.h>
 #include <stdlib.h>
 
 bool char_to_double(const char *str, double *out_value) {

@@ -1,0 +1,6 @@
+Input:
+0xABCDEF
+===============================
+Output:
+Token Type: TOKEN_HEX, Data: 0xABCDEF, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

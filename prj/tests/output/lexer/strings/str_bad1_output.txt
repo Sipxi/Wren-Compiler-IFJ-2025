@@ -1,0 +1,13 @@
+Input:
+a="hello
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: a, Line: 1
+Token Type: TOKEN_ASSIGN, Data: =, Line: 1
+
+===============================
+Exit Code: 1
+Standard Error:
+[1;31mLexical error.
+Error code: 1
+Unterminated string literal at line 1, position 10[0m

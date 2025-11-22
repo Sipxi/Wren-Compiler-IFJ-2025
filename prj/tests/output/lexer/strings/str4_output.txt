@@ -1,0 +1,6 @@
+Input:
+"hello a"
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: hello a, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,0 +1,6 @@
+Input:
+a123b456c789
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: a123b456c789, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

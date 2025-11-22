@@ -1,0 +1,6 @@
+Input:
+"áčďéěíňóřšťúůýž"
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: áčďéěíňóřšťúůýž, Line: 1
+Token Type: TOKEN_EOF, Data: �, Line: 1

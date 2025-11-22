@@ -1,0 +1,7 @@
+Input:
+""unterminated
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: , Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: unterminated, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1
