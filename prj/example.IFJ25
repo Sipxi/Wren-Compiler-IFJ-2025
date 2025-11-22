@@ -2,7 +2,6 @@ import "ifj25" for Ifj
 class Program {
     static main(){
         var a
-        a = 5
-        a = Ifj.write(a)
+        a = 4-6*9-6
     }
 }

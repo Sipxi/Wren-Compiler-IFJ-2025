@@ -1,13 +1,41 @@
 #include "expression.h"
 #include "stack_precedence.h"
 #include "precedence.h"
+#include "ast.h"
 #include "token.h"
 #include "utils.h"
-#include <errno.h>
+#include "error_codes.h"
 
-#include "ast.h"
+#include <errno.h>
 #include <string.h>
 #include <stdlib.h>
+
+
+/**
+ * @brief Преобразует тип токена в тип узла AST
+ * 
+ * @param token Входной токен
+ * @return NodeType Тип узла AST
+ */
+static NodeType token_type_to_node(Token token);
+
+/**
+ * @brief Преобразует грамматический символ в тип узла AST
+ * 
+ * @param symbol Входной грамматический символ
+ * @return NodeType Тип узла AST
+ */
+static NodeType grammar_symbol_to_node_type(GrammarSymbol symbol);
+
+/**
+ * @brief Сворачивает рукоятку на стеке в один узел AST
+ * 
+ * @param stack Указатель на стек
+ * @return true Редукция успешна
+ * @return false Ошибка редукции
+ */
+static bool handle_reduce(PStack *stack);
+
 
 bool char_to_double(const char *str, double *out_value) {
     if (!str || !out_value) return false;
@@ -27,7 +55,7 @@ bool char_to_double(const char *str, double *out_value) {
     return true;
 }
 
-NodeType token_type_to_node(Token token) {
+static NodeType token_type_to_node(Token token) {
     switch (token.type) {
         case TOKEN_PLUS:
             return NODE_OP_PLUS;
@@ -54,12 +82,12 @@ NodeType token_type_to_node(Token token) {
                 return NODE_OP_IS;
             }
             if (strcmp(token.data, "Num") == 0 || strcmp(token.data, "String") == 0 || strcmp(token.data, "Null") == 0) {
-                return NODE_TYPE_NAME; // default to IS for unknown keywords
+                return NODE_TYPE_NAME; 
             }
             if (strcmp(token.data, "null") == 0) {
                 return NODE_LITERAL_NULL;
             }
-            exit(25); // Не оператор
+            exit(SYNTAX_ERROR); // Не оператор
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
             return NODE_ID; // not an operator, but a term
@@ -71,11 +99,11 @@ NodeType token_type_to_node(Token token) {
         case TOKEN_STRING:
             return NODE_LITERAL_STRING;
         default:
-            exit(25); // Не оператор
+            exit(SYNTAX_ERROR); // Не оператор
     }
 }
 
-NodeType grammar_symbol_to_node_type(GrammarSymbol symbol) {
+static NodeType grammar_symbol_to_node_type(GrammarSymbol symbol) {
     switch (symbol) {
         case GS_PLUS:   return NODE_OP_PLUS;
         case GS_MINUS:  return NODE_OP_MINUS;
@@ -88,61 +116,80 @@ NodeType grammar_symbol_to_node_type(GrammarSymbol symbol) {
         case GS_EQ:     return NODE_OP_EQ;
         case GS_NEQ:    return NODE_OP_NEQ;
         case GS_IS:     return NODE_OP_IS;
-        default:        exit(25); // Ошибка
+        default:        exit(SYNTAX_ERROR); // Ошибка
     }
 }
 
-bool handle_reduce(PStack *stack) {
+AstNode *create_leaf_node (Token token) {
+    // Создаем листовой узел AST в зависимости от типа токена
+    AstNode *leaf_node;
+    // Определяем тип узла AST
+    NodeType node_type_term = token_type_to_node(token);
+    // Создаем соответствующий узел AST
+    if (node_type_term == NODE_ID) {
+        leaf_node = ast_new_id_node(node_type_term, token.line, token.data);
+    } else if (node_type_term == NODE_LITERAL_NUM) {
+        double num_value;
+        if (!char_to_double(token.data, &num_value)) {
+            return false; // Ошибка конверсии
+        }
+        leaf_node = ast_new_num_node(num_value, token.line);
+    } else if (node_type_term == NODE_LITERAL_STRING) {
+        leaf_node = ast_new_string_node(token.data, token.line);
+    } else if (node_type_term == NODE_LITERAL_NULL) {
+        leaf_node = ast_new_null_node(token.line);
+    } else {
+        return false; // Неизвестный тип терма
+    }
+    if (leaf_node == NULL) {
+        return false; // Ошибка аллокации
+    }
+    return leaf_node;
+}
+
+static bool handle_reduce(PStack *stack) {
     PStackItem handle[MAX_RULE_LENGTH];
     int count = 0;
-    // Извлекаем элементы до маркера начала рукоятки
-    for (int i = 0; i < MAX_RULE_LENGTH-1; i++) {
+    // Извлекаем 3 элемента (так как максимальная длина правила 3)
+    for (int iter = 0; iter < MAX_RULE_LENGTH-1; iter++) {
         if (PSTACK_is_empty(stack)) {
-            // Ошибка: дошли до $ и не нашли маркер '<'
+            // Ошибка: дошли до $
             return false; 
         }
         PStackItem item = PSTACK_pop(stack);
-        // if (item.symbol == GS_HANDLE_START) {
-        //     PSTACK_pop(stack);
-        //     break; // Найден маркер начала рукоятки
-        // }
-        if (count >= MAX_RULE_LENGTH) {
-            // Ошибка: рукоятка длиннее, чем любое из наших правил
-            return false; 
-        }
+        // Запоминаем элемент рукоятки
         handle[count++] = item;
-    }
-    if (count == 0) {
-        // Ошибка: пустая рукоятка (например, <>)
-        return false;
     }
     AstNode *new_ast_node = NULL;
     bool rule_found = false;
 
-    for (int i = 0; i < NUM_GRAMMAR_RULES; i++) {
+    for (int rule_pos = 0; rule_pos < NUM_GRAMMAR_RULES; rule_pos++) {
         // Сравниваем рукоятку с правилом
-        if (grammar_rules[i][1] == GS_TERM) {
+        if (grammar_rules[rule_pos][1] == GS_TERM) {
             continue; 
         }
-        const int* rule = grammar_rules[i];
+        // Получаем длину правила
+        const int* rule = grammar_rules[rule_pos];
         int rule_length = 0;
-        for (int k = 1; k < MAX_RULE_LENGTH; k++) {
-            if (rule[k] == GS_UNDEF) break;
+        // Вычисляем длину правила
+        for (int idx = 1; idx < MAX_RULE_LENGTH; idx++) {
+            if (rule[idx] == GS_UNDEF) break;
             rule_length++;
         }
+        // Проверяем длину рукоятки
         if (rule_length != count) {
             continue;
         }
         bool match = true;
-        for (int j = 0; j < count; j++) {
-            if ((int) handle[j].symbol != rule[rule_length - j]) {
+        for (int index = 0; index < count; index++) {
+            if ((int) handle[index].symbol != rule[rule_length - index]) {
                 match = false;
                 break;
             }
         }
         if (match) {
             rule_found = true;
-            if (i >=0 && i <= 9) {
+            if (rule_pos >=0 && rule_pos <= 9) {
                 // E -> E op E
                 AstNode *right_node = handle[0].ast_node;
                 AstNode *left_node = handle[2].ast_node;
@@ -151,7 +198,7 @@ bool handle_reduce(PStack *stack) {
                 new_ast_node = ast_new_bin_op(node_type, op_token.line, left_node, right_node);
                 
             }
-            else if (i == 10) {
+            else if (rule_pos == 10) {
                 // E -> E is k
                 AstNode *left_node = handle[2].ast_node;
                 AstNode *type_node = handle[0].ast_node; // Токен "Num", "String", "Null"
@@ -166,7 +213,7 @@ bool handle_reduce(PStack *stack) {
                 
                 ast_node_add_child(new_ast_node, type_node);
             }
-            else if (i == 11) {
+            else if (rule_pos == 11) {
                 // E -> ( E )
                 new_ast_node = handle[1].ast_node;
             }
@@ -199,7 +246,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
     // Читаем первый токен
     Token current_token = peek_token(lexer, file);
     
-    while (1) {
+    while (true) {
         // Получаем верхний терминал стека
         PStackItem *top_terminal_item = PSTACK_get_top_terminal(&stack);
         if (top_terminal_item == NULL) return false; // Ошибка
@@ -219,33 +266,12 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
 
         if (rule == '<') {
             // Сдвиг (Shift)
-            // if (!PSTACK_insert_handle_start(&stack)) {
-            //     return false; // Ошибка
-            // }
             PStackItem new_item;
             new_item.token = current_token;
-
+            // Определяем символ грамматики
             if (input_index == T_TERM) {
                 // Создаем AST узел для терма
-                AstNode *leaf_node;
-                // Заполняем узел в зависимости от типа токена
-
-                NodeType node_type_term = token_type_to_node(current_token);
-                if (node_type_term == NODE_ID) {
-                    leaf_node = ast_new_id_node(node_type_term, current_token.line, current_token.data);
-                } else if (node_type_term == NODE_LITERAL_NUM) {
-                    double num_value;
-                    if (!char_to_double(current_token.data, &num_value)) {
-                        return false; // Ошибка конверсии
-                    }
-                    leaf_node = ast_new_num_node(num_value, current_token.line);
-                } else if (node_type_term == NODE_LITERAL_STRING) {
-                    leaf_node = ast_new_string_node(current_token.data, current_token.line);
-                } else if (node_type_term == NODE_LITERAL_NULL) {
-                    leaf_node = ast_new_null_node(current_token.line);
-                } else {
-                    return false; // Неизвестный тип терма
-                }
+                AstNode *leaf_node = create_leaf_node(current_token);
                 if (leaf_node == NULL) {
                     return false; // Ошибка аллокации
                 }
@@ -253,6 +279,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                 new_item.ast_node = leaf_node;
 
             }
+            // Типы (Num, String, Null)
             else if (input_index == T_TYPE) {
                 // Типы не создают узлы AST на данном этапе
                 new_item.symbol = GS_TYPE;
@@ -275,6 +302,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
             // Сдвиг (Shift) для скобок
             PStackItem new_item;
             new_item.token = current_token;
+            // Скобки не создают узлы AST на данном этапе
             new_item.symbol = token_to_grammar_symbol(current_token);
             new_item.ast_node = NULL; // Скобки не создают узлы AST на данном этапе
             PSTACK_push(&stack, new_item);
@@ -315,6 +343,7 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
         PSTACK_free(&stack);
         return false;
     }
+    // Успешный разбор, добавляем узел в expr_node
     ast_node_add_child(expr_node, final_item.ast_node);
     PSTACK_free(&stack); 
     return true;
