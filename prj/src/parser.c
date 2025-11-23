@@ -87,7 +87,7 @@ static void function_block(Lexer *lexer, FILE *file, AstNode *func_node);
  * @param file Указатель на файл
  * @param block_node Указатель на узел блока
  */
-static void blok_body(Lexer *lexer, FILE *file, AstNode *block_node);
+static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node);
 
 /**
  * @brief Обрабатывает одно выражение в правой части присваивания (id = ... )
@@ -105,7 +105,7 @@ static void right_side_expression(Lexer *lexer, FILE *file, AstNode *parent_node
  * @param file Указатель на файл
  * @return AstNode* Указатель на узел списка аргументов
  */
-static AstNode *build_terms(Lexer *lexer, FILE *file);
+static AstNode *handle_fun_call_params(Lexer *lexer, FILE *file);
 
 /**
  * @brief Проверяет, является ли имя встроенной функцией Ifj
@@ -252,7 +252,7 @@ static void skip_one_EOL(Lexer *lexer, FILE *file) {
 }
 
 static void skip_multiple_EOL(Lexer *lexer, FILE *file) {
-    if (peek_token(lexer, file).type == TOKEN_EOL) {
+    while (peek_token(lexer, file).type == TOKEN_EOL) {
         get_token(lexer, file); // consume EOL
     }
 }
@@ -292,7 +292,7 @@ static void handle_builtin_call(Lexer *lexer, FILE *file, AstNode *assignment_no
         get_token(lexer, file); // consume '('
 
         // Здесь обработка параметров метода
-        AstNode *list_args = build_terms(lexer, file);
+        AstNode *list_args = handle_fun_call_params(lexer, file);
 
         if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
             printf("Expected ')' after method parameters.\n");
@@ -334,7 +334,7 @@ static void handle_function_call(Lexer *lexer, FILE *file, AstNode *assignment_n
         exit(SYNTAX_ERROR);
     }
     get_token(lexer, file); // consume '('
-    AstNode *list_args = build_terms(lexer, file);
+    AstNode *list_args = handle_fun_call_params(lexer, file);
 
     if (peek_token(lexer, file).type != TOKEN_CLOSE_PAREN) {
         printf("Expected ')' after function parameters.\n");
@@ -372,7 +372,7 @@ static void handle_parser_expression(Lexer *lexer, FILE *file, AstNode *assignme
     get_token(lexer, file); // consume EOL
 }
 
-static AstNode *build_terms(Lexer *lexer, FILE *file) {
+static AstNode *handle_fun_call_params(Lexer *lexer, FILE *file) {
     // Создаем узел списка аргументов
     AstNode *arg_list = ast_node_create(NODE_ARGUMENT_LIST, peek_token(lexer, file).line);
     skip_one_EOL(lexer, file);
@@ -438,7 +438,7 @@ static void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_
     }
 }
 
-static void blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
+static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
     switch (peek_token(lexer, file).type) {
         // вместо 
     case TOKEN_IDENTIFIER:
@@ -605,9 +605,9 @@ static void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
 
     // Здесь обработка тела функции
     while (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
-        blok_body(lexer, file, block_node);
+        handle_blok_body(lexer, file, block_node);
     }
-    // Обработка EOL перед '}' проверяется в blok_body
+    // Обработка EOL перед '}' проверяется в handle_blok_body
 
     if (peek_token(lexer, file).type != TOKEN_CLOSE_BRACE) {
         printf("Expected '}' to close function body.\n");
@@ -878,6 +878,6 @@ AstNode *parser_run(FILE *file) {
     // Основной парсер
     parser_kostra(lexer, file);
     lexer_free(lexer);
-    
+
     return program;
 }
