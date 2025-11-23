@@ -1,0 +1,5 @@
+Input:
+
+===============================
+Output:
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

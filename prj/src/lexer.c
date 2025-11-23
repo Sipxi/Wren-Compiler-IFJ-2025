@@ -1,10 +1,9 @@
-
 /**
  * @file lexer.c
  *
- * @brief Реализация лексического анализатора.
+ * @brief Implementace lexikálního analyzátoru.
  *
- * Author:
+ * Autor:
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)
@@ -12,13 +11,11 @@
 
  //! Допишите ваши имена и номера
 #include "lexer.h"
-
-#include <stdbool.h>
-#include <string.h>
-
 #include "error_codes.h"
 #include "utils.h"
 
+#include <stdbool.h>
+#include <string.h>
 
 
 /* ======================================*/
@@ -26,268 +23,300 @@
 /* ======================================*/
 
 typedef enum {
-    STATE_START,  //* Переходное состояние
-    STATE_EOF,
-    STATE_EOL,
-    STATE_IDENTIFIER,
-    STATE_ONE_UNDERSCORE,  //* Переходное состояние после одного _
-    STATE_TWO_UNDERSCORE,  //* Переходное состояние после двух __
-    STATE_GLOBAL_IDENTIFIER,
-    STATE_DOT,
-    STATE_NUMBER,
-    STATE_ZERO_START,
-    STATE_HEX_NUMBER,
-    STATE_FLOAT_NUMBER,
-    STATE_EXP_NUMBER,
-    STATE_DECIMAL_POINT,  //* Переходное состояние после десятичной точки
-    STATE_CHECK_EXPONENT,  //* Переходное состояние для проверки условий
-    //экспоненты
-    STATE_SIGN_EXP_NUMBER,  //* Переходное состояние для знака в экспоненте
-    STATE_HEX_PREFIX,       //* Переходное состояние после 0x
-    STATE_PLUS,
-    STATE_MINUS,
-    STATE_MULTIPLY,
-    STATE_DIVISION,
-    STATE_ASSIGN,
-    STATE_EQUAL,
-    STATE_NOT_EQUAL,
-    STATE_LESS,
-    STATE_EQUAL_LESS,
-    STATE_GREATER,
-    STATE_EQUAL_GREATER,
-    STATE_OPEN_PAREN,
-    STATE_CLOSE_PAREN,
-    STATE_OPEN_BRACE,
-    STATE_CLOSE_BRACE,
-    STATE_COMMA,
+    // Identifikátory
+    STATE_IDENTIFIER,           // Identifikátor (proměnná, funkce, atd.)
+    STATE_ONE_UNDERSCORE,       // _                             * Přechodový stav po jednom _
+    STATE_TWO_UNDERSCORE,       // __                            * Přechodový stav po dvou __
+    STATE_GLOBAL_IDENTIFIER,    // Globální identifikátor
 
-    STATE_FIRST_QUOT,
-    STATE_SECOND_QUOT,
-    STATE_SINGLE_STRING,
-    STATE_SLASH,
-    STATE_STRING_END,
-    STATE_MULTIPLE_STRING,
-    STATE_CLOSING_QUOT,
-    STATE_SECOND_CLOSING_QUOT,
-    STATE_MULTIPLE_STRING_END,
+    // Kulaté závorky a složené závorky
+    STATE_OPEN_PAREN,           // { 
+    STATE_CLOSE_PAREN,          // }
+    STATE_OPEN_BRACE,           // (
+    STATE_CLOSE_BRACE,          // )
 
-    STATE_COMMENT,
-    STATE_WHITESPACE,
-    STATE_DONE,
-    STATE_START_BLOCK_COMMENT,
-    STATE_END_BLOCK_COMMENT,
-    STATE_OPEN_BLOCK_COMMENT,
-    STATE_CLOSE_BLOCK_COMMENT,
-    STATE_BODY_BLOCK_COMMENT
+    // Operátory
+    STATE_MINUS,                // -
+    STATE_PLUS,                 // +
+    STATE_MULTIPLY,             // *
+    STATE_DIVISION,             // /
+    STATE_ASSIGN,               // =
+    
+    // Porovnávací operátory
+    STATE_EXCLAMATION,          // ! *                             * Přechodový stav do !=
+    STATE_NOT_EQUAL,            // !=
+    STATE_EQUAL,                // ==
+    STATE_LESS,                 // <
+    STATE_EQUAL_LESS,           // <=
+    STATE_GREATER,              // >
+    STATE_EQUAL_GREATER,        // >=
+
+    // Ostatní symboly
+    STATE_COMMA,                // ,
+    STATE_DOT,                  // .
+    
+    // Čisla
+    STATE_NUMBER,               // Číslo
+    STATE_ZERO_START,           // 0   
+    STATE_DECIMAL_POINT,        //                              * Přechodový stav po desetinné tečce 1.
+    STATE_FLOAT_NUMBER,         // Číslo s plovoucí desetinnou čárkou 2.5, 0.75    
+    STATE_HEX_PREFIX,           //                              * Přechodový stav po 0x
+    STATE_HEX_NUMBER,           // Šestnáctkové číslo (0x...)  
+    STATE_CHECK_EXPONENT,       //                              * Přechodový stav pro kontrolu exponentu 2e
+    STATE_SIGN_EXP_NUMBER,      //                              * Přechodový stav pro znak v exponentu +-
+    STATE_EXP_NUMBER,           // Číslo v exponenciálním formátu 1.5e10, 2.3E-4
+
+    // Řetězce
+    STATE_FIRST_QUOT,          // "                             * Přechodový stav po první uvozovce
+    STATE_SINGLE_STRING,       // "example...                   * Přechodový stav pro jednoduchý řetězec
+    STATE_SLASH,               // \                             * Přechodový stav pro escape sekvenci
+    STATE_STRING_END,          // "example"| """example"""      * Přechodový stav pro konec řetězce
+
+    // Viceřádkové řetězce
+    STATE_SECOND_QUOT,         // ""                            * Přechodový stav po druhé uvozovce
+    STATE_MULTIPLE_STRING,     // """example..                  * Přechodový stav pro víceřádkový řetězec
+    STATE_CLOSING_QUOT,        // """example"                   * Přechodový stav pro zavírací uvozovku
+    STATE_SECOND_CLOSING_QUOT, // """example""                  * Přechodový stav pro druhou zavírací uvozovku
+
+
+    // Komentáře
+    STATE_COMMENT,              // Komentář na jeden řádek
+    STATE_START_BLOCK_COMMENT,  // Začátek blokového komentáře  * Přechodový stav
+    STATE_BODY_BLOCK_COMMENT,   // Tělo blokového komentáře     * Přechodový stav
+    STATE_END_BLOCK_COMMENT,    // Konec blokového komentáře 
+
+
+    // Speciální stavy
+    STATE_START,               // Startovní stav
+    STATE_EOF,                 // Konec souboru
+    STATE_EOL                  // Konec řádku
+
 } LexerFSMState;
 
 /* ======================================*/
-/* ===== Определение приватных функций лексера =====*/
+/* ===== Deklarace privátních funkcí lexeru =====*/
 /* ======================================*/
 
-
-
 /**
- * Получает следующий токен из исходного кода.
+ * @brief Zapiše do buffer lexéru další token ze zdrojového kódu.
  *
- * Эта функция читает символы из предоставленного файла
- * и создаёт следующий токен на основе правил лексера.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file  Ukazatel na soubor obsahující zdrojový kód.
  */
 void scan_token(Lexer *lexer, FILE *file);
 
 /**
- * Проверяет, является ли символ допустимым символом для идентификаторов (буквы
- * и цифры).
+ * @brief Kontroluje, zda je znak platným znakem pro identifikátory (písmena
+ * a číslice).
  *
- * @param character Символ для проверки.
- * @return true если символ является буквой или цифрой, иначе false.
+ * @param character Znak ke kontrole.
+ * @return true pokud je znak písmeno nebo číslice, jinak false.
  */
 static bool is_letter(char character);
 
 /**
- * Проверяет, начинается ли текущая позиция в файле с комментария.
- * @param file Указатель на файл для проверки.
- * @return -1 если не комментарий, 0 если однострочный комментарий, 1 если
- * многострочный комментарий
+ * @brief Kontroluje, zda aktuální pozice v souboru začíná komentářem.
+ * 
+ * @param file Ukazatel na soubor pro kontrolu.
+ * @return -1 pokud to není komentář, 0 pokud je to jednřádkový komentář,
+ *         1 pokud je to víceřádkový komentář
  */
 static int is_comment_start(char current_char, FILE *file);
 
+
 /**
- * Проверяет, является ли символ цифрой (0-9).
+ * @brief Kontroluje, zda je znak číslicí (0-9).
  *
- * @param character Символ для проверки.
- * @return true если символ является цифрой, иначе false.
+ * @param character Znak ke kontrole.
+ * @return true pokud je znak číslice, jinak false.
  */
 static bool is_digit(char character);
 
 /**
- * Проверяет, является ли текущий идентификатор ключевым словом.
+ * @brief Kontroluje, zda je aktuální identifikátor klíčovým slovem.
  *
- * Если да, то обновляет тип токена на соответствующий тип ключевого слова.
- * @param lexer Указатель на структуру Lexer.
- * @return true если текущий идентификатор является ключевым словом, иначе false
+ * Pokud ano, aktualizuje typ tokenu na odpovídající typ klíčového slova.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @return true pokud je aktuální identifikátor klíčovým slovem, jinak false.
  */
 static bool is_keyword(const char *str);
 
 /**
- * Обрабатывает конец блокового комментария
+ * @brief Zpracovává konec blokového komentáře.
  *
- * Эта функция читает символы из файла,
- * и обрабатывает возможное завершение блокового комментария.
+ * Tato funkce čte znaky ze souboru
+ * a zpracovává možné ukončení blokového komentáře.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @return true если был найден конец блокового комментария, иначе false.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
+ * @return true pokud byl nalezen konec blokového komentáře, jinak false.
  */
 static bool is_end_block_comment(char current_char, FILE *file);
 
 /**
- * Проверяет, является ли символ пробельным (например, пробел, табуляция, новая
- * строка).
+ * @brief Kontroluje, zda je znak bílým znakem (například mezera, tabulátor, nový
+ * řádek).
  *
- * @param character Символ для проверки.
- * @return true если символ является пробельным, иначе false.
+ * @param character Znak ke kontrole.
+ * @return true pokud je znak bílý znak, jinak false.
  */
 static bool is_whitespace(const char character);
 
 /**
- * Проверяет, является ли символ шестнадцатеричной цифрой (0-9, a-f, A-F).
+ * @brief Kontroluje, zda je znak šestnáctkovou číslicí (0-9, a-f, A-F).
  *
- * @param character Символ для проверки.
- * @return true если символ является шестнадцатеричной цифрой, иначе false.
+ * @param character Znak ke kontrole.
+ * @return true pokud je znak šestnáctkovou číslicí, jinak false.
  */
 static bool is_hex_digit(const char character);
 
 /**
- * Записывает указанное количество символов из файла в строку.
+ * @brief Zapíše zadaný počet znaků ze souboru do řetězce.
  *
- * Эта функция читает символы из файла и записывает их в указанную строку.
- * @param file Указатель на файл, из которого будут прочитаны символы.
- * @param count Количество символов для чтения.
- * @param str Строка для записи.
- * @return Количество записанных символов.
+ * Tato funkce čte znaky ze souboru a zapisuje je do zadaného řetězce.
+ * @param file Ukazatel na soubor, ze kterého budou čteny znaky.
+ * @param count Počet znaků k přečtení.
+ * @param str Řetězec pro zápis.
+ * @return Počet zapsaných znaků.
  */
 static void write_str(FILE *file, int count, char **str);
 
 /**
- * Просматривает следующий символ в файле без его удаления из потока.
+ * @brief Prohlíží další znak v souboru bez jeho odstranění z proudu.
  *
- * @param file Указатель на файл для просмотра следующего символа.
- * @return Следующий символ в файле.
+ * @param file Ukazatel na soubor pro prohlížení dalšího znaku.
+ * @return Další znak v souboru.
  */
 static char peek_char(FILE *file);
 
 /**
- * Просматривает символ после следующего в файле без его удаления из потока.
+ * @brief Prohlíží znak po dalším v souboru bez jeho odstranění z proudu.
  *
- * @param file Указатель на файл для просмотра символа после следующего.
- * @return Символ после следующего в файле.
+ * @param file Ukazatel na soubor pro prohlížení znaku po dalším.
+ * @return Znak po dalším v souboru.
  */
 static char peek_next_char(FILE *file);
 
 /**
- * Читает следующий символ из файла и обновляет позицию лексера.
+ * @brief Čte další znak ze souboru a aktualizuje pozici lexéru.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл для чтения следующего символа.
- * @return Прочитанный символ.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor pro čtení dalšího znaku.
+ * @return Přečtený znak.
  */
 static char lexer_consume_char(Lexer *lexer, FILE *file);
 
 /**
- * Возвращает последний прочитанный символ обратно в поток и обновляет позицию
- * лексера.
+ * @brief Vrací poslední přečtený znak zpět do proudu a aktualizuje pozici lexéru.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл для возврата символа.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor pro vrácení znaku.
  */
 static void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char);
 
 /**
- * Устанавливает токен с указанным типом и данными.
+ * @brief Nastavuje token s daným typem a daty.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param type Тип токена для установки.
- * @param data Данные токена для установки (один символ).
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param type Typ tokenu pro nastavení.
+ * @param data Data tokenu pro nastavení (jeden znak).
  */
 static void set_single_token(Lexer *lexer, TokenType type, const char data);
 
 /**
- * Устанавливает токен с указанным типом и данными.
+ * @brief Nastavuje token s daným typem a daty.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param type Тип токена для установки.
- * @param file Указатель на файл, содержащий исходный код.
- * @param characters_read Количество символов, прочитанных для токена.
- *
- *
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param type Typ tokenu pro nastavení.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
+ * @param characters_read Počet znaků přečtených pro token.
  */
 static void set_multi_token(Lexer *lexer, TokenType type, FILE *file,
     int characters_read);
 
 /**
- * Читает число (целое, с плавающей точкой, экспоненциальное) из исходного кода.
+ * @brief Čte číslo (celé, s plovoucí desetinnou čárkou, exponenciální) ze zdrojového kódu.
  *
- * Эта функция читает символы из файла для создания токена числа.
+ * Tato funkce čte znaky ze souboru pro vytvoření tokenu čísla.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
  */
 static void read_number(Lexer *lexer, FILE *file, char current_char);
 
 /**
- * Классифицирует число, начинающееся с '0', как целое, с плавающей точкой,
- * экспоненциальное или шестнадцатеричное.
+ * @brief Klasifikuje číslo začínající na '0' jako celé, s plovoucí desetinnou čárkou,
+ * exponenciální nebo šestnáctkové.
  *
- * Эта функция читает символы из файла для создания токена числа.
+ * Tato funkce čte znaky ze souboru pro vytvoření tokenu čísla.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
  */
 static void classify_number_token(Lexer *lexer, FILE *file, char current_char);
 
 /**
- * Изменяет состояние конечного автомата лексера и возвращает последний
- * прочитанный символ обратно в поток.
+ * @brief Mění stav konečného automatu lexéru a vrací poslední
+ * přečtený znak zpět do proudu.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param file Указатель на файл, содержащий исходный код.
- * @param current_state Указатель на текущее состояние конечного автомата
- * лексера.
- * @param next_state Следующее состояние конечного автомата лексера.
- * @param current_char Текущий символ, который уже был прочитан.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
+ * @param current_state Ukazatel na aktuální stav konečného automatu
+ * lexéru.
+ * @param next_state Následující stav konečného automatu lexéru.
+ * @param current_char Aktuální znak, který již byl přečten.
  */
 static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
     LexerFSMState next_state, char current_char);
 
 /**
- * @brief Обеспечивает наличие указанного количества токенов в буфере лексера.
+ * @brief Zajišťuje, že v bufferu lexéru je požadovaný počet tokenů.
  *
- * Если в буфере меньше токенов, чем нужно, функция читает дополнительные токены
- * из файла и добавляет их в буфер.
+ * Pokud je v bufferu méně tokenů, než je potřeba, funkce načte další tokeny
+ * ze souboru a přidá je do bufferu.
  *
- * @param lexer Указатель на структуру Lexer.
- * @param needed_count Количество токенов, которые должны быть в буфере.
- * @param file Указатель на файл, содержащий исходный код.
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param needed_count Počet tokenů, které musí být v bufferu.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
  */
 static void ensure_buffer_has(Lexer *lexer, int needed_count, FILE *file);
 
 /**
- * @brief Сдвигает буфер токенов лексера, удаляя первый токен.
- * После сдвига количество токенов в буфере уменьшается на один.
- * @param lexer Указатель на структуру Lexer
+ * @brief Posune buffer tokenů lexéru, odstraní první token.
+ * Po posunu se počet tokenů v bufferu sníží o jeden.
+ * @param lexer Ukazatel na strukturu Lexer
  */
 static void shift_buffer(Lexer *lexer);
 
+/**
+ * @brief Nastavuje token řetězce s oříznutým obsahem mezi uvozovkami.
+ *
+ * Tato funkce čte znaky ze souboru a nastavuje token řetězce
+ * pouze s obsahem mezi uvozovkami.
+ *
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
+ * @param total_chars Celkový počet znaků přečtených pro token (včetně uvozovek).
+ * @param quote_len Délka uvozovek (1 pro jednoduché, 3 pro víceřádkové).
+ */
+static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len);
+
+
+/**
+ * @brief Zapiše do char řetězce obsah mezi uvozovkami, oříznutý o uvozovky.
+ * 
+ * @param lexer Ukazatel na strukturu Lexer.
+ * @param file  Ukazatel na soubor obsahující zdrojový kód.
+ */
+static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str);
+
 /* ====================================*/
-/* ===== Имплементация приватных функций лексера =====*/
+/* ===== Implementace privátních funkcí lexéru =====*/
 /* ====================================*/
 
 static bool is_end_block_comment(char current_char, FILE *file) {
-    // Проверить, является ли текущий символ концом блочного комментария
+    // Kontrola, zda aktuální a následující znak tvoří konec blokového komentáře */
     return current_char == '*' && peek_char(file) == '/';
 }
 
@@ -304,7 +333,6 @@ static bool is_keyword(const char *str) {
     const char *keywords[] = { "class",  "if",  "else",  "is",     "null",
                               "return", "var", "while", "Ifj",    "static",
                               "import", "for", "Num",   "String", "Null" };
-    // Определить количество ключевых слов, с помощью sizeof
     int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
     for (int i = 0; i < num_keywords; i++) {
         if (strcmp(str, keywords[i]) == 0) {
@@ -324,15 +352,15 @@ static bool is_hex_digit(const char character) {
 }
 
 static void write_str(FILE *file, int count, char **str) {
-    // Переместить указатель файла назад к последней прочитанной
-    // последовательности символов
+    // Přesunout ukazatel souboru zpět na poslední přečtenou
+    // posloupnost znaků
     if (fseek(file, -count, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR,
             "Failed to seek back in file for token data");
     }
 
-    // Выделить или перераспределить память для строки (+1 для нулевого
-    // терминатора)
+    // Vyhradit nebo přerozdělit paměť pro řetězec (+1 pro nulový
+    // terminátor)
     char *temp = realloc(*str, count + 1);
     if (temp == NULL) {
         lexer_error(NULL, INTERNAL_ERROR,
@@ -340,7 +368,7 @@ static void write_str(FILE *file, int count, char **str) {
     }
     *str = temp;
 
-    // Заполнить новую память символами из файла
+    // Naplnit novou paměť znaky ze souboru
     for (int i = 0; i < count; i++) {
         int c = fgetc(file);
         if (c == EOF) {
@@ -350,9 +378,55 @@ static void write_str(FILE *file, int count, char **str) {
         (*str)[i] = (char)c;
     }
 
-    // Нулевой терминатор
+    // Nulový terminátor
     (*str)[count] = '\0';
 }
+
+
+
+static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str) {
+    // vrátíme se zpět na začátek tokenu (včetně úvodních uvozovek)
+    if (fseek(file, -total_chars, SEEK_CUR) != 0) {
+        lexer_error(NULL, INTERNAL_ERROR, "Failed to seek back in file");
+    }
+
+    // přeskočíme úvodní uvozovky
+    if (fseek(file, quote_len, SEEK_CUR) != 0) {
+        lexer_error(NULL, INTERNAL_ERROR, "Failed to skip opening quotes");
+    }
+
+    // spočítáme skutečnou délku obsahu
+    int content_len = total_chars - (2 * quote_len);
+    
+    // alokujeme paměť pro obsah a ukončovací znak
+    char *temp = realloc(*str, content_len + 1);
+    if (temp == NULL) {
+        lexer_error(NULL, INTERNAL_ERROR, "Failed to allocate memory");
+    }
+    *str = temp;
+
+    // čteme pouze obsah řetězce
+    for (int i = 0; i < content_len; i++) {
+        int c = fgetc(file);
+        if (c == EOF) {
+            (*str)[i] = '\0';
+            return;
+        }
+        (*str)[i] = (char)c;
+    }
+    (*str)[content_len] = '\0'; // ukončíme řetězec nulovým znakem
+
+    // posuneme ukazatel v souboru za koncové uvozovky
+    fseek(file, quote_len, SEEK_CUR);
+}
+
+
+static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len) {
+    lexer->current_token->type = TOKEN_STRING;
+    lexer->current_token->line = lexer->line;
+    write_str_trimmed(file, total_chars, quote_len, &lexer->current_token->data);
+}
+
 
 static char peek_char(FILE *file) {
     int character = fgetc(file);
@@ -369,8 +443,8 @@ static char peek_next_char(FILE *file) {
 }
 
 static char lexer_consume_char(Lexer *lexer, FILE *file) {
-    // Увеличить позицию лексера
-    // Читать следующий символ из файла
+    // Zvýšit pozici lexeru
+    // Přečíst další znak ze souboru
     lexer->position++;
     char character = fgetc(file);
 
@@ -378,9 +452,9 @@ static char lexer_consume_char(Lexer *lexer, FILE *file) {
 }
 
 static void lexer_unconsume_char(Lexer *lexer, FILE *file, char current_char) {
-    // Вернуть последний прочитанный символ обратно в поток
+    // Vrátit poslední přečtený znak zpět do proudu
     ungetc(current_char, file);
-    // Уменьшить позицию лексера
+    // Snížit pozici lexeru
     lexer->position--;
 }
 
@@ -418,27 +492,24 @@ static void change_state(FILE *file, Lexer *lexer, LexerFSMState *current_state,
 
 static void ensure_buffer_has(Lexer *lexer, int needed_count, FILE *file) {
 
-    // Пока токенов в буфере меньше, чем нам нужно
+    // Dokud je v bufferu méně tokenů, než potřebujeme
     while (lexer->buffered_count < needed_count &&
         lexer->buffered_count < TOKEN_BUFFER_SIZE) {
-        // читаем новый токен и добавляем его в конец буфера
+        // čteme nový token a přidáme ho na konec bufferu
         Token to_add;
         scan_token(lexer, file);
         token_copy_data(&to_add, lexer->current_token);
         lexer->buffered_tokens[lexer->buffered_count] = to_add;
         lexer->buffered_count++;
-        // НЕ освобождаем to_add, так как data теперь принадлежит токену в буфере
-        // Освобождаем только саму структуру токена, но не данные
     }
 }
 
 static void shift_buffer(Lexer *lexer) {
-    // Освободить данные первого токена (который удаляется)
+    // Uvolnit data prvního tokenu (který je odstraňován)
     if (lexer->buffered_count > 0) {
         free(lexer->buffered_tokens[0].data);
     }
-
-    // Сдвинуть остальные токены
+    // Posunout ostatní tokeny
     for (int i = 1; i < lexer->buffered_count; i++) {
         lexer->buffered_tokens[i - 1] = lexer->buffered_tokens[i];
     }
@@ -446,18 +517,18 @@ static void shift_buffer(Lexer *lexer) {
 }
 
 /* ==================================== */
-/* ===== Имплементация публичных функций лексера =====*/
+/* ===== Implementace veřejných funkcí lexeru =====*/
 /* ==================================== */
 
 Lexer *lexer_init() {
-    // Выделить память для структуры Lexer
+    // Alokovat paměť pro strukturu Lexer
     Lexer *lexer = (Lexer *)malloc(sizeof(Lexer));
     if (lexer == NULL) {
         lexer_error(NULL, INTERNAL_ERROR,
             "Failed to allocate memory for Lexer");
     }
-    // Инициализировать позицию и номер строки
-    // Начать позицию с 1 и номер строки с 1
+    // Inicializovat pozici a číslo řádku
+    // Začít pozici od 1 a číslo řádku od 1
     lexer->position = 1;
     lexer->line = 1;
     lexer->current_token = token_init();
@@ -469,14 +540,13 @@ void lexer_free(Lexer *lexer) {
     if (lexer == NULL) {
         return;
     }
-    // Освободить память для текущего токена
+    // Uvolnit paměť pro aktuální token
     token_free(lexer->current_token);
-    // Освободить память для всех токенов в буфере
+    // Uvolnit paměť pro všechny tokeny v bufferu
     for (int i = 0; i < lexer->buffered_count; i++) {
         free(lexer->buffered_tokens[i].data);
     }
-
-    // Освободить память для структуры Lexer
+    // Uvolnit paměť pro strukturu Lexer
     free(lexer);
 }
 
@@ -485,692 +555,767 @@ void lexer_error(Lexer *lexer, int error_code, const char *message) {
         "\033[1;31mLexical error.\nError code: %d\n%s at line %d, position "
         "%d\033[0m\n",
         error_code, message, lexer->line, lexer->position);
-    // Освободить память и завершить программу с кодом ошибки
+    // Uvolnit paměť a ukončit program s kódem chyby
     lexer_free(lexer);
     exit(error_code);
 }
 
 Token peek_token(Lexer *lexer, FILE *file) {
-    // Мне нужен 1 токен
+    // Potřebuji 1 token
     ensure_buffer_has(lexer, 1, file);
     return lexer->buffered_tokens[0];
 }
 
 Token peek_next_token(Lexer *lexer, FILE *file) {
-    // Мне нужны 2 токена
+    // Potřebuji 2 tokeny
     ensure_buffer_has(lexer, 2, file);
     return lexer->buffered_tokens[1];
 }
 
 void get_token(Lexer *lexer, FILE *file) {
     if (lexer->buffered_count > 0) {
-        // (Твой код буфера)
         shift_buffer(lexer);
     }
     else {
-        // Буфер пуст. Просто сканируем и возвращаем копию
+        // Buffer je prázdný. Prostě skenujeme a vracíme kopii
         scan_token(lexer, file);
     }
 }
 
 void scan_token(Lexer *lexer, FILE *file) {
-    // FSM реализация лексера
+    // FSM realizace lexeru
     LexerFSMState state = STATE_START;
     bool find_eol = false;
     int count_block_comment = 0;
-    // Счетчик прочитанных символов для текущего токена
+    // Počet přečtených znaků pro aktuální token
     int characters_read = 0;
+    int quote_len = 0;
 
     while (true) {
-        // Чтение текущего символа и обновление позиции лексера
+        // Čtení aktuálního znaku a aktualizace pozice lexeru
         char current_char = lexer_consume_char(lexer, file);
 
+        // Hlavní přepínač stavů
         switch (state) {
-        case STATE_START:
-            if (is_letter(current_char)) {
-                change_state(file, lexer, &state, STATE_IDENTIFIER,
-                    current_char);
+            // =========================
+            // ===== Startovní stav =====
+            // =========================
+            case STATE_START:
+                // ===== Ignorování bílých znaků =====
+                if (is_whitespace(current_char)) {
+                    break;
+                }
+                // ===== Přechod na identifikátor =====
+                else if (is_letter(current_char)) {
+                    change_state(file, lexer, &state, STATE_IDENTIFIER,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na globální proměnnou =====
+                else if (current_char == '_') {
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_ONE_UNDERSCORE,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na kulaté a složené závorky =====
+                else if (current_char == '{') {
+                    change_state(file, lexer, &state, STATE_OPEN_BRACE,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '}') {
+                    change_state(file, lexer, &state, STATE_CLOSE_BRACE,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '(') {
+                    change_state(file, lexer, &state, STATE_OPEN_PAREN,
+                        current_char);
+                    break;
+                }
+                else if (current_char == ')') {
+                    change_state(file, lexer, &state, STATE_CLOSE_PAREN,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na operátory =====
+                else if (current_char == '+') {
+                    change_state(file, lexer, &state, STATE_PLUS, current_char);
+                    break;
+                }
+                else if (current_char == '-') {
+                    change_state(file, lexer, &state, STATE_MINUS,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '*') {
+                    change_state(file, lexer, &state, STATE_MULTIPLY,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '/') {
+                    change_state(file, lexer, &state, STATE_DIVISION,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '=') {
+                    change_state(file, lexer, &state, STATE_ASSIGN,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '<') {
+                    change_state(file, lexer, &state, STATE_LESS, current_char);
+                    break;
+                }
+                else if (current_char == '>') {
+                    change_state(file, lexer, &state, STATE_GREATER,
+                        current_char);
+                    break;
+                }
+                else if (current_char == '!') {
+                    change_state(file, lexer, &state, STATE_EXCLAMATION,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na ostatní symboly =====
+                else if (current_char == '.') {
+                    change_state(file, lexer, &state, STATE_DOT, current_char);
+                    break;
+                }
+                else if (current_char == ',') {
+                    change_state(file, lexer, &state, STATE_COMMA, current_char);
+                    break;
+                }
+                // ===== Přechod na konec souboru =====
+                else if (current_char == EOF) {
+                    change_state(file, lexer, &state, STATE_EOF, current_char);
+                    break;
+                }
+                // ===== Přechod na čísla začínající na 0 =====
+                else if (current_char == '0') {
+                    change_state(file, lexer, &state, STATE_ZERO_START,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na čísla začínající na 1-9 =====
+                else if (is_digit(current_char)) {
+                    change_state(file, lexer, &state, STATE_NUMBER,
+                        current_char);
+                    break;
+                }
+                // ===== Přechod na řetězce =====
+                else if (current_char == '"') {
+                    state = STATE_FIRST_QUOT;
+                    characters_read++;
+                    break;
+                }
+                // ===== Přechod na konec řádku =====
+                else if (current_char == '\n') {
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                    break;
+                }
+                // ===== Neznámý znak - chyba =====
+                else {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unknown character encountered");
+                    break;
+                }
+            
+            // =========================
+            // ===== Stavy identifikátorů =====
+            // =========================
+            case STATE_IDENTIFIER:
+                // Je-li další znak písmeno nebo číslo, pokračujeme ve čtení
+                if (is_letter(current_char) || (current_char == '_') ||
+                    is_digit(current_char)) {
+                    // Čteme dál
+                    characters_read++;
+                    break;
+                }
+                // Poslední přečtený znak nepatří do identifikátoru,
+                // vrátíme ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                set_multi_token(lexer, TOKEN_IDENTIFIER, file, characters_read);
+
+                // Kontrola, zda je identifikátor klíčovým slovem
+                if (is_keyword(lexer->current_token->data)) {
+                    lexer->current_token->type = TOKEN_KEYWORD;
+                }
+
+                return;
+            // ===== Stavy globálních identifikátorů =====
+            case STATE_ONE_UNDERSCORE:
+                // Při přechodu čteme znak
+                current_char = lexer_consume_char(lexer, file);
+                if (current_char == '_') {
+                    // Pokud je druhý znak také '_', přecházíme do stavu s
+                    // dvěma '_'
+                    change_state(file, lexer, &state, STATE_TWO_UNDERSCORE,
+                        current_char);
+                }
+                else {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Invalid global identifier");
+                }
                 break;
-            }
-            else if (is_whitespace(current_char)) {
-                change_state(file, lexer, &state, STATE_WHITESPACE,
-                    current_char);
-                break;
-            }
-            else if (current_char == '_') {
-                characters_read++;
-                change_state(file, lexer, &state, STATE_ONE_UNDERSCORE,
-                    current_char);
-                break;
-            }
-            else if (current_char == EOF) {
-                change_state(file, lexer, &state, STATE_EOF, current_char);
-                break;
-            }
-            else if (current_char == '.') {
-                change_state(file, lexer, &state, STATE_DOT, current_char);
-                break;
-            }
-            else if (is_digit(current_char) && current_char != '0') {
-                change_state(file, lexer, &state, STATE_NUMBER,
-                    current_char);
-                break;
-            }
-            else if (current_char == '0') {
-                change_state(file, lexer, &state, STATE_ZERO_START,
-                    current_char);
-                break;
-            }
-            else if (current_char == '"') {
-                state = STATE_FIRST_QUOT;
-                characters_read++;
-                break;
-            }
-            else if (current_char == '+') {
-                change_state(file, lexer, &state, STATE_PLUS, current_char);
-                break;
-            }
-            else if (current_char == '-') {
-                change_state(file, lexer, &state, STATE_MINUS,
-                    current_char);
-                break;
-            }
-            else if (current_char == '*') {
-                change_state(file, lexer, &state, STATE_MULTIPLY,
-                    current_char);
-                break;
-            }
-            else if (current_char == '!' && peek_char(file) == '=') {
-                change_state(file, lexer, &state, STATE_NOT_EQUAL,
-                    current_char);
-                break;
-            }
-            else if (current_char == '=') {
-                change_state(file, lexer, &state, STATE_ASSIGN,
-                    current_char);
-                break;
-            }
-            else if (current_char == '<') {
-                change_state(file, lexer, &state, STATE_LESS, current_char);
-                break;
-            }
-            else if (current_char == '>') {
-                change_state(file, lexer, &state, STATE_GREATER,
-                    current_char);
-                break;
-            }
-            else if (current_char == '/') {
-                change_state(file, lexer, &state, STATE_DIVISION,
-                    current_char);
-                break;
-            }
-            else if (current_char == '{') {
-                change_state(file, lexer, &state, STATE_OPEN_BRACE,
-                    current_char);
-                break;
-            }
-            else if (current_char == '}') {
-                change_state(file, lexer, &state, STATE_CLOSE_BRACE,
-                    current_char);
-                break;
-            }
-            else if (current_char == '(') {
-                change_state(file, lexer, &state, STATE_OPEN_PAREN,
-                    current_char);
-                break;
-            }
-            else if (current_char == ')') {
-                change_state(file, lexer, &state, STATE_CLOSE_PAREN,
-                    current_char);
-                break;
-            }
-            else if (current_char == '\n') {
-                change_state(file, lexer, &state, STATE_EOL, current_char);
-                break;
-            }
-            else if (current_char == ',') {
-                change_state(file, lexer, &state, STATE_COMMA, current_char);
-                break;
-            }
-            else {
+
+            case STATE_TWO_UNDERSCORE:
+                // Při přechodu čteme znak
+                current_char = lexer_consume_char(lexer, file);
+                // Kontrolujeme, zda je další znak písmeno
+                if (is_letter(current_char)) {
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_GLOBAL_IDENTIFIER,
+                        current_char);
+                    break;
+                }
+                // Chyba: neplatný formát globálního identifikátoru
                 lexer_error(lexer, LEXER_ERROR,
-                    "Unknown character encountered");
+                        "Invalid global identifier");
                 break;
-            }
-        case STATE_COMMA:
-            set_single_token(lexer, TOKEN_COMMA, current_char);
-            return;
-        case STATE_WHITESPACE:
-            if (!is_whitespace(current_char))
-                change_state(file, lexer, &state, STATE_START,
-                    current_char);
-            break;
-        case STATE_DIVISION:
-            // Проверяем, является ли следующий символ началом комментария
-            if (peek_char(file) == '/')
-                change_state(file, lexer, &state, STATE_COMMENT,
-                    current_char);
-            else if (peek_char(file) == '*') {
-                change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
-                    current_char);
-                lexer_consume_char(lexer, file);
-            }
-            else {  // Это просто оператор деления
+
+            case STATE_GLOBAL_IDENTIFIER:
+                if (is_letter(current_char) || (current_char == '_') ||
+                    is_digit(current_char)) {
+                    // Čteme dál
+                    characters_read++;
+                    continue;
+                }
+                // Poslední přečtený znak nepatří do identifikátoru,
+                // vrátíme ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file,
+                    characters_read);
+
+                return;
+
+            // =========================
+            // ===== Stavy kulatých a složených závorek =====
+            // =========================
+            case STATE_OPEN_BRACE:
+                set_single_token(lexer, TOKEN_OPEN_BRACE, current_char);
+                return;
+            case STATE_CLOSE_BRACE:
+                set_single_token(lexer, TOKEN_CLOSE_BRACE, current_char);
+                return;
+            case STATE_OPEN_PAREN:
+                set_single_token(lexer, TOKEN_OPEN_PAREN, current_char);
+                return;
+            case STATE_CLOSE_PAREN:
+                set_single_token(lexer, TOKEN_CLOSE_PAREN, current_char);
+                return;
+                
+            // =========================
+            // ===== Stavy operátorů =====
+            // =========================
+            case STATE_DIVISION:
+                // Je-li další znak /, je to začátek jednořádkového komentáře
+                if (peek_char(file) == '/') {
+                    change_state(file, lexer, &state, STATE_COMMENT,
+                        current_char);
+                    break;
+                }
+                // Je-li další znak *, je to začátek blokového komentáře
+                else if (peek_char(file) == '*') {
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
+                        current_char);
+                    break;
+                    lexer_consume_char(lexer, file);
+                }
+                // Je to prostě operátor dělení
                 set_single_token(lexer, TOKEN_DIVISION, current_char);
                 return;
-            }
-            break;
-        case STATE_START_BLOCK_COMMENT:
-            // так как начало комментария это всегда 2 символа, то должны
-            // один перепрыгнуть
-            current_char = lexer_consume_char(lexer, file);
-            count_block_comment++;  // увеличиваем счетчик вложенных блок
-            // комментариев
-            change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
-                current_char);
-            break;
-        case STATE_BODY_BLOCK_COMMENT:
-            if (current_char ==
-                '\n')  // отслеживаем новые строки внутри комментария
-                lexer->line++;
-            // Проверяем, является ли следующий символ началом комментария
-            else if (is_comment_start(current_char, file) == 1) {
-                change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
-                    current_char);
-                lexer_consume_char(lexer, file);
-            }
-            else if (is_end_block_comment(current_char, file)) {
-                change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT,
-                    current_char);
-                lexer_consume_char(lexer, file);
-                // если ни конец файла, это ошибка
-            }
-            else if (current_char == EOF) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Unterminated block comment");
-            }
-            // иначе продолжаем оставаться в теле комментария
-            break;
-        case STATE_END_BLOCK_COMMENT:
-            // так как начало комментария это всегда 2 символа, то должны
-            // один перепрыгнуть
-            current_char = lexer_consume_char(lexer, file);
-            count_block_comment--;
-            // если до этого вне комментария был EOL, то возвращаемся в EOL
-            if (count_block_comment == 0 && find_eol)
-                change_state(file, lexer, &state, STATE_EOL, current_char);
-            // иначе в пробельное состояние
-            else if (count_block_comment == 0)
-                change_state(file, lexer, &state, STATE_WHITESPACE,
-                    current_char);
-            // если все блоки не закрыты остаемся в теле комментария
-            else
-                change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
-                    current_char);
-            break;
-        case STATE_COMMENT:
-            // пока не достигнут конец строки
-            if (current_char == '\n')
-                change_state(file, lexer, &state, STATE_EOL, current_char);
-            // или конец файла
-            else if (current_char == EOF) {
-                change_state(file, lexer, &state, STATE_EOF, current_char);
-                find_eol = true;  // устанавливаем флаг что был найден EOL,
-                // так как файл закончился
-            }
-            break;
-        case STATE_EOL:
-            // устанавливаем флаг что был найден EOL
-            find_eol = true;
-            // отслеживаем номер строки
-            if (current_char == '\n') lexer->line++;
-            // отслеживаем комментарии после EOL
-            else if (current_char == '/' && peek_char(file) == '/') {
-                change_state(file, lexer, &state, STATE_COMMENT,
-                    current_char);
-                lexer_consume_char(lexer, file);
-            } else if (current_char == EOF) {
-                change_state(file, lexer, &state, STATE_EOF, current_char);
-            } else if (current_char == '/' && peek_char(file) == '*') {
-                change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
-                    current_char);
-                lexer_consume_char(lexer, file);
-                // если следующий символ не пробельный, то
-                // возвращаем токен EOL и оставляем символ для следующего
-                // токена
-            }
-            else if (!is_whitespace(current_char)) {
-                set_single_token(lexer, TOKEN_EOL, '\n');
-                lexer_unconsume_char(lexer, file, current_char);
+            case STATE_PLUS:
+                set_single_token(lexer, TOKEN_PLUS, current_char);
                 return;
-            }
-            break;
-
-        case STATE_IDENTIFIER:
-            // Мы знаем, что первый символ является буквой, читаем дальше
-            if (is_letter(current_char) || (current_char == '_') ||
-                is_digit(current_char)) {
-                // Читаем дальше
-                characters_read++;
-                continue;
-            }
-            // Последний прочитанный символ не принадлежит идентификатору,
-            // вернуть его обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            set_multi_token(lexer, TOKEN_IDENTIFIER, file, characters_read);
-
-            // Проверяем, является ли идентификатор ключевым словом
-            if (is_keyword(lexer->current_token->data)) {
-                lexer->current_token->type = TOKEN_KEYWORD;
-            }
-
-            return;
-        case STATE_ONE_UNDERSCORE:
-            // При переходе читаем символ
-            current_char = lexer_consume_char(lexer, file);
-            if (current_char == '_') {
-                // Если второй символ тоже '_', переходим в состояние с
-                // двумя '_'
-                change_state(file, lexer, &state, STATE_TWO_UNDERSCORE,
-                    current_char);
-            }
-            else {
+            case STATE_MINUS:
+                set_single_token(lexer, TOKEN_MINUS, current_char);
+                return;
+            case STATE_MULTIPLY:
+                set_single_token(lexer, TOKEN_MULTIPLY, current_char);
+                return;
+            case STATE_EXCLAMATION:
+                if(peek_char(file) == '=') {
+                    change_state(file, lexer, &state, STATE_NOT_EQUAL,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                    break;
+                }
+                // Chyba: neočekávaný znak po '!'
                 lexer_error(lexer, LEXER_ERROR,
-                    "Invalid global identifier");
-            }
-            break;
-        case STATE_TWO_UNDERSCORE:
-            // При переходе читаем символ
-            current_char = lexer_consume_char(lexer, file);
-            // Проверяем, что следующий символ является буквой
-            if (is_letter(current_char)) {
-                characters_read++;
-                change_state(file, lexer, &state, STATE_GLOBAL_IDENTIFIER,
-                    current_char);
-            }
-            else {
-                // Ошибка: неверный формат глобального идентификатора
-                lexer_error(lexer, LEXER_ERROR,
-                    "Invalid global identifier");
-            }
-            break;
-        case STATE_GLOBAL_IDENTIFIER:
-            if (is_letter(current_char) || (current_char == '_') ||
-                is_digit(current_char)) {
-                // Читаем дальше
-                characters_read++;
-                continue;
-            }
-            // Последний прочитанный символ не принадлежит идентификатору,
-            // вернуть его обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            set_multi_token(lexer, TOKEN_GLOBAL_IDENTIFIER, file,
-                characters_read);
-
-            return;
-        case STATE_DOT:
-            set_single_token(lexer, TOKEN_DOT, current_char);
-            return;
-
-        case STATE_NUMBER:
-            // Проверяем, является ли следующий символ цифрой
-            // Если да, продолжаем читать цифры
-            if (is_digit(current_char)) {
-                // После того, как мы прочитали цифру, увеличиваем счетчик
-                characters_read++;
-                continue;
-            }
-            // Проверить, начинается ли десятичная часть или экспонента
-            if (current_char == '.') {
-                // Сразу добавляем к счетчику символов, после if
-                characters_read++;
-                change_state(file, lexer, &state, STATE_DECIMAL_POINT,
-                    current_char);
+                        "Unexpected character after '!'");
                 break;
-            }
-            else if (current_char == 'e' || current_char == 'E') {
-                // Сразу добавляем к счетчику символов, после if
-                characters_read++;
-                change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
-                    current_char);
-                break;
-            }
-            // Последний прочитанный символ не принадлежит числу, вернуть
-            // его обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            // Установить тип токена в TOKEN_INT
-            set_multi_token(lexer, TOKEN_INT, file, characters_read);
-            // Вернуть текущий токен
-            return;
+            case STATE_NOT_EQUAL:
+                set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
+                return;
+            case STATE_ASSIGN:
+                if (peek_char(file) == '=') {
+                    change_state(file, lexer, &state, STATE_EQUAL,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_ASSIGN, current_char);
+                return;
+            case STATE_EQUAL:
+                set_multi_token(lexer, TOKEN_EQUAL, file, strlen("=="));
+                return;
+            case STATE_LESS:
+                if (peek_char(file) == '=') {
+                    change_state(file, lexer, &state, STATE_EQUAL_LESS,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_LESS, current_char);
+                return;
+            case STATE_EQUAL_LESS:
+                set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
+                return;
+            case STATE_GREATER:
+                if (peek_char(file) == '=') {
+                    change_state(file, lexer, &state, STATE_EQUAL_GREATER,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                    break;
+                }
+                set_single_token(lexer, TOKEN_GREATER, current_char);
+                return;
+            case STATE_EQUAL_GREATER:
+                set_multi_token(lexer, TOKEN_EQUAL_GREATER, file, strlen(">="));
+                return;
 
-        case STATE_ZERO_START:
-            // Первый символ был '0' - увеличиваем счетчик
-            characters_read++;
-            // Считываем следующий символ после '0'
-            if (current_char == 'x') {
-                // Обработка шестнадцатеричных чисел
+            // =========================
+            // ===== Stavy ostatních symbolů ======
+            // =========================
+            case STATE_COMMA:
+                set_single_token(lexer, TOKEN_COMMA, current_char);
+                return;
+            case STATE_DOT:
+                set_single_token(lexer, TOKEN_DOT, current_char);
+                return;
+            // =========================
+            // ===== Stavy čísel =====
+            // =========================
+            case STATE_ZERO_START:
+                // První znak je '0' - zpracujeme další znaky
                 characters_read++;
-                change_state(file, lexer, &state, STATE_HEX_PREFIX,
-                    current_char);
-                break;
-            }
-            else if (current_char == '.') {
-                // Обработка чисел с плавающей точкой
-                characters_read++;
-                change_state(file, lexer, &state, STATE_DECIMAL_POINT,
-                    current_char);
-                break;
-            }
-            else if (current_char == 'e' || current_char == 'E') {
-                // Обработка чисел в экспоненциальной форме
-                characters_read++;
-                change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
-                    current_char);
-                break;
-            }
-            else if (is_digit(current_char) && current_char != '0') {
-                // Оказывается, 0456 это нормальное число во wren, выведет
-                // 456 Поэтому 0 просто убираем и читаем дальше как обычное
-                // число Уменьшаем счетчик, так как '0' не учитывается в
-                // числе
-                characters_read--;
-                change_state(file, lexer, &state, STATE_NUMBER,
-                    current_char);
-                break;
-            }
-            // Это просто '0'
-            set_single_token(lexer, TOKEN_INT, '0');
-            return;
+                // Následující znak určuje typ čísla
+                char next_char = peek_char(file);
+                if (next_char == 'x') {
+                    // Zpracování šestnáctkových čísel
+                    lexer_consume_char(lexer, file); // spotřebovat 'x'
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_HEX_PREFIX,
+                        current_char);
+                    break;
+                }
+                else if (next_char == '.') {
+                    // Zpracování čísel s desetinnou tečkou
+                    characters_read++;
+                    lexer_consume_char(lexer, file); // spotřebovat '.'
+                    change_state(file, lexer, &state, STATE_DECIMAL_POINT,
+                        current_char);
+                    break;
+                }
+                else if (next_char == 'e' || next_char == 'E') {
+                    // Zpracování čísel v exponenciálním tvaru
+                    characters_read++;
+                    lexer_consume_char(lexer, file); // spotřebovat 'e' nebo 'E'
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
+                        current_char);
+                    break;
+                }
+                else if (is_digit(next_char)) {
+                    //! DODELAT
+                    // Ukazuje se, že 0456 je normální číslo ve Wren, vypíše
+                    // 456 Proto prostě odstraníme 0 a pokračujeme ve čtení jako běžné
+                    // číslo Snižujeme čítač, protože '0' se v čísle nepočítá
+                    // characters_read--;
 
-        case STATE_DECIMAL_POINT:
-            // Считытываем следующий символ после '.'
-            current_char = lexer_consume_char(lexer, file);
-            if (!is_digit(current_char)) {
-                lexer_error(lexer, LEXER_ERROR, "Invalid float format");
-            }
-            // Если следующий символ является цифрой, переходим в состояние
-            // чтения числа с плавающей точкой
-            change_state(file, lexer, &state, STATE_FLOAT_NUMBER,
-                current_char);
-            break;
+                    // lexer_consume_char(lexer, file); // spotřebovat další číslici
+                    // change_state(file, lexer, &state, STATE_NUMBER,
+                    //     current_char);
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Invalid number format: leading zeros are not allowed");
+                    break;
+                }
 
-        case STATE_CHECK_EXPONENT:
-            // Считытываем следующий символ после 'e' или 'E'
-            current_char = lexer_consume_char(lexer, file);
-            if (current_char == '+' || current_char == '-') {
-                // Считываем знак экспоненты
-                characters_read++;
-                change_state(file, lexer, &state, STATE_SIGN_EXP_NUMBER,
-                    current_char);
-                break;
-            }
-            // Проверить, что следующий символ является цифрой
-            if (!is_digit(current_char)) {
-                lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
-            }
-            // Переходим в состояние чтения экспоненты
-            change_state(file, lexer, &state, STATE_EXP_NUMBER,
-                current_char);
-            break;
+                // To je prostě '0'
+                set_single_token(lexer, TOKEN_INT, '0');
+                return;
 
-        case STATE_SIGN_EXP_NUMBER:
-            // Считываем следующий символ после '+' или '-'
-            current_char = lexer_consume_char(lexer, file);
-            // Проверить, что следующий символ является цифрой
-            if (!is_digit(current_char)) {
-                lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
-            }
-            // Переходим в состояние чтения экспоненты
-            change_state(file, lexer, &state, STATE_EXP_NUMBER,
-                current_char);
-            break;
+            case STATE_NUMBER:
+                // Čtení čísla začínajícího na 1-9
+                if (is_digit(current_char)) {
+                    // Pokračovat ve čtení čísla
+                    characters_read++;
+                    break;
+                }
+                // Zkontrolovat, zda začíná desetinná tečka 
+                if (current_char == '.') {
+                    // Ihned přidat k počtu znaků, po if
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_DECIMAL_POINT,
+                        current_char);
+                    break;
+                }
+                // Zkontrolovat, zda začíná exponent
+                else if (current_char == 'e' || current_char == 'E') {
+                    // Ihned přidat k počtu znaků, po if
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
+                        current_char);
+                    break;
+                }
+                // Poslední přečtený znak nepatří k číslu, vrátit
+                // ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                // Nastavit typ tokenu na TOKEN_INT
+                set_multi_token(lexer, TOKEN_INT, file, characters_read);
+    
+                return;
 
-        case STATE_HEX_PREFIX:
-            // Считываем следующий символ после '0x'
-            current_char = lexer_consume_char(lexer, file);
-            // Проверить, что следующий символ является шестнадцатеричной
-            // цифрой
-            if (!is_hex_digit(current_char)) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Invalid hexadecimal format");
-            }
-            change_state(file, lexer, &state, STATE_HEX_NUMBER,
-                current_char);
-            break;
-
-        case STATE_HEX_NUMBER:
-            // Следующий символ будет считываться в начале всего цикла
-            if (is_hex_digit(current_char)) {
-                // После того, как мы прочитали шестнадцатеричную цифру,
-                // увеличиваем счетчик
-                characters_read++;
-                continue;
-            }
-            // Последний прочитанный символ не является шестнадцатеричной
-            // цифрой, вернуть его обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            // Установить тип токена в TOKEN_HEX
-            set_multi_token(lexer, TOKEN_HEX, file, characters_read);
-            return;
-
-        case STATE_FLOAT_NUMBER:
-            // Следующий символ будет считываться в начале всего цикла
-            if (is_digit(current_char)) {
-                // После того, как мы прочитали цифру, увеличиваем счетчик
-                characters_read++;
-                continue;
-            }
-            // Проверить, начинается ли экспонента
-            if (current_char == 'e' || current_char == 'E') {
-                characters_read++;
-                change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
+            case STATE_DECIMAL_POINT:
+                // Čtení čísla s desetinnou tečkou
+                current_char = lexer_consume_char(lexer, file);
+                if (!is_digit(current_char)) {
+                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
+                }
+                // Pokud je následující znak číslice, přejdeme do stavu
+                // čtení čísla s plovoucí desetinnou čárkou
+                change_state(file, lexer, &state, STATE_FLOAT_NUMBER,
                     current_char);
                 break;
-            }
-            // Последний прочитанный символ не является цифрой, вернуть его
-            // обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            // Установить тип токена в TOKEN_FLOAT
-            set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
-            return;
 
-        case STATE_EXP_NUMBER:
-            // Следующий символ будет считываться в начале всего цикла
-            if (is_digit(current_char)) {
-                // После того, как мы прочитали цифру, увеличиваем счетчик
-                characters_read++;
-                continue;
-            }
-            // Последний прочитанный символ не является цифрой, вернуть его
-            // обратно в поток
-            lexer_unconsume_char(lexer, file, current_char);
-            // Установить тип токена в TOKEN_EXP
-            set_multi_token(lexer, TOKEN_EXP, file, characters_read);
-            return;
+            case STATE_FLOAT_NUMBER:
+                // Čtení čísla s plovoucí desetinnou čárkou
+                if (is_digit(current_char)) {
+                    // Pokračovat ve čtení čísla
+                    characters_read++;
+                    break;
+                }
+                // Zkontrolovat, zda začíná exponent
+                if (current_char == 'e' || current_char == 'E') {
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_CHECK_EXPONENT,
+                        current_char);
+                    break;
+                }
+                // Poslední přečtený znak nepatří k číslu, vrátit
+                // ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                // Nastavit typ tokenu na TOKEN_FLOAT
+                set_multi_token(lexer, TOKEN_FLOAT, file, characters_read);
 
-        case STATE_FIRST_QUOT:
-            if (current_char == '"') {
-                characters_read++;
-                state = STATE_SECOND_QUOT;
+                return;
+
+            case STATE_HEX_PREFIX:
+                // Čtení dalšího znaku po '0x'
+                current_char = lexer_consume_char(lexer, file);
+                // Zkontrolovat, zda je další znak šestnáctková číslice
+                if (!is_hex_digit(current_char)) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Invalid hexadecimal format");
+                }
+                change_state(file, lexer, &state, STATE_HEX_NUMBER,
+                    current_char);
                 break;
-            }
-            else if (current_char == '\\') {
-                characters_read++;
-                state = STATE_SLASH;
+                
+            case STATE_HEX_NUMBER:
+                // Další znak bude čten na začátku celého cyklu
+                if (is_hex_digit(current_char)) {
+                    // Po přečtení šestnáctkové číslice
+                    // zvýšíme počet přečtených znaků
+                    characters_read++;
+                    break;
+                }
+                // Poslední přečtený znak nepatří k šestnáctkové
+                // číslici, vrátit ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                // Nastavit typ tokenu na TOKEN_HEX
+                set_multi_token(lexer, TOKEN_HEX, file, characters_read);
+                return;
+
+            case STATE_CHECK_EXPONENT:
+                // Čtení dalšího znaku po 'e' nebo 'E'
+                current_char = lexer_consume_char(lexer, file);
+                if (current_char == '+' || current_char == '-') {
+                    // Čtení znaménka exponentu
+                    characters_read++;
+                    change_state(file, lexer, &state, STATE_SIGN_EXP_NUMBER,
+                        current_char);
+                    break;
+                }
+                // Zkontrolovat, zda je následující znak číslice
+                if (!is_digit(current_char)) {
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
+                }
+                // Přejít do stavu čtení exponentu
+                change_state(file, lexer, &state, STATE_EXP_NUMBER,
+                    current_char);
                 break;
-            }
-            else {
+
+            case STATE_SIGN_EXP_NUMBER:
+                // Čtení dalšího znaku po '+' nebo '-'
+                current_char = lexer_consume_char(lexer, file);
+                // Zkontrolovat, zda je následující znak číslice
+                if (!is_digit(current_char)) {
+                    lexer_error(lexer, LEXER_ERROR, "Invalid exponent format");
+                }
+                // Přejít do stavu čtení exponentu
+                change_state(file, lexer, &state, STATE_EXP_NUMBER,
+                    current_char);
+                break;
+
+            case STATE_EXP_NUMBER:
+                // Čtení dalšího znaku po 'e' nebo 'E'
+                if (is_digit(current_char)) {
+                    // Po přečtení číslice zvýšíme počet přečtených znaků
+                    characters_read++;
+                    continue;
+                }
+                // Poslední přečtený znak nepatří k číslici, vrátit ho zpět do proudu
+                lexer_unconsume_char(lexer, file, current_char);
+                // Nastavit typ tokenu na TOKEN_EXP
+                set_multi_token(lexer, TOKEN_EXP, file, characters_read);
+                return;
+            // =========================
+            // ==== Stavy řetězců =====
+            // =========================
+            case STATE_FIRST_QUOT:
+                quote_len = 1;
+                // Bud první znak po úvodní uvozovce je další uvozovka (prázdný řetězec)
+                if (current_char == '"') {
+                    state = STATE_SECOND_QUOT;
+                    characters_read++;
+                    break;
+                }
+                // Nebo další znak je konec řetězce nebo konec souboru
+                // To je chyba
+                else if (current_char == EOF || current_char == '\n') {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                // Nebo další znak jsou escape sekvence nebo běžné znaky
+                else if (current_char == '\\') {
+                    characters_read++;
+                    state = STATE_SLASH;
+                    break;
+                }
+                // Jinak pokračujeme ve čtení řetězce
+                state = STATE_SINGLE_STRING;
+                
+                characters_read++;
+                break;
+
+            case STATE_SINGLE_STRING:
+                // Pokud je další znak uvozovka, je to konec řetězce
+                if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_STRING_END;
+                    break;
+                }
+                // Pokud je další znak konec řádku nebo souboru, je to chyba
+                else if (current_char == EOF || current_char == '\n') {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                // Pokud je další znak zpětné lomítko, přecházíme do stavu escape sekvence
+                else if (current_char == '\\') {
+                    characters_read++;
+                    state = STATE_SLASH;
+                    break;
+                }
+                // Jinak pokračujeme ve čtení řetězce
+                characters_read++;
+                break;
+
+            case STATE_SLASH:
                 characters_read++;
                 state = STATE_SINGLE_STRING;
                 break;
-            }
-        case STATE_SECOND_QUOT:
-            if (current_char == EOF) {
-                state = STATE_STRING_END;
+
+
+            case STATE_SECOND_QUOT:
+                if (current_char == EOF) {
+                    state = STATE_STRING_END;
+                    break;
+                }
+                // Pokud je další znak neni uvozovka, je to konec řetězce
+                else if (current_char != '"') {
+                    lexer_unconsume_char(lexer, file, current_char);
+                    state = STATE_STRING_END;
+                    break;
+                }
+                // Jinak je to další uvozovka, pokračujeme ve čtení řetězce
+                quote_len = 3;
+                characters_read++;
+                state = STATE_MULTIPLE_STRING;
                 break;
-            }
-            else if (current_char != '"') {
+
+            case STATE_STRING_END:
                 lexer_unconsume_char(lexer, file, current_char);
-                state = STATE_STRING_END;
-                break;
-            }
-            else {
+                set_string_token_trimmed(lexer, file, characters_read, quote_len);
+                return;
+            // =========================
+            // ===== Stavy víceřádkové řetězce =====
+            // =========================
+            case STATE_MULTIPLE_STRING:
+                if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_CLOSING_QUOT;
+                    break;
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
                 characters_read++;
-                state = STATE_MULTIPLE_STRING;
                 break;
-            }
 
-        case STATE_MULTIPLE_STRING:
-            if (current_char == '"') {
-                characters_read++;
-                state = STATE_CLOSING_QUOT;
-                break;
-            }
-            else if (current_char == EOF) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Unterminated string literal");
-                break;
-            }
-            else {
-                characters_read++;
-                continue;
-            }
+            case STATE_CLOSING_QUOT:
+                if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_SECOND_CLOSING_QUOT;
+                    break;
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                else {
+                    characters_read++;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+                }
 
-        case STATE_CLOSING_QUOT:
-            if (current_char == '"') {
-                characters_read++;
-                state = STATE_SECOND_CLOSING_QUOT;
-                break;
-            }
-            else if (current_char == EOF) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Unterminated string literal");
-                break;
-            }
-            else {
-                characters_read++;
-                state = STATE_MULTIPLE_STRING;
-                break;
-            }
+            case STATE_SECOND_CLOSING_QUOT:
+                if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_STRING_END;
+                    break;
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                else {
+                    characters_read++;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+                }
 
-        case STATE_SECOND_CLOSING_QUOT:
-            if (current_char == '"') {
-                characters_read++;
-                state = STATE_STRING_END;
+            // =========================
+            // ===== Stavy komentářů =====
+            // =========================
+            case STATE_COMMENT:
+                // Dokud nedojdeme na konec řádku, čteme komentář
+                if (current_char == '\n')
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                // nebo konec souboru
+                else if (current_char == EOF) {
+                    change_state(file, lexer, &state, STATE_EOF, current_char);
+                }
                 break;
-            }
-            else if (current_char == EOF) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Unterminated string literal");
-                break;
-            }
-            else {
-                characters_read++;
-                state = STATE_MULTIPLE_STRING;
-                break;
-            }
-
-        case STATE_SINGLE_STRING:
-            if (current_char == '"') {
-                characters_read++;
-                state = STATE_STRING_END;
-                break;
-            }
-            else if (current_char == EOF) {
-                lexer_error(lexer, LEXER_ERROR,
-                    "Unterminated string literal");
-                break;
-            }
-            else if (current_char == '\\') {
-                characters_read++;
-                state = STATE_SLASH;
-                break;
-            }
-            else {
-                characters_read++;
-                continue;
-            }
-
-        case STATE_SLASH:
-            characters_read++;
-            state = STATE_SINGLE_STRING;
-            break;
-
-        case STATE_STRING_END:
-            lexer_unconsume_char(lexer, file, current_char);
-            set_multi_token(lexer, TOKEN_STRING, file, characters_read);
-            return;
-
-        case STATE_PLUS:
-            set_single_token(lexer, TOKEN_PLUS, current_char);
-            return;
-        case STATE_MINUS:
-            set_single_token(lexer, TOKEN_MINUS, current_char);
-            return;
-        case STATE_MULTIPLY:
-            set_single_token(lexer, TOKEN_MULTIPLY, current_char);
-            return;
-        case STATE_NOT_EQUAL:
-            lexer_consume_char(lexer, file);
-            set_multi_token(lexer, TOKEN_NOT_EQUAL, file, strlen("!="));
-            return;
-        case STATE_ASSIGN:
-            if (peek_char(file) == '=') {
-                change_state(file, lexer, &state, STATE_EQUAL,
+            case STATE_START_BLOCK_COMMENT:
+                // protože začátek komentáře jsou vždy 2 znaky,
+                // musíme jeden přeskočit
+                current_char = lexer_consume_char(lexer, file);
+                // zvyšujeme čítač vnořených bloků
+                count_block_comment++;  
+                change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
                     current_char);
-                lexer_consume_char(lexer, file);
                 break;
-            }
-            set_single_token(lexer, TOKEN_ASSIGN, current_char);
-            return;
-        case STATE_EQUAL:
-            set_multi_token(lexer, TOKEN_EQUAL, file, strlen("=="));
-            return;
-        case STATE_LESS:
-            if (peek_char(file) == '=') {
-                change_state(file, lexer, &state, STATE_EQUAL_LESS,
-                    current_char);
-                lexer_consume_char(lexer, file);
+
+            case STATE_BODY_BLOCK_COMMENT:
+                if (current_char ==
+                    '\n')  // sledujeme nové řádky uvnitř komentáře
+                    lexer->line++;
+                // Kontrolujeme, zda je další znak začátkem komentáře
+                else if (is_comment_start(current_char, file) == 1) {
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                }
+                else if (is_end_block_comment(current_char, file)) {
+                    change_state(file, lexer, &state, STATE_END_BLOCK_COMMENT,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                    // pokud není konec souboru, je to chyba
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated block comment");
+                }
+                // jinak zůstáváme v těle komentáře
+
                 break;
-            }
-            set_single_token(lexer, TOKEN_LESS, current_char);
-            return;
-        case STATE_EQUAL_LESS:
-            set_multi_token(lexer, TOKEN_EQUAL_LESS, file, strlen("<="));
-            return;
-        case STATE_GREATER:
-            if (peek_char(file) == '=') {
-                change_state(file, lexer, &state, STATE_EQUAL_GREATER,
-                    current_char);
-                lexer_consume_char(lexer, file);
+
+            case STATE_END_BLOCK_COMMENT:
+                // protože začátek komentáře jsou vždy 2 znaky,
+                // musíme jeden přeskočit
+                current_char = lexer_consume_char(lexer, file);
+                count_block_comment--;
+                // pokud před tím mimo komentář byl EOL, vracíme se do EOL
+                if (count_block_comment == 0 && find_eol)
+                    change_state(file, lexer, &state, STATE_EOL, current_char);
+                // jinak do stavu START
+                else if (count_block_comment == 0)
+                    change_state(file, lexer, &state, STATE_START,
+                        current_char);
+                // pokud nejsou všechny bloky uzavřeny, zůstáváme v těle komentáře
+                else
+                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
+                        current_char);
                 break;
+
+            // =========================
+            // ===== Stavy konce řádku a souboru =====
+            // =========================
+            case STATE_EOL:
+                // nastavujeme příznak, že byl nalezen EOL
+                find_eol = true;
+                // sledujeme číslo řádku
+                if (current_char == '\n') lexer->line++;
+                // sledujeme komentáře po EOL
+                else if (current_char == '/' && peek_char(file) == '/') {
+                    change_state(file, lexer, &state, STATE_COMMENT,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                }
+                else if (current_char == EOF) {
+                    change_state(file, lexer, &state, STATE_EOF, current_char);
+                }
+                else if (current_char == '/' && peek_char(file) == '*') {
+                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
+                        current_char);
+                    lexer_consume_char(lexer, file);
+                }
+                // pokud další znak není bílý znak,
+                // vrátíme token EOL a znak ponecháme pro další token
+                else if (!is_whitespace(current_char)) {
+                    set_single_token(lexer, TOKEN_EOL, '\n');
+                    lexer_unconsume_char(lexer, file, current_char);
+                    return;
+                }
+                break;
+
+            case STATE_EOF:
+                set_single_token(lexer, TOKEN_EOF, EOF);
+                return;
+            default:
+                // Chyba: neznámý stav
+                lexer_error(lexer, LEXER_ERROR, "Unknown state in lexer FSM");
             }
-            set_single_token(lexer, TOKEN_GREATER, current_char);
-            return;
-        case STATE_EQUAL_GREATER:
-            set_multi_token(lexer, TOKEN_EQUAL_GREATER, file, strlen(">="));
-            return;
-        case STATE_OPEN_BRACE:
-            set_single_token(lexer, TOKEN_OPEN_BRACE, current_char);
-            return;
-        case STATE_CLOSE_BRACE:
-            set_single_token(lexer, TOKEN_CLOSE_BRACE, current_char);
-            return;
-        case STATE_OPEN_PAREN:
-            set_single_token(lexer, TOKEN_OPEN_PAREN, current_char);
-            return;
-        case STATE_CLOSE_PAREN:
-            set_single_token(lexer, TOKEN_CLOSE_PAREN, current_char);
-            return;
-        case STATE_EOF:
-            // Если переход был из однострочного комментария
-            set_single_token(lexer, TOKEN_EOF, EOF);
-            return;
-        default:
-            // Ошибка: неизвестное состояние
-            lexer_error(lexer, LEXER_ERROR, "Unknown state in lexer FSM");
         }
-    }
-    // Этот код никогда не будет достигнут
+    // Pokud jsme někde v kódu vyskakovali z cyklu bez návratu,
+    // je to neočekávané chování
     lexer_error(lexer, LEXER_ERROR, "Lexer exited unexpectedly");
 }

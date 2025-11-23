@@ -1,0 +1,10 @@
+Input:
+"""This is a
+multiline
+string"""
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: This is a
+multiline
+string, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

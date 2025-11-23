@@ -1,0 +1,1 @@
+while (i < count) { i = i + 1 }

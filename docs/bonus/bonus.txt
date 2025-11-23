@@ -1,0 +1,164 @@
+=========================================================
+FUNEXP (+1,5 bodu) Volání funkce může být součástí výrazu. Výraz může být parametrem ve
+volání funkce.
+=========================================================
+|                                                        |
+|                                                        |
+----------------------------------------------------------
+Теперь в функции можно использовать выражения
+До этого нельзя было
+a = call(2+3, 3+4, "str", 5.0) - можно в расширении 
+a = call(<expression>, <expression>...)
+----------------------------------------------------------
+
+
+=========================================================
+EXTSTAT (+0,25 bodu) Podporujte složený příkaz definice lokální proměnné s přiřazením hodnoty nebo voláním funkce; a příkaz návratu z funkce bez uvedení výrazu:
+var idl = výraz
+var idl = id_funkce(seznam_vstupních_parametrů)
+var idl = id_fce_getter
+return
+V případě definice s přiřazením hodnoty se výraz na pravé straně vyhodnotí ještě před vznikem proměnné v aktuálním rozsahu platnosti:
+var x = 10
+{ // blok tvori novy rozsah platnosti
+var x = x * 2 // pouzije dosud platne x
+// hodnota x zde bude 20
+}
+=========================================================
+|                                                        |
+|                                                        |                                                     |
+----------------------------------------------------------
+теперь можно делать
+var a = <expression>
+например 
+var a = 5
+var a = 5+5
+так в обычном коде нельзя было делать
+
+теперь можно делать
+var a = func(2,3)
+так в обычном коде нельзя было делать
+
+и можно делать
+var a = func_getter
+так в обычном коде нельзя было делать
+
+Если была декларация перед блоком, то возьмёт первое где было объявлено
+var x = 10
+{
+var x = x * 2 // возьмёт внешнее x = 10
+// здесь x будет 20
+}
+----------------------------------------------------------
+
+
+
+=========================================================
+EXTFUN (+0,1 bodu) Podporujte samostatně stojící příkaz volání funkce (tj. bez přiřazení návratové hodnoty do proměnné):
+id_funkce(seznam_vstupních_parametrů)
+Není nutné podporovat samostatně stojící funkce typu statický getter.
+=========================================================
+|                                                        |
+|                                                        |
+---------------------------------------------------------
+теперь можно делать
+func(2,3)
+так в обычном коде нельзя было делать только с присвоением
+-----------------------------------------------------------
+
+=========================================================
+BOOLTHEN (+1,0 bodu) Podpora typu Bool, booleovských hodnot true a false, booleovských výrazů včetně kulatých závorek. Podporujte přiřazování výsledku booleovského vý25
+razu do proměnné. Podporujte negační unární operátor !. Pravdivostní hodnoty lze porovnávat jen operátory == a !=.
+Podporujte také booleovské operátory && a ||, jejichž priorita, asociativita i sémantika
+odpovídá jazyku Wren. (Pozorně nastudujte jejich sémantiku – povšimněte si, že nepracují
+pouze s hodnotami typu Bool!)
+Podporujte také zkrácený podmíněný příkaz (bez části else) a rozšířený podmíněný příkaz
+if – else if – else.
+Hodnoty typu Bool podporujte také ve vestavěných funkcích Ifj.write a Ifj.str. Podporujte také novou vestavěnou funkci Ifj.read_bool pro načítání těchto hodnot (v souladu s chováním instrukce READ rozpoznává pouze řetězce true a false, jinak vrací
+null).
+=========================================================
+|                                                        |
+|                                                        |
+----------------------------------------------------------
+теперь можно использовать тип Bool
+----------------------------------------------------------
+
+
+=========================================================
+CYCLES (+1,0 bodu) Podporujte cyklus for:
+for ( id in výraz_rozsahu ) blok
+Výraz_rozsahu je zde výraz, který obsahuje právě jeden výskyt operátoru exkluzivního rozsahu ’...’ nebo operátoru inkluzivního rozsahu ’..’. Tyto operátory mají prioritu a asociativitu odpovídající jazyku Wren. Na levé i pravé straně výrazu musí být celočíselná hodnota
+typu Num (jinak chyba 6 / 26). Není nutné, aby bylo možné výsledek operátoru rozsahu uložit do proměnné (v jazyce Wren použitím operátoru vzniká hodnota typu Range – zde to
+můžete implementovat obdobně nebo úplně jinak).
+Dále v cyklu typu for i while podporujte klíčová slova break a continue
+=========================================================
+|                                                        |
+|                                                        |
+----------------------------------------------------------
+теперь можно использовать цикл for
+----------------------------------------------------------
+
+
+=========================================================
+OPERATORS (+0,25 bodu) Podporujte unární operátor - (unární mínus), vč. možnosti používat záporné číselné literály. Podporujte ternární operátor ?: s běžnou sémantikou (odpovídající jazyku Wren).
+=========================================================
+|                                                        |
+|                                                        |
+----------------------------------------------------------
+теперь можно использовать унарный минус и тернарный оператор
+например
+a = -5
+----------------------------------------------------------
+
+´==========================================================
+STATICAN (+1,75 bodu) Provádějte statickou analýzu typů ve výrazech s proměnnými nebo
+gettery a při předávání proměnných nebo getterů jako parametrů funkcí. Pokud implementujete i FUNEXP, analýza bude zahrnovat i volání funkcí uvnitř výrazů. Překlad bude končit
+s typovou chybou 6 vždy, pokud je typová kolize ve všech případech nevyhnutelná.
+Kde to je možné, staticky analyzujte také celočíselnost hodnot typu Num. Pokud implementujete i rozšíření FUNEXP nebo BOOLTHEN, můžete volitelně přidat vestavěnou funkci
+Ifj.is_int a informaci o celočíselnosti propagovat do větvení (viz příklad níže).
+26
+V případě funkcí s větvením stačí uvažovat, že funkce může vždy vrátit typ ze všech větví
+(i pokud jsou některé nedosažitelné). Příklad níže pro jednoduchost uvažuje i rozšíření
+EXTSTAT a EXTFUN.
+static poly_fun() { // vraci String nebo Num
+var a = Ifj.read_num()
+if (a > 10) {
+return "retezec"
+} else {
+return a
+}
+}
+static non_poly_fun() { // vzdy vraci Num (ale ne nutne celociselny)
+var b = Ifj.read_num()
+if (b < 20) {
+return b * 2
+} else {
+return b
+}
+}
+var poly_var = poly_fun() // muze byt String nebo Num
+var non_poly_var = non_poly_fun() // jednoznacne Num
+var x = 10 + poly_var // neni chyba prekladu (muze byt za behu)
+var y = "ahoj" + poly_var // neni chyba prekladu (muze byt za behu)
+var z = "nelze" + non_poly_var // je chyba prekladu!
+var u = 15 * 10.8 + 49
+var v = "ahoj" + " svete"
+var w = u + v // je chyba prekladu!
+Ifj.ord("ahoj", u) // chyba prekladu - v "u" urcite neni cele cislo
+Ifj.ord("ahoj", non_poly_var) // neni chyba prekladu
+// Pro odvazne (takto vyzaduje FUNEXP):
+static definitely_not_int() {
+var c = Ifj.read_num()
+if (Ifj.is_int(c)) {
+return 0.123
+} else {
+return c
+}
+}
+Ifj.ord("ahoj", definitely_not_int()) // chyba prekladu
+=========================================================
+|                                                        |
+|                                                        |
+----------------------------------------------------------
+теперь можно делать статический анализ типов
+----------------------------------------------------------

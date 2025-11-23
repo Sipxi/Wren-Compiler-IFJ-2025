@@ -1,0 +1,7 @@
+Input:
+"hello" a  
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: hello, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: a, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -5,67 +5,67 @@ INCLUDES = -Iinclude
 
 # Directories
 SRCDIR = src
-INCDIR = include
 OBJDIR = obj
 
-# Source files (excluding main.c and test.c - they have their own main functions)
-LIB_SOURCES = $(filter-out $(SRCDIR)/main.c $(SRCDIR)/test.c, $(wildcard $(SRCDIR)/*.c))
-LIB_OBJECTS = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+# Detect all .c files
+ALL_SOURCES = $(wildcard $(SRCDIR)/*.c)
 
-# Main program files
+# Exclude these (each has its own main)
 MAIN_SOURCE = $(SRCDIR)/main.c
-MAIN_OBJECT = $(OBJDIR)/main.o
-
-# Test program files
 TEST_SOURCE = $(SRCDIR)/test.c
-TEST_OBJECT = $(OBJDIR)/test.o
 
-# Target executables
+LIB_SOURCES = $(filter-out $(MAIN_SOURCE) $(TEST_SOURCE), $(ALL_SOURCES))
+
+# Object files
+LIB_OBJECTS  = $(LIB_SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+MAIN_OBJECT  = $(MAIN_SOURCE:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+TEST_OBJECT  = $(TEST_SOURCE:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
+
+# Executables
 MAIN_TARGET = ifj_compiler
 TEST_TARGET = test_playground
 
-# Default target - compile everything
+# Default target
 all: $(MAIN_TARGET) $(TEST_TARGET)
 
-# Create main executable
+# Main binary
 $(MAIN_TARGET): $(LIB_OBJECTS) $(MAIN_OBJECT)
 	$(CC) $^ -o $@
 
-# Create test executable
+# Test binary
 $(TEST_TARGET): $(LIB_OBJECTS) $(TEST_OBJECT)
 	$(CC) $^ -o $@
 
-# Compile source files to object files
+# Generic rule for object files
 $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-# Create obj directory if it doesn't exist
+# Create object dir
 $(OBJDIR):
 	mkdir -p $(OBJDIR)
 
-# Clean build files
-clean:
-	rm -rf $(OBJDIR) $(MAIN_TARGET) $(TEST_TARGET)
+# --- Additional target you wanted ---
+compile-test: $(LIB_OBJECTS) $(TEST_OBJECT)
+	$(CC) $(LIB_OBJECTS) $(TEST_OBJECT) -o test_playground
 
-# Run the main program
+# Clean
+clean:
+	rm -rf $(OBJDIR) $(MAIN_TARGET) $(TEST_TARGET) test_playground
+
+# Run commands
 run: $(MAIN_TARGET)
 	@./$(MAIN_TARGET) < example.IFJ25 > code.out
 
 run-valgrind: $(MAIN_TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(MAIN_TARGET) < example.IFJ25
 
-# Run the test playground
 test-pg: $(TEST_TARGET)
 	./$(TEST_TARGET)
 
-# Run the test playground with valgrind
 test-pg-valgrind: $(TEST_TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(TEST_TARGET)
 
-# Build the compiler binary
-build: $(LIB_OBJECTS) $(MAIN_OBJECT)
-	$(CC) $^ -o ifj_compiler
+# Rebuild compiler
+build: $(MAIN_TARGET)
 
-
-# Phony targets
-.PHONY: all clean run test-pg test-pg-valgrind
+.PHONY: all clean run test-pg test-pg-valgrind build compile-test

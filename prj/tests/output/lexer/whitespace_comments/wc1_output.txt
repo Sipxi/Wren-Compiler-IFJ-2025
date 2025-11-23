@@ -1,0 +1,12 @@
+Input:
+// This is a single line comment
+var x = 5
+===============================
+Output:
+Token Type: TOKEN_EOL, Data: 
+, Line: 2
+Token Type: TOKEN_KEYWORD, Data: var, Line: 2
+Token Type: TOKEN_IDENTIFIER, Data: x, Line: 2
+Token Type: TOKEN_ASSIGN, Data: =, Line: 2
+Token Type: TOKEN_INT, Data: 5, Line: 2
+Token Type: TOKEN_EOF, Data: ÿ, Line: 2

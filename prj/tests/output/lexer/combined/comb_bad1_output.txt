@@ -1,0 +1,20 @@
+Input:
+class MyClass {
+    var name: String
+}
+===============================
+Output:
+Token Type: TOKEN_KEYWORD, Data: class, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: MyClass, Line: 1
+Token Type: TOKEN_OPEN_BRACE, Data: {, Line: 1
+Token Type: TOKEN_EOL, Data: 
+, Line: 2
+Token Type: TOKEN_KEYWORD, Data: var, Line: 2
+Token Type: TOKEN_IDENTIFIER, Data: name, Line: 2
+
+===============================
+Exit Code: 1
+Standard Error:
+[1;31mLexical error.
+Error code: 1
+Unknown character encountered at line 2, position 30[0m

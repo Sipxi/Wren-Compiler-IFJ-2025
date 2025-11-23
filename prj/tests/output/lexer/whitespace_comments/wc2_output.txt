@@ -1,0 +1,13 @@
+Input:
+/* This is a
+   block comment */
+var y = 10
+===============================
+Output:
+Token Type: TOKEN_EOL, Data: 
+, Line: 3
+Token Type: TOKEN_KEYWORD, Data: var, Line: 3
+Token Type: TOKEN_IDENTIFIER, Data: y, Line: 3
+Token Type: TOKEN_ASSIGN, Data: =, Line: 3
+Token Type: TOKEN_INT, Data: 10, Line: 3
+Token Type: TOKEN_EOF, Data: ÿ, Line: 3

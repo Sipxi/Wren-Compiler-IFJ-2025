@@ -1,0 +1,6 @@
+Input:
+__global
+===============================
+Output:
+Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __global, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1
