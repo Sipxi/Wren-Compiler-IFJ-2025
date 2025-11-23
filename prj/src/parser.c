@@ -130,20 +130,12 @@ static NodeType token_to_node(Token token);
 static bool is_term(Token token);
 
 /**
- * @brief Пропускает один токен EOL, если он есть
+ * @brief Пропускает токен EOL, если он есть
  * 
  * @param lexer Указатель на лексер
  * @param file Указатель на файл
  */
-static void skip_one_EOL(Lexer *lexer, FILE *file);
-
-/**
- * @brief Пропускает несколько токенов EOL, если они есть
- * 
- * @param lexer Указатель на лексер
- * @param file Указатель на файл
- */
-static void skip_multiple_EOL(Lexer *lexer, FILE *file);
+static void skip_EOL(Lexer *lexer, FILE *file);
 
 /**
  * @brief Форматирует полное имя встроенной функции Ifj.что-то
@@ -153,6 +145,15 @@ static void skip_multiple_EOL(Lexer *lexer, FILE *file);
  * @param buffer_size Размер буфера
  */
 static void format_full_function_name(Token identifier, char *output_buffer, size_t buffer_size);
+
+/**
+ * @brief Обрабатывает идентификатор в присваивании
+ * 
+ * @param lexer Указатель на лексер
+ * @param file Указатель на файл
+ * @param block_node Узел блока, куда будет добавлено присваивание
+ */
+static void handle_identifier (Lexer *lexer, FILE *file, AstNode *block_node);
 
 /**
  * @brief Обрабатывает вызов встроенной функции Ifj.что-то
@@ -245,14 +246,8 @@ static bool is_builtin(const char *name) {
     return false;
 }
 
-static void skip_one_EOL(Lexer *lexer, FILE *file) {
+static void skip_EOL(Lexer *lexer, FILE *file) {
     if (peek_token(lexer, file).type == TOKEN_EOL) {
-        get_token(lexer, file); // consume EOL
-    }
-}
-
-static void skip_multiple_EOL(Lexer *lexer, FILE *file) {
-    while (peek_token(lexer, file).type == TOKEN_EOL) {
         get_token(lexer, file); // consume EOL
     }
 }
@@ -261,12 +256,36 @@ static void format_full_function_name(Token identifier, char *output_buffer, siz
     snprintf(output_buffer, buffer_size, "Ifj.%s", identifier.data);
 }
 
+static void handle_identifier (Lexer *lexer, FILE *file, AstNode *block_node) {
+    Token identifier = peek_token(lexer, file);
+    if (peek_next_token(lexer, file).type == TOKEN_ASSIGN) {
+        // создаем узел присваивания
+        AstNode *assignment_node = ast_node_create(NODE_ASSIGNMENT, peek_next_token(lexer, file).line);
+        ast_node_add_child(block_node, assignment_node);
+        // создаем узел идентификатора для левой части
+        AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier.data);
+        ast_node_add_child(assignment_node, id_node);
+        
+        get_token(lexer, file); // consume identifier
+        get_token(lexer, file); // consume '='
+
+        // обрабатываем правую часть выражения
+        right_side_expression(lexer, file, assignment_node);
+
+    } else {
+        printf("Expected '=' after identifier in assignment.\n");
+        get_token(lexer, file); // consume identifier token
+        get_token(lexer, file); // consume invalid token
+        exit(SYNTAX_ERROR);
+    }
+}
+
 static void handle_builtin_call(Lexer *lexer, FILE *file, AstNode *assignment_node) {
     get_token(lexer, file); // consume 'Ifj' keyword
     if (peek_token(lexer, file).type == TOKEN_DOT) {
         get_token(lexer, file); // consume '.'
 
-        skip_one_EOL(lexer, file);
+        skip_EOL(lexer, file);
         Token current_token = peek_token(lexer, file);
         // Проверяем, что это действительно встроенная функция
         if (!is_builtin(current_token.data)) {
@@ -375,7 +394,7 @@ static void handle_parser_expression(Lexer *lexer, FILE *file, AstNode *assignme
 static AstNode *handle_fun_call_params(Lexer *lexer, FILE *file) {
     // Создаем узел списка аргументов
     AstNode *arg_list = ast_node_create(NODE_ARGUMENT_LIST, peek_token(lexer, file).line);
-    skip_one_EOL(lexer, file);
+    skip_EOL(lexer, file);
     Token current_token = peek_token(lexer, file);
     // Проверяем есть ли термы
     if (is_term(current_token)) {
@@ -388,11 +407,10 @@ static AstNode *handle_fun_call_params(Lexer *lexer, FILE *file) {
         get_token(lexer, file); // consume parameter
         // Добавляем первый терм в список аргументов
         ast_node_add_child(arg_list, leaf_node);
-        skip_one_EOL(lexer, file);
         // Последующие термы через запятую
         while (peek_token(lexer, file).type == TOKEN_COMMA) {
             get_token(lexer, file); // consume ','   
-            skip_one_EOL(lexer, file);
+            skip_EOL(lexer, file);
             Token current_token = peek_token(lexer, file);
             if (is_term(current_token) == false) {
                 printf("Expected parameter identifier after ','.\n");
@@ -408,6 +426,7 @@ static AstNode *handle_fun_call_params(Lexer *lexer, FILE *file) {
             ast_node_add_child(arg_list, leaf_node);
         }
     }
+    skip_EOL(lexer, file);
     return arg_list;
 }
 
@@ -440,30 +459,19 @@ static void right_side_expression(Lexer *lexer, FILE *file, AstNode *assignment_
 
 static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
     switch (peek_token(lexer, file).type) {
-        // вместо 
-    case TOKEN_IDENTIFIER:
     case TOKEN_GLOBAL_IDENTIFIER: {
-        Token identifier = peek_token(lexer, file);
-        if (peek_next_token(lexer, file).type == TOKEN_ASSIGN) {
-            // создаем узел присваивания
-            AstNode *assignment_node = ast_node_create(NODE_ASSIGNMENT, peek_next_token(lexer, file).line);
-            ast_node_add_child(block_node, assignment_node);
-            // создаем узел идентификатора для левой части
-            AstNode *id_node = ast_new_id_node(NODE_ID, identifier.line, identifier.data);
-            ast_node_add_child(assignment_node, id_node);
-            
-            get_token(lexer, file); // consume identifier
-            get_token(lexer, file); // consume '='
-
-            // обрабатываем правую часть выражения
-            right_side_expression(lexer, file, assignment_node);
-
-        } else {
-            printf("Expected '=' after identifier in assignment.\n");
-            get_token(lexer, file); // consume identifier token
-            get_token(lexer, file); // consume invalid token
-            exit(SYNTAX_ERROR);
+        if (peek_next_token(lexer, file).type == TOKEN_EOL) {
+            AstNode *global_id_node = ast_new_id_node(NODE_ID, peek_token(lexer, file).line, peek_token(lexer, file).data);
+            ast_node_add_child(block_node, global_id_node);
+            get_token(lexer, file); // consume global identifier
+            get_token(lexer, file); // consume EOL
+            break;
         }
+        handle_identifier(lexer, file, block_node);
+        break;
+    }
+    case TOKEN_IDENTIFIER: {
+        handle_identifier(lexer, file, block_node);
         break;
     }
     case TOKEN_KEYWORD:
@@ -473,17 +481,17 @@ static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
             ast_node_add_child(block_node, return_node);
             get_token(lexer, file); // consume 'return' keyword
 
-            // Пустой return
-            if (peek_token(lexer, file).type == TOKEN_EOL) {
-                get_token(lexer, file); // consume EOL
-                break;
-            }
+            //? Пустой return
+            // if (peek_token(lexer, file).type == TOKEN_EOL) {
+            //     get_token(lexer, file); // consume EOL
+            //     break;
+            // }
 
             // return expression
             handle_parser_expression(lexer, file, return_node);
             break;
         }
-        if (strcmp(peek_token(lexer, file).data, "if") == 0) {
+        else if (strcmp(peek_token(lexer, file).data, "if") == 0) {
             
             AstNode *if_node = ast_node_create(NODE_IF, peek_token(lexer, file).line);
             ast_node_add_child(block_node, if_node);
@@ -516,10 +524,16 @@ static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
                 
                 // обработка else блока
                 function_block(lexer, file, if_node);
+                if (peek_token(lexer, file).type != TOKEN_EOL) {
+                    printf("Expected end of line after 'else' block.\n");
+                    get_token(lexer, file); // consume invalid token
+                    exit(SYNTAX_ERROR);
+                }
+                get_token(lexer, file); // consume EOL
             }
             break;
         }
-        if (strcmp(peek_token(lexer, file).data, "while") == 0) {
+        else if (strcmp(peek_token(lexer, file).data, "while") == 0) {
             
             AstNode *while_node = ast_node_create(NODE_WHILE, peek_token(lexer, file).line);
             ast_node_add_child(block_node, while_node);
@@ -539,13 +553,20 @@ static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
             
             // обработка while блока
             function_block(lexer, file, while_node);
+            if (peek_token(lexer, file).type != TOKEN_EOL) {
+                printf("Expected end of line after 'while' block.\n");
+                get_token(lexer, file); // consume invalid token
+                exit(SYNTAX_ERROR);
+            }
+            get_token(lexer, file); // consume EOL
             break;
         }
-        if (strcmp(peek_token(lexer, file).data, "var") == 0) {
+        else if (strcmp(peek_token(lexer, file).data, "var") == 0) {
             get_token(lexer, file); // consume 'var' keyword
 
             // Проверяем чтобы была id
-            if (peek_token(lexer, file).type != TOKEN_IDENTIFIER) {
+            if (peek_token(lexer, file).type != TOKEN_IDENTIFIER && 
+                peek_token(lexer, file).type != TOKEN_GLOBAL_IDENTIFIER) {
                 printf("Expected variable name after 'var' keyword.\n");
                 get_token(lexer, file); // consume invalid token
                 exit(SYNTAX_ERROR);
@@ -564,8 +585,12 @@ static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
             get_token(lexer, file); // consume EOL
             break;
         }
+        else {
+            printf("Unexpected keyword in function body: %s\n", peek_token(lexer, file).data);
+            get_token(lexer, file); // consume invalid token
+            exit(SYNTAX_ERROR);
+        }
         break;
-            
     case TOKEN_EOL:
         get_token(lexer, file); // consume EOL
         break;
@@ -574,12 +599,19 @@ static void handle_blok_body(Lexer *lexer, FILE *file, AstNode *block_node) {
     case TOKEN_OPEN_BRACE:
         // Начало вложенного блока
         function_block(lexer, file, block_node);
+        // После вложенного блока должен быть EOL
+        if (peek_token(lexer, file).type != TOKEN_EOL) {
+            printf("Expected end of line after nested block.\n");
+            get_token(lexer, file); // consume invalid token
+            exit(SYNTAX_ERROR);
+        }
+        get_token(lexer, file); // consume EOL
         break;
     case TOKEN_EOF:
         printf("Unexpected end of file inside function body.\n");
         exit(SYNTAX_ERROR);
     default:
-        return;
+        exit(SYNTAX_ERROR);
     }
 }
 
@@ -590,7 +622,7 @@ static void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
         exit(SYNTAX_ERROR);
     }
     get_token(lexer, file); // consume '{'
-    //! расширение EOL после {
+    //? расширение EOL после {
     if (peek_token(lexer, file).type != TOKEN_EOL) {
         printf("Expected end of line after '{' in function body.\n");
         get_token(lexer, file); // consume invalid token
@@ -619,7 +651,7 @@ static void function_block(Lexer *lexer, FILE *file, AstNode *func_node) {
 
 static void function_params(Lexer *lexer, FILE *file, AstNode *param_list) {
     // Условие задания, после скобки может быть EOL (они не проверяют, но пусть будет)
-    skip_one_EOL(lexer, file);
+    skip_EOL(lexer, file);
     // Здесь можно добавить обработку параметров функции
     if (peek_token(lexer, file).type == TOKEN_IDENTIFIER) {
         get_token(lexer, file); // consume parameter identifier
@@ -762,7 +794,7 @@ static void parser_prolog(Lexer *lexer, FILE *file) {
         get_token(lexer, file); // consume invalid token
         exit(SYNTAX_ERROR);
     }
-    skip_multiple_EOL(lexer, file);
+    skip_EOL(lexer, file);
 
     if (peek_token(lexer, file).type != TOKEN_KEYWORD ||
         strcmp(peek_token(lexer, file).data, "import") != 0) {
@@ -846,8 +878,6 @@ static void parser_kostra(Lexer *lexer, FILE *file) {
         parser_function_list(lexer, file);
     }
     get_token(lexer, file);
-
-    skip_multiple_EOL(lexer, file);
 
     // Проверяем конец файла
     if (peek_token(lexer, file).type != TOKEN_EOF) {
