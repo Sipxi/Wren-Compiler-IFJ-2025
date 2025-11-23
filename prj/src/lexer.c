@@ -78,13 +78,11 @@ typedef enum {
     STATE_CLOSING_QUOT,        // """example"                   * Přechodový stav pro zavírací uvozovku
     STATE_SECOND_CLOSING_QUOT, // """example""                  * Přechodový stav pro druhou zavírací uvozovku
 
-
     // Komentáře
     STATE_COMMENT,              // Komentář na jeden řádek
     STATE_START_BLOCK_COMMENT,  // Začátek blokového komentáře  * Přechodový stav
     STATE_BODY_BLOCK_COMMENT,   // Tělo blokového komentáře     * Přechodový stav
     STATE_END_BLOCK_COMMENT,    // Konec blokového komentáře 
-
 
     // Speciální stavy
     STATE_START,               // Startovní stav
@@ -99,7 +97,6 @@ typedef enum {
 
 /**
  * @brief Zapiše do buffer lexéru další token ze zdrojového kódu.
- *
  *
  * @param lexer Ukazatel na strukturu Lexer.
  * @param file  Ukazatel na soubor obsahující zdrojový kód.
@@ -302,7 +299,6 @@ static void shift_buffer(Lexer *lexer);
  */
 static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len);
 
-
 /**
  * @brief Zapiše do char řetězce obsah mezi uvozovkami, oříznutý o uvozovky.
  * 
@@ -333,6 +329,7 @@ static bool is_keyword(const char *str) {
     const char *keywords[] = { "class",  "if",  "else",  "is",     "null",
                               "return", "var", "while", "Ifj",    "static",
                               "import", "for", "Num",   "String", "Null" };
+
     int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
     for (int i = 0; i < num_keywords; i++) {
         if (strcmp(str, keywords[i]) == 0) {
@@ -382,8 +379,6 @@ static void write_str(FILE *file, int count, char **str) {
     (*str)[count] = '\0';
 }
 
-
-
 static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str) {
     // vrátíme se zpět na začátek tokenu (včetně úvodních uvozovek)
     if (fseek(file, -total_chars, SEEK_CUR) != 0) {
@@ -420,13 +415,11 @@ static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char *
     fseek(file, quote_len, SEEK_CUR);
 }
 
-
 static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len) {
     lexer->current_token->type = TOKEN_STRING;
     lexer->current_token->line = lexer->line;
     write_str_trimmed(file, total_chars, quote_len, &lexer->current_token->data);
 }
-
 
 static char peek_char(FILE *file) {
     int character = fgetc(file);
@@ -527,6 +520,7 @@ Lexer *lexer_init() {
         lexer_error(NULL, INTERNAL_ERROR,
             "Failed to allocate memory for Lexer");
     }
+    
     // Inicializovat pozici a číslo řádku
     // Začít pozici od 1 a číslo řádku od 1
     lexer->position = 1;
