@@ -30,9 +30,10 @@ bool char_to_double(const char *str, double *out_value);
  * @brief Создает листовой узел AST из токена
  * 
  * @param token Входной токен
+ * @param node_type_term Тип узла AST
  * @return AstNode* Указатель на созданный узел AST
  */
-AstNode *create_leaf_node (Token token);
+AstNode *create_leaf_node (Token token, NodeType node_type_term);
 
 
 

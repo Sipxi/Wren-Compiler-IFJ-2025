@@ -122,11 +122,10 @@ static NodeType grammar_symbol_to_node_type(GrammarSymbol symbol) {
     }
 }
 
-AstNode *create_leaf_node (Token token) {
+AstNode *create_leaf_node (Token token, NodeType node_type_term) {
     // Создаем листовой узел AST в зависимости от типа токена
     AstNode *leaf_node;
-    // Определяем тип узла AST
-    NodeType node_type_term = token_type_to_node(token);
+
     // Создаем соответствующий узел AST
     if (node_type_term == NODE_ID) {
         leaf_node = ast_new_id_node(node_type_term, token.line, token.data);
@@ -270,7 +269,9 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
             // Определяем символ грамматики
             if (input_index == T_TERM) {
                 // Создаем AST узел для терма
-                AstNode *leaf_node = create_leaf_node(current_token);
+                // Определяем тип узла AST
+                NodeType node_type_term = token_type_to_node(current_token);
+                AstNode *leaf_node = create_leaf_node(current_token, node_type_term);
                 if (leaf_node == NULL) {
                     exit(INTERNAL_ERROR); // Ошибка аллокации
                 }
