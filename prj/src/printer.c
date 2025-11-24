@@ -165,7 +165,15 @@ static void ast_print_recursive(AstNode* node, int indent_level) {
     for (int i = 0; i < indent_level; ++i) {
         printf("  ");
     }
-    printf("%s (line %d)\n", node_type_to_string(node->type), node->line_number);
+    if (node->type == NODE_ID) {
+        printf("%s: {%s} (line %d)\n", node_type_to_string(node->type), node->data.identifier, node->line_number);
+    } else if (node->type == NODE_LITERAL_NUM) {
+        printf("%s: {%g} (line %d)\n", node_type_to_string(node->type), node->data.literal_num, node->line_number);
+    } else if (node->type == NODE_LITERAL_STRING) {
+        printf("%s: \"%s\" (line %d)\n", node_type_to_string(node->type), node->data.literal_string, node->line_number);
+    } else {
+        printf("%s (line %d)\n", node_type_to_string(node->type), node->line_number);
+    }
     AstNode* child = node->child;
     while (child != NULL) {
         ast_print_recursive(child, indent_level + 1);
