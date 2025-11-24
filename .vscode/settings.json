@@ -18,6 +18,7 @@
         "new": "c",
         "functional": "c",
         "tac.h": "c",
-        "utils.h": "c"
+        "utils.h": "c",
+        "string.h": "c"
     }
 }
