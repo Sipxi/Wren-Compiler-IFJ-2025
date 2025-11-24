@@ -9,12 +9,10 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "symtable.h"
 #include <string.h>
+#include "symtable.h"
 #include "tac.h"
 #include "utils.h"
-
-#include <stdio.h>
 
 // ? Потом если не нужно удалить
 typedef enum {

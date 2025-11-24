@@ -140,6 +140,17 @@ static void gen_defvar_str(char *frame, char *var);
 static void gen_move(Operand *dest, Operand *src);
 
 /**
+ * @brief Generuje instrukci MOVE pro přiřazení hodnoty z charů.
+ * 
+ * @param dest_frame Rámec cílového operandu (GF nebo LF).
+ * @param dest Cílový operánd pro přiřazení.
+ * @param src_frame Rámec zdrojového operandu (GF nebo LF).
+ * @param src Zdrojový operánd pro přiřazení.
+ */
+static void gen_move_str(char* dest_frame, char *dest, char* src_frame, char *src);
+
+
+/**
  * @brief Generuje instrukci pro předání parametru funkci.
  * 
  * @param instructions Seznam TAC instrukcí celého programu.
@@ -262,8 +273,6 @@ char *get_frame(Operand *op){
 
 
 static void gen_init(Symtable *table){
-    char *global_var_name = NULL;   // Promenná pro název globální proměnné
-
     // Hlavicka IFJcode25
     fprintf(stdout, ".IFJcode25\n");
 
@@ -282,7 +291,7 @@ static void gen_init(Symtable *table){
         TableEntry* entry = &table->entries[i];     
         if (entry->status == SLOT_OCCUPIED) {
             if (entry->data->kind == KIND_VAR) {
-                gen_defvar(entry->data->unique_name);
+                gen_defvar_str("GF", entry->data->unique_name);
                 gen_move_str("GF", entry->data->unique_name, "nil", "nil");
             }
         }
@@ -329,7 +338,7 @@ static void gen_return(TacInstruction *instr){
     // Pokud je návratová hodnota, vložíme ji do LF@ret
     if (instr->result != NULL) {
         gen_move_str("LF", "ret", get_frame(instr->result),
-                    instr->result);
+                    instr->result->data.symbol_entry->data->unique_name);
     }
 
     // Provádíme pop frame pro návrat z funkce
@@ -911,7 +920,7 @@ static void gen_function_begin(TACDLList  *instructions){
 
 static void gen_label_from_instr(TACDLList  *instructions){
     TacInstruction *instr;  // aktuální instrukce
-    instr->operation_code = OP_LABEL;
+    TACDLL_GetValue(instructions, &instr);
 
     // Zkopírujeme seznam instrukcí pro pohyb bez ovlivnění původního
     TACDLList instructions_copy = *instructions;
@@ -1163,7 +1172,7 @@ static void gen_substring(TACDLList *instructions) {
     gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
 
-    gen(label_check_23_arg);
+    gen_label(label_check_23_arg);
     fprintf(stdout, "ADD GF@$tmp_type_2 int@1\n");
     
     // Kontrola typu
@@ -1225,7 +1234,7 @@ static void gen_substring(TACDLList *instructions) {
     free(label_check_23_arg);
     free(label_while);
     free(label_end);
-    free(label_zero_arg);
+    free(label_check_with_len);
 }
 
 static void gen_strcmp(TACDLList *instructions){
