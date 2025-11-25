@@ -78,13 +78,11 @@ typedef enum {
     STATE_CLOSING_QUOT,        // """example"                   * Přechodový stav pro zavírací uvozovku
     STATE_SECOND_CLOSING_QUOT, // """example""                  * Přechodový stav pro druhou zavírací uvozovku
 
-
     // Komentáře
     STATE_COMMENT,              // Komentář na jeden řádek
     STATE_START_BLOCK_COMMENT,  // Začátek blokového komentáře  * Přechodový stav
     STATE_BODY_BLOCK_COMMENT,   // Tělo blokového komentáře     * Přechodový stav
     STATE_END_BLOCK_COMMENT,    // Konec blokového komentáře 
-
 
     // Speciální stavy
     STATE_START,               // Startovní stav
@@ -98,13 +96,22 @@ typedef enum {
 /* ======================================*/
 
 /**
+ * @brief Zpracovává escape sekvenci v řetězci.
+ * 
+ * @param file Ukazatel na soubor obsahující zdrojový kód.
+ * @param chars_read Počet znaků přečtených v rámci řetězce.
+ * @param limit_len Maximální délka řetězce (bez uvozovek).
+ * @return Znak odpovídající escape sekvenci.
+ */
+static char process_escape_sequence(FILE *file, int *chars_read, int limit_len);
+
+/**
  * @brief Zapiše do buffer lexéru další token ze zdrojového kódu.
- *
  *
  * @param lexer Ukazatel na strukturu Lexer.
  * @param file  Ukazatel na soubor obsahující zdrojový kód.
  */
-void scan_token(Lexer *lexer, FILE *file);
+static void scan_token(Lexer *lexer, FILE *file);
 
 /**
  * @brief Kontroluje, zda je znak platným znakem pro identifikátory (písmena
@@ -123,7 +130,6 @@ static bool is_letter(char character);
  *         1 pokud je to víceřádkový komentář
  */
 static int is_comment_start(char current_char, FILE *file);
-
 
 /**
  * @brief Kontroluje, zda je znak číslicí (0-9).
@@ -302,9 +308,10 @@ static void shift_buffer(Lexer *lexer);
  */
 static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len);
 
-
 /**
  * @brief Zapiše do char řetězce obsah mezi uvozovkami, oříznutý o uvozovky.
+ * 
+ * @note Tato funkce také zpracovává escape sekvence v rámci řetězce.
  * 
  * @param lexer Ukazatel na strukturu Lexer.
  * @param file  Ukazatel na soubor obsahující zdrojový kód.
@@ -333,6 +340,7 @@ static bool is_keyword(const char *str) {
     const char *keywords[] = { "class",  "if",  "else",  "is",     "null",
                               "return", "var", "while", "Ifj",    "static",
                               "import", "for", "Num",   "String", "Null" };
+
     int num_keywords = sizeof(keywords) / sizeof(keywords[0]);
     for (int i = 0; i < num_keywords; i++) {
         if (strcmp(str, keywords[i]) == 0) {
@@ -349,6 +357,41 @@ static bool is_whitespace(const char character) {
 static bool is_hex_digit(const char character) {
     return (is_digit(character)) || (character >= 'a' && character <= 'f') ||
         (character >= 'A' && character <= 'F');
+}
+
+static char process_escape_sequence(FILE *file, int *chars_read, int limit_len) {
+    // Již jsme přečetli '\', nyní čteme další znak
+    int escape_char = fgetc(file);
+    (*chars_read)++;
+
+    switch (escape_char) {
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 't': return '\t';
+        case '\\': return '\\';
+        case '"': return '\"';
+        case '\'': return '\''; 
+        case 'x': {
+            // Hexadecimální escape sekvence \xAA
+            char hex_buf[3] = {0};
+
+            // Ověření, zda jsou k dispozici další dva znaky
+            if (*chars_read + 2 > limit_len) {
+                lexer_error(NULL, INTERNAL_ERROR, "Incomplete hex sequence at end of string");
+                return '?';
+            }
+
+            hex_buf[0] = fgetc(file);
+            hex_buf[1] = fgetc(file);
+            (*chars_read) += 2;
+
+            // Převod hexadecimálního řetězce na celé číslo/znak
+            return (char)strtol(hex_buf, NULL, 16);
+        }
+        default:
+            // Pokud je escape sekvence neznámá, obvykle se vrátí znak doslovně
+            return (char)escape_char;
+    }
 }
 
 static void write_str(FILE *file, int count, char **str) {
@@ -382,51 +425,57 @@ static void write_str(FILE *file, int count, char **str) {
     (*str)[count] = '\0';
 }
 
-
-
 static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str) {
-    // vrátíme se zpět na začátek tokenu (včetně úvodních uvozovek)
+    // Seek zpět na začátek řetězce
     if (fseek(file, -total_chars, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to seek back in file");
     }
-
-    // přeskočíme úvodní uvozovky
     if (fseek(file, quote_len, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to skip opening quotes");
     }
 
-    // spočítáme skutečnou délku obsahu
-    int content_len = total_chars - (2 * quote_len);
+    // Spočítat skutečnou délku obsahu a alokovat paměť
+    int raw_content_len = total_chars - (2 * quote_len);
     
-    // alokujeme paměť pro obsah a ukončovací znak
-    char *temp = realloc(*str, content_len + 1);
+    char *temp = realloc(*str, raw_content_len + 1);
     if (temp == NULL) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to allocate memory");
     }
     *str = temp;
 
-    // čteme pouze obsah řetězce
-    for (int i = 0; i < content_len; i++) {
-        int c = fgetc(file);
-        if (c == EOF) {
-            (*str)[i] = '\0';
-            return;
-        }
-        (*str)[i] = (char)c;
-    }
-    (*str)[content_len] = '\0'; // ukončíme řetězec nulovým znakem
+    // Čtení a zpracování
+    int write_index = 0;
+    int chars_read = 0;
 
-    // posuneme ukazatel v souboru za koncové uvozovky
+    while (chars_read < raw_content_len) {
+        int c = fgetc(file);
+        chars_read++;
+
+        if (c == EOF) break;
+
+        // Ověření, zda jde o escape sekvenci
+        if (quote_len == 1 && c == '\\') {
+            // Předat adresu chars_read, aby pomocná funkce mohla inkrementovat
+            // pokud spotřebuje další znaky (například v \xAA)
+            (*str)[write_index++] = process_escape_sequence(file, &chars_read, raw_content_len);
+        } 
+        else {
+            // Normální znak
+            (*str)[write_index++] = (char)c;
+        }
+    }
+
+    (*str)[write_index] = '\0'; // Nulový terminátor
+
+    // Posunout ukazatel souboru za koncové uvozovky
     fseek(file, quote_len, SEEK_CUR);
 }
-
 
 static void set_string_token_trimmed(Lexer *lexer, FILE *file, int total_chars, int quote_len) {
     lexer->current_token->type = TOKEN_STRING;
     lexer->current_token->line = lexer->line;
     write_str_trimmed(file, total_chars, quote_len, &lexer->current_token->data);
 }
-
 
 static char peek_char(FILE *file) {
     int character = fgetc(file);
@@ -527,6 +576,7 @@ Lexer *lexer_init() {
         lexer_error(NULL, INTERNAL_ERROR,
             "Failed to allocate memory for Lexer");
     }
+    
     // Inicializovat pozici a číslo řádku
     // Začít pozici od 1 a číslo řádku od 1
     lexer->position = 1;
