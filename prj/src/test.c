@@ -5,11 +5,6 @@
  * Обновлен для работы с exit() кодами вместо return false/true.
  */
 
-
-#include "lexer.h"
-#include "parser.h"
-#include "optimizer.h"
-#include "codegen.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,8 +15,7 @@
 #include "optimizer.h"        // Наш optimizer.h
 #include "codegen.h"    // Наш codegen.h
 #include "symtable.h"   // Наша таблица символов
-#include "parser.h"     // Наш parser.h
-#include "printer.h"   // Для отладки
+#include "parser.h"   // Наша таблица символов
 
  // --- "Красивый визуал" (ANSI цвета) ---
 #define ANSI_COLOR_GREEN   "\x1b[32m"
@@ -844,43 +838,43 @@ AstNode *create_test_builtin_type_error() {
 /* ==================== ГЛАВНАЯ ФУНКЦИЯ ТЕСТА ======================= */
 /* ================================================================== */
 
-int old_semantics_test() {
-    printf("============================================================\n");
-    printf(" Запуск тестов для Семантического Анализатора (Pass 2)...\n");
-    printf(" (Используются коды выхода вместо булевых значений)\n");
-    printf("============================================================\n");
+// int old_semantics_test() {
+//     printf("============================================================\n");
+//     printf(" Запуск тестов для Семантического Анализатора (Pass 2)...\n");
+//     printf(" (Используются коды выхода вместо булевых значений)\n");
+//     printf("============================================================\n");
 
-    // --- Тесты на Ошибки (ожидаем соответствующие коды ошибок) ---
-    printf(ANSI_COLOR_CYAN "--- Тесты на Ошибки ---\n" ANSI_COLOR_RESET);
+//     // --- Тесты на Ошибки (ожидаем соответствующие коды ошибок) ---
+//     printf(ANSI_COLOR_CYAN "--- Тесты на Ошибки ---\n" ANSI_COLOR_RESET);
     
-    // Ошибки определения (код 3)
-    run_test("Ошибка 3: Использование неопределенной переменной", create_test_undefined_variable_error(), 3);
-    run_test("Ошибка 3: Нет функции main", create_test_no_main_function_error(), 3);
+//     // Ошибки определения (код 3)
+//     run_test("Ошибка 3: Использование неопределенной переменной", create_test_undefined_variable_error(), 3);
+//     run_test("Ошибка 3: Нет функции main", create_test_no_main_function_error(), 3);
     
-    // Ошибки переопределения (код 4)
-    run_test("Ошибка 4: Переопределение переменной в том же скоупе", create_test_redefinition_error(), 4);
+//     // Ошибки переопределения (код 4)
+//     run_test("Ошибка 4: Переопределение переменной в том же скоупе", create_test_redefinition_error(), 4);
     
-    // Ошибки типов встроенных функций (код 5)
-    run_test("Ошибка 5: Неверный тип параметра встроенной функции", create_test_builtin_type_error(), 5);
+//     // Ошибки типов встроенных функций (код 5)
+//     run_test("Ошибка 5: Неверный тип параметра встроенной функции", create_test_builtin_type_error(), 5);
     
-    // Ошибки совместимости типов (код 6)
-    run_test("Ошибка 6: Несовместимые типы в выражении", create_test_type_mismatch_error(), 6);
+//     // Ошибки совместимости типов (код 6)
+//     run_test("Ошибка 6: Несовместимые типы в выражении", create_test_type_mismatch_error(), 6);
 
-    // --- Тесты на Успех (ожидаем код 0) ---
-    printf(ANSI_COLOR_CYAN "\n--- Тесты на Успех (ожидаем код 0) ---\n" ANSI_COLOR_RESET);
-    run_test("Успех: Валидная программа", create_test_valid_program(), 0);
+//     // --- Тесты на Успех (ожидаем код 0) ---
+//     printf(ANSI_COLOR_CYAN "\n--- Тесты на Успех (ожидаем код 0) ---\n" ANSI_COLOR_RESET);
+//     run_test("Успех: Валидная программа", create_test_valid_program(), 0);
 
-    // --- Итоги ---
-    printf("============================================================\n");
-    if (passed_tests == total_tests) {
-        printf(ANSI_COLOR_GREEN "Все %d тестов пройдены успешно!\n" ANSI_COLOR_RESET, total_tests);
-    } else {
-        printf(ANSI_COLOR_RED "Провалено %d из %d тестов.\n" ANSI_COLOR_RESET, total_tests - passed_tests, total_tests);
-    }
-    printf("============================================================\n");
+//     // --- Итоги ---
+//     printf("============================================================\n");
+//     if (passed_tests == total_tests) {
+//         printf(ANSI_COLOR_GREEN "Все %d тестов пройдены успешно!\n" ANSI_COLOR_RESET, total_tests);
+//     } else {
+//         printf(ANSI_COLOR_RED "Провалено %d из %d тестов.\n" ANSI_COLOR_RESET, total_tests - passed_tests, total_tests);
+//     }
+//     printf("============================================================\n");
 
-    return (passed_tests == total_tests) ? 0 : 1;
-}
+//     return (passed_tests == total_tests) ? 0 : 1;
+// }
 
 void test_gen_code(){
     AstNode *root = create_test_valid_overloading();
@@ -948,8 +942,9 @@ int test_lexer(){
     }
     return 0;
 }
-void test_all() {
-    FILE *file = stdin;
+
+void test_all(){
+    FILE *file = fopen("example.IFJ25", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return;
@@ -971,9 +966,8 @@ void test_all() {
     // TACDLL_Dispose(&tac_list);
     // symtable_free(&global_table);
     ast_node_free_recursive(program);
+    return;
 }
-
-
 
 int main() {
 

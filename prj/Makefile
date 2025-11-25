@@ -54,7 +54,7 @@ clean:
 
 # Run commands
 run: $(MAIN_TARGET)
-	@./$(MAIN_TARGET) < example.IFJ25 > code.out
+	@./$(MAIN_TARGET) < example.IFJ25 > code.out && ./ic25int-linux-x86_64 code.out
 
 run-valgrind: $(MAIN_TARGET)
 	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(MAIN_TARGET) < example.IFJ25
