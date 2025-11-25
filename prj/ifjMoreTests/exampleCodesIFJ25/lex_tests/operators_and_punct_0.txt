@@ -1,0 +1,12 @@
+import "ifj25" for Ifj
+class Program {
+static main() {
+var a
+a = (1 + 2) * 3 / 4 - 5
+if (a != 0) {
+__d = Ifj.write("ops")
+} else {
+__d = Ifj.write("ops")
+}
+}
+}
