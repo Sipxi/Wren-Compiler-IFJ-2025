@@ -1,3 +1,4 @@
+// Syntax error: Incomplete ternary operator
 import "ifj25" for Ifj
 class Program {
     static main() {
