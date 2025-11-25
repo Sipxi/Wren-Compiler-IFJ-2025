@@ -1144,8 +1144,33 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
         TableEntry *func_entry = symtable_lookup(&global_table, mangled_name);
 
         if (!func_entry) {
-            fprintf(stderr, "Error 3/5: Undefined function '%s' with %d args (Line %d).\n", name, arity, node->line_number);
-            exit(3);
+            bool found_with_other_arity = false;
+            size_t name_len = strlen(name);
+
+            // Пробегаем по всей глобальной таблице и ищем функцию с тем же именем
+            for (size_t i = 0; i < global_table.capacity; i++) {
+                TableEntry *func = &global_table.entries[i];
+                
+                // Проверяем только занятые слоты с функциями
+                if (func->status == SLOT_OCCUPIED && func->data->kind == KIND_FUNC) {
+                    // Проверяем, начинается ли ключ с "name" + "$"
+                    // Это гарантирует, что мы нашли именно "test$...", а не "testing$..."
+                    if (strncmp(func->key, name, name_len) == 0 && func->key[name_len] == '$') {
+                        found_with_other_arity = true;
+                        break;
+                    }
+                }
+            }
+
+            if (found_with_other_arity) {
+                // Функция есть, но арность не совпала
+                fprintf(stderr, "Semantic Error (Line %d): Function '%s' called with wrong number of arguments (expected another, got %d).\n", node->line_number, name, arity);
+                exit(5); // Ошибка арности
+            } else {
+                // Функции с таким именем вообще нет
+                fprintf(stderr, "Semantic Error (Line %d): Undefined function '%s'.\n", node->line_number, name);
+                exit(3); // Ошибка неопределенной функции
+            }
         }
 
         id_node->table_entry = func_entry;
