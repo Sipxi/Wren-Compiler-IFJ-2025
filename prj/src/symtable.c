@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INITIAL_CAPACITY 16  //! ИЗМЕНИТЬ ПРИ РАБОТЕ НА БОЛЬШЕ(например 64)
+#define INITIAL_CAPACITY 256  //! ИЗМЕНИТЬ ПРИ РАБОТЕ НА БОЛЬШЕ(например 64)
 // "Магическое" число для инициализации хеша DJB2
 #define HASH_NUMBER 5381
 #define LOAD_FACTOR_THRESHOLD 0.5

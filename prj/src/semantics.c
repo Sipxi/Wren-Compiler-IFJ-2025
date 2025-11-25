@@ -193,6 +193,12 @@ bool analyze_semantics(AstNode *root) {
 
     //printf("DEBUG: Step 2a completed. User functions collected.\n");
 
+    // --- ОТЛАДКА: ВЫВОД ТАБЛИЦЫ ПОСЛЕ СБОРА ФУНКЦИЙ ---
+    printf("\n=== GLOBAL TABLE AFTER PASS 2A ===\n");
+    symtable_print(&global_table);
+    printf("==================================\n");
+    // --------------------------------------------------
+
     //* --- ШАГ 2b: Анализ Тел Функций ---
 
     // 1. Снова проходим по всем узлам функций
@@ -548,7 +554,36 @@ static bool analyze_function_body(AstNode *func_node)
     // }
 
     // 8. Если мы дошли сюда без ошибок:
-    func_entry->data->is_defined = true;
+// 8. Финализация (Fix Segfault)
+    
+    // Восстанавливаем имя для поиска заново (чтобы не зависеть от переменных выше)
+    const char *fn_name = func_node->data.identifier;
+    int fn_arity = count_parameters(func_node);
+    char lookup_key[256]; // Используем свое локальное имя переменной
+
+    if (func_node->type == NODE_SETTER_DEF) {
+        sprintf(lookup_key, "%s$setter", fn_name);
+    } else if (func_node->type == NODE_GETTER_DEF) {
+        sprintf(lookup_key, "%s$getter", fn_name);
+    } else {
+        sprintf(lookup_key, "%s$%d", fn_name, fn_arity);
+    }
+
+    // Ищем запись заново, чтобы получить валидный указатель
+    TableEntry *fresh_entry = symtable_lookup(&global_table, lookup_key);
+    
+    if (fresh_entry == NULL) {
+        fprintf(stderr, "Critical Error: Function entry lost in memory during analysis.\n");
+        exit(99); 
+    }
+    
+    // Безопасная запись
+    if (fresh_entry->data) {
+        fresh_entry->data->is_defined = true;
+    } else {
+        fprintf(stderr, "Critical Error: Symbol data is NULL.\n");
+        exit(99);
+    }
 
     // 9. Очищаем стек
     H_Stack_Pop(&stack);
@@ -671,22 +706,7 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
         }
 
 
-// --- ОТЛАДКА ---
-        TableEntry *debug_entry = symtable_lookup(current_table, name);
-        printf("DEBUG VAR_DEF: Looking for name: '%s' (len: %lu) in table: %p\n", 
-               name, (unsigned long)strlen(name), (void*)current_table);
-        
-        if (debug_entry) {
-            printf(" -> FOUND! Key in table: '%s'\n", debug_entry->key);
-        } else {
-            printf(" -> NOT FOUND. Printing table keys:\n");
-            for(size_t i=0; i < current_table->capacity; i++) {
-                 if (current_table->entries[i].status == SLOT_OCCUPIED) {
-                     printf("    Slot %lu: '%s'\n", i, current_table->entries[i].key);
-                 }
-            }
-        }
-        // ----------------
+
 
 
         // 2. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
