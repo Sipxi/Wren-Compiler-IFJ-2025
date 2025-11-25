@@ -923,11 +923,7 @@ void print_token_data(const char *data) {
 
 int test_lexer(){
     // Use stdin for input (supports redirection like: ./test < input.IFJ25)
-    FILE *file = fopen("example.IFJ25", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return 1;
-    }
+    FILE *file = stdin;
 
     Lexer *lexer = lexer_init();
     if (lexer == NULL) {
@@ -981,13 +977,13 @@ void test_all() {
 
 int main() {
 
-    //test_all();
+    test_all();
 
-    FILE *file = fopen("example.IFJ25", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return 0;
-    }
+    // FILE *file = fopen("example.IFJ25", "r");
+    // if (file == NULL) {
+    //     fprintf(stderr, "Error opening file.\n");
+    //     return 0;
+    // }
     // Lexer *lexer = lexer_init();
     // Token token;
 
@@ -1005,13 +1001,13 @@ int main() {
     //     fprintf(stderr, "Error closing file.\n");
     // }
 	// Запускаем парсер, передавая ему стандартный ввод
-    AstNode *program = parser_run(file);
-    if (program == NULL) {
-        fprintf(stderr, "Parsing failed.\n");
-        return 0;
-    }
-    ast_print_debug(program);
-    ast_node_free_recursive(program);
+    // AstNode *program = parser_run(file);
+    // if (program == NULL) {
+    //     fprintf(stderr, "Parsing failed.\n");
+    //     return 0;
+    // }
+    // ast_print_debug(program);
+    // ast_node_free_recursive(program);
 
 
     return 0;

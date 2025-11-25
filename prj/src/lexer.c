@@ -14,6 +14,7 @@
 #include "error_codes.h"
 #include "utils.h"
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -370,27 +371,35 @@ static char process_escape_sequence(FILE *file, int *chars_read, int limit_len) 
         case 't': return '\t';
         case '\\': return '\\';
         case '"': return '\"';
-        case '\'': return '\''; 
         case 'x': {
             // Hexadecimální escape sekvence \xAA
             char hex_buf[3] = {0};
 
-            // Ověření, zda jsou k dispozici další dva znaky
+            // 1. Ověření, zda máme dostatek znaků do limitu
             if (*chars_read + 2 > limit_len) {
-                lexer_error(NULL, INTERNAL_ERROR, "Incomplete hex sequence at end of string");
-                return '?';
+                // Toto nastane spíše na konci souboru/řádku
+                exit(LEXER_ERROR); // Lexikální chyba
             }
 
-            hex_buf[0] = fgetc(file);
-            hex_buf[1] = fgetc(file);
+            int h1 = fgetc(file);
+            int h2 = fgetc(file);
             (*chars_read) += 2;
 
-            // Převod hexadecimálního řetězce na celé číslo/znak
-            return (char)strtol(hex_buf, NULL, 16);
+            // Ověření, zda jsou to skutečně hexadecimální číslice 
+            if (!isxdigit(h1) || !isxdigit(h2)) {
+                // Pokud to nejsou hex čísla (např. \xZZ), je to lexikální chyba
+                exit(LEXER_ERROR); // Lexikální chyba
+            }
+
+            hex_buf[0] = (char)h1;
+            hex_buf[1] = (char)h2;
+
+            // Převod na číslo - vrátíme jako int (0-255), abychom se vyhnuli znaménku
+            return (int)strtol(hex_buf, NULL, 16);
         }
         default:
-            // Pokud je escape sekvence neznámá, obvykle se vrátí znak doslovně
-            return (char)escape_char;
+            // Neznámá escape sekvence
+            exit(LEXER_ERROR); // Lexikální chyba
     }
 }
 
@@ -452,6 +461,11 @@ static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char *
         chars_read++;
 
         if (c == EOF) break;
+        //! Quick fix for non-printable characters
+        if (c <= 31){
+            fprintf(stderr, "Lexer error: Invalid character in string literal\n");
+            exit(LEXER_ERROR); // Nekorektní znak v řetězci
+        }
 
         // Ověření, zda jde o escape sekvenci
         if (quote_len == 1 && c == '\\') {
@@ -1031,7 +1045,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 // Čtení čísla s desetinnou tečkou
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
-                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
+                    lexer_error(lexer, SYNTAX_ERROR, "Invalid float format");
                 }
                 // Pokud je následující znak číslice, přejdeme do stavu
                 // čtení čísla s plovoucí desetinnou čárkou
