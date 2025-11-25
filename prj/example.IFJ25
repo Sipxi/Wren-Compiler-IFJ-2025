@@ -1,8 +1,8 @@
 import "ifj25" for Ifj
 class Program {
-    static main(){
-        var a
-        a = 5
-        a = Ifj.write(a)
+    static main() {
+        s = Ifj.substring("Hello", 
+                              1, 
+                              3)
     }
 }
