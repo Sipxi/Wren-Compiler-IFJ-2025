@@ -462,9 +462,11 @@ static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char *
 
         if (c == EOF) break;
         //! Quick fix for non-printable characters
-        if (c <= 31){
-            fprintf(stderr, "Lexer error: Invalid character in string literal\n");
-            exit(LEXER_ERROR); // Nekorektní znak v řetězci
+        if (quote_len != 3) {
+            if (c <= 31){
+                fprintf(stderr, "Lexer error: Invalid character in string literal\n");
+                exit(LEXER_ERROR); // Nekorektní znak v řetězci
+            }
         }
 
         // Ověření, zda jde o escape sekvenci
