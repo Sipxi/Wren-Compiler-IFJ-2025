@@ -343,7 +343,7 @@ static void gen_call(char* label_name){
 static void gen_return(TacInstruction *instr){
     // Pokud je návratová hodnota, vložíme ji do LF@ret
     if (instr->result != NULL) {
-        fprintf(stdout, "MOVE LF@$ret ");
+        fprintf(stdout, "MOVE LF@ret ");
         gen_operand(instr->result, 0);
         fprintf(stdout, "\n");
     }
@@ -786,12 +786,11 @@ static void gen_mul_str(TacInstruction *instr){
 
 static void gen_comprasion(TacInstruction *instr){
     char *label_start_operation = create_unique_label("START_OPERATION");
-    char *label_arg_2_float= create_unique_label("ARG2_TO_FLOAT");
+    char *label_arg_2_float = create_unique_label("ARG2_TO_FLOAT");
+    char *label_end = create_unique_label("END_COMPARASION");
 
     // Kontrola typů a příprava operandů
     gen_type(instr);
-    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "nil");
-    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
     
     
     if (getter_check(instr))
@@ -812,7 +811,12 @@ static void gen_comprasion(TacInstruction *instr){
     // Pokud jsou oba operandy stejného typu, pokračuj
     gen_jumpifeq_str(label_start_operation, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
 
-    // Pokud operandy nejsou stejného typu, chyba pro string a bool
+    fprintf(stdout, "MOVE ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " bool@false\n");
+    gen_jump(label_end);
+
+    // Pokud operandy nejsou stejného typu, null pro string a bool
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "string");
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "bool");
@@ -856,7 +860,10 @@ static void gen_comprasion(TacInstruction *instr){
     gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
 
-    
+    // Konec porovnání
+    gen_label(label_end);
+
+    free(label_end);
     free(label_start_operation);
     free(label_arg_2_float);
 }
