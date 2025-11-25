@@ -1,15 +1,16 @@
 /**
  * @file token.c
  * 
- * Реализация функций для работы с токенами.
+ * Realizace struktury a funkcí tokenů.
  *
- * Author:
+ * Autor:
  *     - Serhij Čepil (253038)
  * ! Допишите ваши имена и номера
  */
 #include "token.h"
 #include "error_codes.h"
 #include "utils.h"
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -31,22 +32,22 @@ void token_copy_data(Token* dest, const Token* src) {
 }
 
 Token *token_init() {
-    // Выделить память для структуры Token 
+    // Vyhradit paměť pro strukturu Token 
     Token *token = (Token *)malloc(sizeof(Token));
     if (token == NULL) {
         token_init_error(INTERNAL_ERROR);
     }
             
-    // Выделить память для поля данных токена
-    // Начальное выделение для 1 символа + нулевой терминатор (минимум 2 байта)
+    // Vyhradit paměť pro pole dat tokenu
+    // Počáteční alokace pro 1 znak + nulový terminátor (minimálně 2 bajty)
     token->data = (char *)malloc(sizeof(char) + 1);
     if (token->data == NULL) {
         free(token);
         token_init_error(INTERNAL_ERROR);
     }
-    // Инициализировать пустую строку
+    // Inicializovat prázdný řetězec
     token->data[0] = '\0';
-    // Инициализировать тип и номер строки значениями по умолчанию
+    // Inicializovat typ a číslo řádku výchozími hodnotami
     token->type = TOKEN_UNDEFINED;
     token->line = -1;
     return token;
@@ -66,7 +67,6 @@ char *token_type_to_string(TokenType type) {
     switch (type) {
         case TOKEN_UNDEFINED: return "TOKEN_UNDEFINED";
         case TOKEN_STRING: return "TOKEN_STRING";
-        case TOKEN_MULTI_STRING: return "TOKEN_MULTI_STRING";
         case TOKEN_INT: return "TOKEN_INT";
         case TOKEN_FLOAT: return "TOKEN_FLOAT";
         case TOKEN_EXP: return "TOKEN_EXP";

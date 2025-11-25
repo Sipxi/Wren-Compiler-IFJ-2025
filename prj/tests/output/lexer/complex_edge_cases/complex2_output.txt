@@ -1,0 +1,10 @@
+Input:
+"""multistring"""+"regular string"+__global_var
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: multistring, Line: 1
+Token Type: TOKEN_PLUS, Data: +, Line: 1
+Token Type: TOKEN_STRING, Data: regular string, Line: 1
+Token Type: TOKEN_PLUS, Data: +, Line: 1
+Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __global_var, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

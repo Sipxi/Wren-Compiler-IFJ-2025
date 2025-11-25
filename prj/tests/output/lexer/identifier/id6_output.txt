@@ -1,0 +1,31 @@
+Input:
+call var hello class import null str float int bool true false
+Ifj if else while for return static is Num String Null
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: call, Line: 1
+Token Type: TOKEN_KEYWORD, Data: var, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: hello, Line: 1
+Token Type: TOKEN_KEYWORD, Data: class, Line: 1
+Token Type: TOKEN_KEYWORD, Data: import, Line: 1
+Token Type: TOKEN_KEYWORD, Data: null, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: str, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: float, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: int, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: bool, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: true, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: false, Line: 1
+Token Type: TOKEN_EOL, Data: 
+, Line: 2
+Token Type: TOKEN_KEYWORD, Data: Ifj, Line: 2
+Token Type: TOKEN_KEYWORD, Data: if, Line: 2
+Token Type: TOKEN_KEYWORD, Data: else, Line: 2
+Token Type: TOKEN_KEYWORD, Data: while, Line: 2
+Token Type: TOKEN_KEYWORD, Data: for, Line: 2
+Token Type: TOKEN_KEYWORD, Data: return, Line: 2
+Token Type: TOKEN_KEYWORD, Data: static, Line: 2
+Token Type: TOKEN_KEYWORD, Data: is, Line: 2
+Token Type: TOKEN_KEYWORD, Data: Num, Line: 2
+Token Type: TOKEN_KEYWORD, Data: String, Line: 2
+Token Type: TOKEN_KEYWORD, Data: Null, Line: 2
+Token Type: TOKEN_EOF, Data: ÿ, Line: 2

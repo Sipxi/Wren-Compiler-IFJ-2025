@@ -1,0 +1,6 @@
+Input:
+"123 numbers in string"
+===============================
+Output:
+Token Type: TOKEN_STRING, Data: 123 numbers in string, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

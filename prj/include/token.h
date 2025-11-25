@@ -8,55 +8,53 @@
  * ! Допишите ваши имена и номера
  */
 
-
 #ifndef TOKEN_H
 #define TOKEN_H
 
 #include <stddef.h>
 #include <stdlib.h>
 
-/*===== Структура и функции токенов =====*/
+/*===== Struktura a funkce tokenů =====*/
 
-/* Перечисление возможных типов токенов */
+/* Všechny tokeny */
 typedef enum {
-    TOKEN_UNDEFINED, 
-    TOKEN_STRING,
-    TOKEN_MULTI_STRING,
-    TOKEN_INT,
-    TOKEN_FLOAT,
-    TOKEN_EXP,
-    TOKEN_HEX,
-    TOKEN_GLOBAL_IDENTIFIER,
-    TOKEN_IDENTIFIER,
-    TOKEN_KEYWORD,
-    TOKEN_DOT,
-    TOKEN_COMMA,
-    TOKEN_EOF,
-    TOKEN_EOL,
-    TOKEN_ASSIGN,
-    TOKEN_OPEN_PAREN,
-    TOKEN_CLOSE_PAREN,
-    TOKEN_OPEN_BRACE,
-    TOKEN_CLOSE_BRACE,
-    TOKEN_PLUS,
-    TOKEN_MINUS,
-    TOKEN_MULTIPLY,
-    TOKEN_EQUAL,
-    TOKEN_NOT_EQUAL,
-    TOKEN_GREATER,
-    TOKEN_EQUAL_GREATER,
-    TOKEN_LESS,
-    TOKEN_EQUAL_LESS,
-    TOKEN_DIVISION
+    TOKEN_UNDEFINED,            // Nedefinovaný token   
+    TOKEN_STRING,               // Řetězcový token,         "něco", """něco"""
+    TOKEN_INT,                  // Celé číslo               1,2,3...
+    TOKEN_FLOAT,                // Desetinné číslo          1.5, 0.75...
+    TOKEN_EXP,                  // Exponenciální číslo      1.5e10, 2.3E-4...
+    TOKEN_HEX,                  // Hexadecimální číslo      0x1A3F...
+    TOKEN_GLOBAL_IDENTIFIER,    // Globální identifikátor   __global_var
+    TOKEN_IDENTIFIER,           // Identifikátor            var_name, funcName...
+    TOKEN_KEYWORD,              // Klíčové slovo            if, else, while...
+    TOKEN_DOT,                  //                          .
+    TOKEN_COMMA,                //                          ,
+    TOKEN_EOF,                  //                          EOF
+    TOKEN_EOL,                  //                          \n
+    TOKEN_ASSIGN,               //                          =
+    TOKEN_OPEN_PAREN,           //                          (
+    TOKEN_CLOSE_PAREN,          //                          )
+    TOKEN_OPEN_BRACE,           //                          {
+    TOKEN_CLOSE_BRACE,          //                          }
+    TOKEN_PLUS,                 //                          +
+    TOKEN_MINUS,                //                          -
+    TOKEN_MULTIPLY,             //                          *
+    TOKEN_EQUAL,                //                          ==
+    TOKEN_NOT_EQUAL,            //                          !=
+    TOKEN_GREATER,              //                          >
+    TOKEN_EQUAL_GREATER,        //                          >=
+    TOKEN_LESS,                 //                          <
+    TOKEN_EQUAL_LESS,           //                          <=
+    TOKEN_DIVISION              //                          /
 } TokenType;
 
 /**
- * Структура, представляющая токен в исходном коде.
+ * Struktura, představující token v zdrojovém kódu.
  *
- * Поля:
- * - type: Тип токена (из перечисления TokenType).
- * - data: Указатель на строковые данные токена.
- * - line: Номер строки, где был найден токен.
+ * Pole:
+ * - type: Typ tokenu (z výčtu TokenType).
+ * - data: Ukazatel na řetězcová data tokenu.
+ * - line: Číslo řádku, kde byl token nalezen.
  */
 typedef struct {
     TokenType type;
@@ -64,48 +62,38 @@ typedef struct {
     int line;
 } Token;
 
-
 /**
- * @brief Копирует данные из одного токена в другой.
+ * @brief Kopíruje data z jednoho tokenu do druhého.
  * 
- * @param dest Указатель на целевой токен.
- * @param src Указатель на исходный токен.
+ * @param dest Ukazatel na cílový token.
+ * @param src Ukazatel na zdrojový token.
  * 
  */
 void token_copy_data(Token* dest, const Token* src);
 
 /**
- * @brief Копирует данные из одного токена в другой.
- * 
- * @param dest Указатель на целевой токен.
- * @param src Указатель на исходный токен.
- * 
- */
-void token_copy_data(Token* dest, const Token* src);
-
-/**
- * Инициализирует структуру Token.
- * Эта функция выделяет память для поля данных
- * и устанавливает тип и номер строки на значения по умолчанию.
+ * Inicializuje strukturu Token.
+ * Tato funkce alokuje paměť pro pole dat
+ * a nastaví typ a číslo řádku na výchozí hodnoty.
  *
- * @return Указатель на инициализированную структуру Token.
+ * @return Ukazatel na inicializovanou strukturu Token.
  */
 Token *token_init();
 
 /**
- * Освобождает память, выделенную для поля данных структуры Token.
+ * Uvolňuje paměť alokovanou pro pole dat struktury Token.
  *
- * @param token Указатель на структуру Token для освобождения.
+ * @param token Ukazatel na strukturu Token k uvolnění.
  */
 void token_free(Token *token);
 
-/* === Вспомогательные функции === */
+/* === Pomocné funkce === */
 
 /**
- * Преобразует тип токена в строковое представление.
+ * Převádí typ tokenu na řetězcovou reprezentaci.
  *
- * @param type Тип токена (из перечисления TokenType).
- * @return Строковое представление типа токена.
+ * @param type Typ tokenu (z výčtu TokenType).
+ * @return Řetězcová reprezentace typu tokenu.
  */
 char *token_type_to_string(TokenType type);
 

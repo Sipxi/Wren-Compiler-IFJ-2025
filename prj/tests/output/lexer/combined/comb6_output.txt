@@ -1,0 +1,11 @@
+Input:
+func(0xFF, 1.5e-3)
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: func, Line: 1
+Token Type: TOKEN_OPEN_PAREN, Data: (, Line: 1
+Token Type: TOKEN_HEX, Data: 0xFF, Line: 1
+Token Type: TOKEN_COMMA, Data: ,, Line: 1
+Token Type: TOKEN_EXP, Data: 1.5e-3, Line: 1
+Token Type: TOKEN_CLOSE_PAREN, Data: ), Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

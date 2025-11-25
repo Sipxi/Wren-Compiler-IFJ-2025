@@ -1,0 +1,6 @@
+Input:
+9999999999999999999
+===============================
+Output:
+Token Type: TOKEN_INT, Data: 9999999999999999999, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

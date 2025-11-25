@@ -1,0 +1,22 @@
+Input:
+0x0+0.0*1e0-0xFF/"""multi
+line"""+__global.method()
+===============================
+Output:
+Token Type: TOKEN_HEX, Data: 0x0, Line: 1
+Token Type: TOKEN_PLUS, Data: +, Line: 1
+Token Type: TOKEN_FLOAT, Data: 0.0, Line: 1
+Token Type: TOKEN_MULTIPLY, Data: *, Line: 1
+Token Type: TOKEN_EXP, Data: 1e0, Line: 1
+Token Type: TOKEN_MINUS, Data: -, Line: 1
+Token Type: TOKEN_HEX, Data: 0xFF, Line: 1
+Token Type: TOKEN_DIVISION, Data: /, Line: 1
+Token Type: TOKEN_STRING, Data: multi
+line, Line: 1
+Token Type: TOKEN_PLUS, Data: +, Line: 1
+Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __global, Line: 1
+Token Type: TOKEN_DOT, Data: ., Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: method, Line: 1
+Token Type: TOKEN_OPEN_PAREN, Data: (, Line: 1
+Token Type: TOKEN_CLOSE_PAREN, Data: ), Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

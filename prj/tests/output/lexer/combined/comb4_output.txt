@@ -1,0 +1,7 @@
+Input:
+return "hello world"
+===============================
+Output:
+Token Type: TOKEN_KEYWORD, Data: return, Line: 1
+Token Type: TOKEN_STRING, Data: hello world, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

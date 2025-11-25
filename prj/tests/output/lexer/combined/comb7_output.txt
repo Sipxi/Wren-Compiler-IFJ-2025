@@ -1,0 +1,18 @@
+Input:
+while (i < count) { i = i + 1 }
+===============================
+Output:
+Token Type: TOKEN_KEYWORD, Data: while, Line: 1
+Token Type: TOKEN_OPEN_PAREN, Data: (, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: i, Line: 1
+Token Type: TOKEN_LESS, Data: <, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: count, Line: 1
+Token Type: TOKEN_CLOSE_PAREN, Data: ), Line: 1
+Token Type: TOKEN_OPEN_BRACE, Data: {, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: i, Line: 1
+Token Type: TOKEN_ASSIGN, Data: =, Line: 1
+Token Type: TOKEN_IDENTIFIER, Data: i, Line: 1
+Token Type: TOKEN_PLUS, Data: +, Line: 1
+Token Type: TOKEN_INT, Data: 1, Line: 1
+Token Type: TOKEN_CLOSE_BRACE, Data: }, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1

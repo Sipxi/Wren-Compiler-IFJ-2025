@@ -1,0 +1,11 @@
+Input:
+1.
+===============================
+Output:
+
+===============================
+Exit Code: 1
+Standard Error:
+[1;31mLexical error.
+Error code: 1
+Invalid float format at line 1, position 4[0m

@@ -1,0 +1,6 @@
+Input:
+abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_
+===============================
+Output:
+Token Type: TOKEN_IDENTIFIER, Data: abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_, Line: 1
+Token Type: TOKEN_EOF, Data: ÿ, Line: 1
