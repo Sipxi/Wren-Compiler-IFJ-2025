@@ -953,7 +953,7 @@ int test_lexer(){
     return 0;
 }
 void test_all() {
-    FILE *file = fopen("example.IFJ25", "r");
+    FILE *file = stdin;
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return;
@@ -965,54 +965,46 @@ void test_all() {
         fprintf(stderr, "Parsing failed.\n");
         return;
     }
-    analyze_semantics(program);
-    TACDLList tac_list;
-    TACDLL_Init(&tac_list);
-    generate_tac(program, &tac_list, &global_table);
+    // analyze_semantics(program);
+    // TACDLList tac_list;
+    // TACDLL_Init(&tac_list);
+    // generate_tac(program, &tac_list, &global_table);
     // optimize_tac(&tac_list);
-    print_tac_list(&tac_list);
+    // print_tac_list(&tac_list);
     //generate_code(&tac_list, &global_table);
-    TACDLL_Dispose(&tac_list);
+    // TACDLL_Dispose(&tac_list);
     symtable_free(&global_table);
     ast_node_free_recursive(program);
 }
 
+void run_tests(){
+    FILE *file = stdin;
+    
+    Lexer *lexer = lexer_init();
+    if (lexer == NULL) {
+        fprintf(stderr, "Error initializing lexer.\n");
+        fclose(file);
+        return;
+    }
+    Token token;
+    do{
+        token = peek_token(lexer, file);
+        printf("Token Type: %s, Data: ",
+               token_type_to_string(token.type));
+        print_token_data(token.data);
+        printf(", Line: %d\n", token.line);
+        // consume the token
+        get_token(lexer, file);
+    }
+    while (token.type != TOKEN_EOF);
+    
+
+
+}
 
 
 int main() {
-
-    //test_all();
-
-    FILE *file = fopen("example.IFJ25", "r");
-    if (file == NULL) {
-        fprintf(stderr, "Error opening file.\n");
-        return 0;
-    }
-    // Lexer *lexer = lexer_init();
-    // Token token;
-
-    // do {
-    //     token = peek_token(lexer, file);
-    //     printf("Token Type: %s, Data: %s, Line: %d\n",
-    //             token_type_to_string(token.type),
-    //            token.data != NULL ? token.data : "NULL",
-    //            token.line);
-    //     get_token(lexer, file); // consume the token
-
-    // } while (token.type != TOKEN_EOF);
-    // lexer_free(lexer);
-    // if (fclose(file) != 0) { // обработка ошибки закрытия файла
-    //     fprintf(stderr, "Error closing file.\n");
-    // }
-	// Запускаем парсер, передавая ему стандартный ввод
-    AstNode *program = parser_run(file);
-    if (program == NULL) {
-        fprintf(stderr, "Parsing failed.\n");
-        return 0;
-    }
-    ast_print_debug(program);
-    ast_node_free_recursive(program);
-
-
+    test_lexer();
+    // test_all();
     return 0;
 }
