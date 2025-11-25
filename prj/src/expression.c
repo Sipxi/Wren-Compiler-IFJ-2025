@@ -37,6 +37,35 @@ static NodeType grammar_symbol_to_node_type(GrammarSymbol symbol);
  */
 static bool handle_reduce(PStack *stack);
 
+/**
+ * @brief Проверяет, нужно ли игнорировать EOL после определенных токенов
+ * 
+ * @param token Входной токен
+ * @return true Если EOL нужно игнорировать
+ * @return false Иначе
+ */
+static bool ignore_eol (Token token);
+
+static bool ignore_eol (Token token) {
+    switch (token.type) {
+        case TOKEN_PLUS:
+        case TOKEN_MINUS:
+        case TOKEN_MULTIPLY:
+        case TOKEN_DIVISION:
+        case TOKEN_LESS:
+        case TOKEN_GREATER:
+        case TOKEN_EQUAL_LESS:
+        case TOKEN_EQUAL_GREATER:
+        case TOKEN_EQUAL:
+        case TOKEN_NOT_EQUAL:
+            return true;
+        case TOKEN_KEYWORD:
+            if (strcmp(token.data, "is") == 0) return true;
+            return false;
+        default:
+            return false;
+    }
+}
 
 bool char_to_double(const char *str, double *out_value) {
     if (!str || !out_value) return false;
@@ -296,8 +325,18 @@ bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node) {
                 new_item.ast_node = NULL; // Операторы не создают узлы AST на данном этапе
             }
             PSTACK_push(&stack, new_item);
-            get_token(lexer, file); // consume token
-            current_token = peek_token(lexer, file);
+            Token processed_token = current_token;
+            current_token = peek_next_token(lexer, file);
+            // Пропускаем EOL после сдвига, если нужно
+            if (ignore_eol(processed_token) && current_token.type == TOKEN_EOL) {
+                get_token(lexer, file); // consume identifier
+                get_token(lexer, file); // consume EOL
+                current_token = peek_token(lexer, file);
+            } else {
+                get_token(lexer, file); // consume token
+                current_token = peek_token(lexer, file);
+            }
+            
         }
         else if (rule == '=') {
             // Сдвиг (Shift) для скобок
