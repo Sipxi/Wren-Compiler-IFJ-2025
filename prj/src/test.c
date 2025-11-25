@@ -973,7 +973,7 @@ void test_all(){
 }
 
 int main() {
-    test_lexer();
-    // test_all();
+    // test_lexer();
+    test_all();
     return 0;
 }

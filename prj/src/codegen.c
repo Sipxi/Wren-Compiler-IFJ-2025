@@ -78,7 +78,7 @@ static void gen_jumpifneq(TacInstruction *instr);
  * 
  * @param op Ukazatel na operánd k vygenerování.
  */
-static void gen_operand(Operand *op);
+static void gen_operand(Operand *op, int arg_num);
 
 /**
  * @brief Generuje prirazení typu hodnot pro zadanou instrukci TAC.
@@ -259,6 +259,8 @@ static void gen_str(TACDLList *instructions);
  */
 char *get_frame(Operand *op);
 
+static int getter_check(TacInstruction *instr);
+
 /* =================================================================== */
 /* ===== Implementace privátních funkcí generátoru cílového kódu ===== */
 /* =================================================================== */
@@ -284,6 +286,9 @@ static void gen_init(Symtable *table){
     gen_defvar_str("GF","$tmp_op_1");
     gen_defvar_str("GF","$tmp_op_2");
     gen_defvar_str("GF","$ret_ifj_fun");
+    gen_defvar_str("GF","$getter_1");
+    gen_defvar_str("GF","$getter_2");
+    
 
     // Definice globálních proměnných z tabulky symbolů
     for (size_t i = 0; i < table->capacity; i++) {
@@ -358,12 +363,12 @@ static void gen_jumpifneq_str(char *label_name, char *frame_op_1,
 
 static void gen_jumpifneq(TacInstruction *instr){
     fprintf(stdout, "JUMPIFEQ $%s ", instr->arg2->data.label_name);
-    gen_operand(instr->arg1);
+    gen_operand(instr->arg1, 1);
     fprintf(stdout, " bool@false\n");
 
 }
 
-static void gen_operand(Operand *op){
+static void gen_operand(Operand *op, int arg_num){
     // Generování proměnné
     if (op->type == OPERAND_TYPE_SYMBOL) {
         char *prefix = get_frame(op);
@@ -398,6 +403,8 @@ static void gen_operand(Operand *op){
     // generování dočasné proměnné
     } else if (op->type == OPERAND_TYPE_TEMP) {
         fprintf(stdout, "LF@$t$%i", op->data.temp_id);
+    } else if (op->type == OPERAND_TYPE_LABEL) {
+        fprintf(stdout, "GF@$setter_%i", arg_num);
     }
 
 }
@@ -405,10 +412,10 @@ static void gen_operand(Operand *op){
 static void gen_type(TacInstruction *instr) {
     // Zapíšeme do pomocných globálních promenných typy argumentů 
     fprintf(stdout, "TYPE GF@$tmp_type_1 ");
-    gen_operand(instr->arg1);
+    gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
     fprintf(stdout, "TYPE GF@$tmp_type_2 ");
-    gen_operand(instr->arg2);
+    gen_operand(instr->arg2, 2);
     fprintf(stdout, "\n");
 }
 
@@ -433,14 +440,14 @@ static void gen_divide(TacInstruction *instr){
     // dělení float
     gen_label(label_div);
     fprintf(stdout, "DIV ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
     fprintf(stdout, "JUMP $%s\n", label_end);
 
     // dělení int
     gen_label(label_idiv);
     fprintf(stdout, "IDIV ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
 
     // po dělení typu float konverze výsledku
@@ -463,9 +470,16 @@ static void gen_same_operand_check(TacInstruction *instr){
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
     // Uložení operandů do dočasných proměnných
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
+    if (instr->arg1->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$tmp_op_1", "GF", "$setter_1");
+    else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
                 instr->arg1->data.symbol_entry->data->unique_name);
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
+
+    if (instr->arg2->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+    else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
                 instr->arg2->data.symbol_entry->data->unique_name);
 
     // pro operaci CONCAT speciální kontrola
@@ -474,6 +488,7 @@ static void gen_same_operand_check(TacInstruction *instr){
         gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "int");
         gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "float");
         gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "float");
+        return;
     }
 
     // Vytvoření štítků
@@ -508,18 +523,25 @@ static void gen_same_operand_check(TacInstruction *instr){
 static void gen_convert_result(TacInstruction *instr){
     char *label_end_convert = create_unique_label("END_CONVERT");
 
+    fprintf(stdout, "TYPE GF@$tmp_type_1 ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, "\n");
+
+    gen_jumpifeq_str(label_end_convert, "GF", "$tmp_type_1", "string", "int");
+
     // Kontrola, zda je výsledek float
     fprintf(stdout, "ISINT GF@$tmp ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, "\n");
     
+
     gen_jumpifeq_str(label_end_convert, "GF", "$tmp", "bool", "false");
 
     // Konverze float na int
     fprintf(stdout, "FLOAT2INT ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, "\n");
 
     // Štítek pro konec Konverze
@@ -550,7 +572,7 @@ static void gen_arithmetic(TacInstruction *instr){
         default:
             break;
     }
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
 
     // Konverze výsledku zpět na int, pokud je to potřeba
@@ -562,7 +584,7 @@ static void gen_arithmetic(TacInstruction *instr){
 static void gen_defvar(Operand *var){
     // Výpis declarace promenné
     fprintf(stdout, "DEFVAR ");
-    gen_operand(var);
+    gen_operand(var, 0);
     fprintf(stdout, "\n");
 }
 
@@ -580,7 +602,7 @@ static void gen_move(Operand *dest, Operand *src){
     // Výpis přiřazení
 
     fprintf(stdout, "MOVE ");
-    gen_operand(dest);
+    gen_operand(dest, 0);
     fprintf(stdout, " ");
 
     // Kontrola na přířazení navratové hodnoty funkce 
@@ -594,7 +616,7 @@ static void gen_move(Operand *dest, Operand *src){
 
     // Pokud není funkce přířazíme druhý argument
     } else
-        gen_operand(src);
+        gen_operand(src, 1);
 
     fprintf(stdout, "\n");
 }
@@ -605,24 +627,31 @@ static void gen_param(TACDLList *instructions){
 
     TacInstruction *instr;  // Actualní volající instrukce
     TACDLL_GetValue(instructions, &instr);
+    bool is_setter = false;
+    if (instr->operation_code == OP_ASSIGN)
+        is_setter = true;
 
     // Kontrola přítomnosti parametrů funkce 
-    if (TACDLL_IsActive(instructions) 
-        && instr->operation_code != OP_PARAM)
+    if (is_setter ||
+        (TACDLL_IsActive(instructions) && instr->operation_code != OP_PARAM))
     {
         TACDLL_Previous(instructions);
         return;
     }
 
     char *label_name; // Jmeno funkce
-    label_name = instr->arg1->data.label_name;
+    if (instr->operation_code == OP_ASSIGN)
+        label_name = instr->result->data.label_name;
+    else
+        label_name = instr->arg1->data.label_name;
 
     TACDLList instrs_fun = *instructions;   // Copie seznamu instrukcí
     TacInstruction *instr_param; // Actualní instrukce funkce
     
     // Od začatku hledáme žačatek funkce
     TACDLL_First(&instrs_fun);
-    TACDLL_Next(instructions);
+    if (!is_setter)
+        TACDLL_Next(instructions);
     while (TACDLL_IsActive(&instrs_fun)) {
         TACDLL_GetValue(&instrs_fun, &instr_param);
         TACDLL_Next(&instrs_fun);
@@ -631,6 +660,17 @@ static void gen_param(TACDLList *instructions){
             break;
     }
     TACDLL_Next(&instrs_fun);    
+
+    // Declarace a přiřazení pro setter
+    if (is_setter) {
+        // definueme parametr pro setter
+        TACDLL_GetValue(&instrs_fun, &instr_param);
+        char *param_name = instr_param->result->data.symbol_entry->data->unique_name;
+        char *arg_name = instr->arg1->data.symbol_entry->data->unique_name;
+        gen_defvar_str("TF", param_name);
+        gen_move_str("TF", param_name, get_frame(instr->arg1), arg_name);
+        return;
+    }
 
     // Teď kdy máme active_element na parametrech a argumentech
     // Přirazíme paremetrům hodnoty argumentů  
@@ -670,7 +710,10 @@ static void gen_mul_str(TacInstruction *instr){
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
+    if (instr->arg2->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+    else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
                 instr->arg2->data.symbol_entry->data->unique_name);
 
     // kontrola že druhý operand je int
@@ -689,9 +732,9 @@ static void gen_mul_str(TacInstruction *instr){
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_2", "bool", "true");
 
     // Inicializace výsledné string proměnné a počítadla
-    gen_move_str(get_frame(instr->result), 
-                 instr->result->data.symbol_entry->data->unique_name, 
-                 "string", "");
+    fprintf(stdout, "MOVE ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " string@\n");
 
     // Začátek smyčky
     gen_label(label_loop);
@@ -701,11 +744,11 @@ static void gen_mul_str(TacInstruction *instr){
     
     // Konkatenace řetězce
     fprintf(stdout, "CONCAT ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " ");
-    gen_operand(instr->arg1);
+    gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
 
     // DEC počítadla
@@ -729,9 +772,16 @@ static void gen_comprasion(TacInstruction *instr){
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "nil");
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
     
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
+    
+    if (instr->arg1->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$tmp_op_1", "GF", "$setter_1");
+    else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
                 instr->arg1->data.symbol_entry->data->unique_name);
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
+    if (instr->arg2->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+    else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
                 instr->arg2->data.symbol_entry->data->unique_name);
 
     // Pokud jsou oba operandy stejného typu, pokračuj
@@ -748,14 +798,14 @@ static void gen_comprasion(TacInstruction *instr){
 
     // Konverze prvního operandu
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 ");
-    gen_operand(instr->arg1);
+    gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
     gen_jump(label_start_operation);
 
     // Konverze druhého operandu
     gen_label(label_arg_2_float);
     fprintf(stdout, "INT2FLOAT GF@$tmp_op_2 ");
-    gen_operand(instr->arg2);
+    gen_operand(instr->arg2, 2);
     fprintf(stdout, "\n");
 
     // Začátek operace  
@@ -778,7 +828,7 @@ static void gen_comprasion(TacInstruction *instr){
         default:
             break;
     }
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
 
     
@@ -795,9 +845,9 @@ static void gen_eq_comprasion(TacInstruction *instr){
 
     // OR výsledku s předchozím
     fprintf(stdout, "OR ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " GF@$tmp ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, "\n");
 }
 
@@ -807,9 +857,9 @@ static void gen_not_equal(TacInstruction *instr){
 
     // NOT výsledku
     fprintf(stdout, "NOT ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, " ");
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     fprintf(stdout, "\n");
 }
 
@@ -817,7 +867,7 @@ static void gen_declare(Operand *result){
     // Declarace proměnné v IFJ25 znamená pouze inicializaci na nil v IFJcode25
     // protoze proměnné jsou declarovány na zacatku vygenerovaného funkce
     fprintf(stdout, "MOVE ");
-    gen_operand(result);
+    gen_operand(result, 0);
     fprintf(stdout, " nil@nil\n");
 }
 
@@ -852,8 +902,16 @@ static void gen_function_begin(TACDLList  *instructions){
         } else if (op_code == OP_DECLARE) {
             // ? Деклариется ли глобальная переменная?
             // Kontrola neglobální proměnné
-            if (symtable_lookup(&gen_global_table, instr->result->data.symbol_entry->key) == NULL)
-                gen_defvar(instr->result);
+            if (instr->result != NULL) {
+                if (instr->result->type == OPERAND_TYPE_SYMBOL) {
+                    // Hledáme na 0 úrovni symtable proměnné
+                    if (symtable_lookup(&gen_global_table, 
+                        instr->result->data.symbol_entry->key) == NULL) {
+                        gen_defvar(instr->result);
+                    }
+                } else
+                    gen_defvar(instr->result);
+            }
         }
         TACDLL_Next(instructions);
     }
@@ -889,13 +947,13 @@ static void gen_is(TacInstruction *instr){
     
     // Získání typu prvního operandu
     fprintf(stdout, "TYPE GF@$tmp_type_1 ");
-    gen_operand(instr->arg1);
+    gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
 
     // Porovnání typu s požadovaným typem
     fprintf(stdout, "EQ ");
     // Vysledek uložíme do výsledné proměnné
-    gen_operand(instr->result);
+    gen_operand(instr->result, 0);
     // První operand je typ prvního operandu
     fprintf(stdout, " GF@$tmp_type_1 ");
 
@@ -914,9 +972,9 @@ static void gen_is(TacInstruction *instr){
         fprintf(stdout, "string@int\n");
         fprintf(stdout, "EQ GF@$tmp GF@$tmp string@float\n");
         fprintf(stdout, "OR ");
-        gen_operand(instr->result);
+        gen_operand(instr->result, 0);
         fprintf(stdout, " GF@$tmp ");
-        gen_operand(instr->result);
+        gen_operand(instr->result, 0);
         fprintf(stdout, "\n");
     } 
 
@@ -952,8 +1010,11 @@ static void gen_write(TACDLList *instructions){
     TACDLL_GetValue(instructions, &instr);
 
     // Přířazujeme argument do pomocné proměnné
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr)) {
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola typu float
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
@@ -978,7 +1039,11 @@ static void gen_floor(TACDLList *instructions){
     TACDLL_GetValue(instructions, &instr);
     
     // Přiřazení argumentu do návratové hodnoty
-    gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
+
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$ret_ifj_fun", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola typu
@@ -1007,8 +1072,11 @@ static void gen_str(TACDLList *instructions) {
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
     // Přiřazení argumentu do návratové hodnoty
-    gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$ret_ifj_fun", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Switch podle typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$ret_ifj_fun\n");
@@ -1071,8 +1139,11 @@ static void gen_length(TACDLList *instructions){
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
 
-    gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (instr->arg1->type == OPERAND_TYPE_LABEL)
+        gen_move_str("GF", "$ret_ifj_fun", "GF", "$setter_1");
+    else
+        gen_move_str("GF", "$ret_ifj_fun", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola na string
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$ret_ifj_fun\n");
@@ -1095,9 +1166,11 @@ static void gen_substring(TACDLList *instructions) {
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
 
-    
-    gen_move_str("GF", "$tmp", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
     
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp\n");
@@ -1111,8 +1184,11 @@ static void gen_substring(TACDLList *instructions) {
     gen_move_str("GF", "$tmp_type_2", "int", "0");
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_2");
+    } else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     gen_label(label_check_23_arg);
     fprintf(stdout, "ADD GF@$tmp_type_2 GF@$tmp_type_2 int@1\n");
@@ -1138,8 +1214,11 @@ static void gen_substring(TACDLList *instructions) {
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
     gen_move_str("GF", "$tmp_op_1", "GF" ,"$tmp_op_2");
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_3");
+    } else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
     // Jump na kontrolu 2. argumentu
     gen_jump(label_check_23_arg);
 
@@ -1192,14 +1271,20 @@ static void gen_strcmp(TACDLList *instructions){
     // Získaní 1. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
 
     // Získaní 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_2");
+    } else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola typů
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
@@ -1273,14 +1358,20 @@ static void gen_ord(TACDLList *instructions){
     // Získání 1. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Získání 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
     
     // Kontrola typů
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
@@ -1307,7 +1398,7 @@ static void gen_ord(TACDLList *instructions){
     // Ifj.length(s) < i
     fprintf(stdout, "STRLEN GF@$tmp GF@$tmp_op_1\n");
     fprintf(stdout, "GT GF@$tmp_2 GF@$tmp_op_2 GF@$tmp\n");
-    gen_jumpifneq_str(label_end, "GF", "$tmp_2", "bool", "true");
+    gen_jumpifeq_str(label_end, "GF", "$tmp_2", "bool", "true");
 
     // ord
     fprintf(stdout, "STRI2INT GF@$ret_ifj_fun GF@$tmp_op_1 GF@$tmp_op_2\n");
@@ -1325,8 +1416,11 @@ static void gen_chr(TACDLList *instructions){
     // Získání argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
-                instr->arg1->data.symbol_entry->data->unique_name);
+    if (getter_check(instr) == 1) {
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
+    } else
+        gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
+                    instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
@@ -1379,6 +1473,31 @@ static void gen_ifj_fun(TACDLList *instructions){
     }
 }
 
+static int getter_check(TacInstruction *instr){
+    int result = 0;
+    if (instr->arg1 != NULL &&
+        (instr->arg1->type == OPERAND_TYPE_LABEL) &&
+        instr->operation_code != OP_CALL) 
+    {
+        gen_create_frame();
+        gen_defvar_str("TF", "ret");
+        gen_call(instr->arg1->data.label_name);
+        gen_move_str("GF", "$getter_1", "TF", "ret");
+        result = 1;
+    }
+
+    if (instr->arg2 != NULL &&
+        instr->arg2->type == OPERAND_TYPE_LABEL &&
+        instr->operation_code != OP_CALL) 
+    {   
+        gen_create_frame();
+        gen_defvar_str("TF", "ret");
+        gen_call(instr->arg1->data.label_name);
+        gen_move_str("GF", "$getter_2", "TF", "ret");
+        result = 2;
+    }
+    return result;
+}
 
 /* ================================================================= */
 /* ===== Implementace veřejných funkcí generátoru cílového kódu ==== */
@@ -1400,6 +1519,30 @@ int generate_code(TACDLList *instructions, Symtable *table) {
         // ! test output
         fprintf(stdout, "\n# ======================= NEW INSTRUCTION =======================\n");
         fprintf(stdout, "#"); print_single_tac_instruction_gencode(instr);
+        
+        if (instr->arg1 != NULL && 
+            instr->arg1->type == OPERAND_TYPE_LABEL && 
+            strstr(instr->arg1->data.label_name, "Ifj.") == NULL &&
+            strstr(instr->arg1->data.label_name, "main") == NULL &&
+            instr->operation_code != OP_CALL) 
+        {
+            gen_create_frame();
+            gen_defvar_str("TF", "ret");
+            gen_call(instr->arg1->data.label_name);
+            gen_move_str("GF", "$getter_1", "TF", "ret");
+        }
+
+        if (instr->arg2 != NULL &&
+            instr->arg2->type == OPERAND_TYPE_LABEL &&
+            strstr(instr->arg2->data.label_name, "Ifj.") == NULL &&
+            strstr(instr->arg2->data.label_name, "main") == NULL &&
+            instr->operation_code != OP_CALL) 
+        {   
+            gen_create_frame();
+            gen_defvar_str("TF", "ret");
+            gen_call(instr->arg1->data.label_name);
+            gen_move_str("GF", "$getter_1", "TF", "ret");
+        }
 
         switch (instr->operation_code) {
             case OP_JUMP:
@@ -1448,7 +1591,12 @@ int generate_code(TACDLList *instructions, Symtable *table) {
                 }
                 break;
             case OP_ASSIGN:
-                gen_move(instr->result, instr->arg1);
+                // Kontrola zda je volání setteru
+                if (instr->result->type == OPERAND_TYPE_LABEL) {
+                    gen_param(instructions);
+                    gen_call(instr->result->data.label_name);
+                } else
+                    gen_move(instr->result, instr->arg1);
                 break;
             case OP_DECLARE:
                 gen_declare(instr->result);
