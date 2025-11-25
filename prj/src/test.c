@@ -965,29 +965,34 @@ void test_all() {
         fprintf(stderr, "Parsing failed.\n");
         return;
     }
+    ast_print_debug(program);
     analyze_semantics(program);
     TACDLList tac_list;
     TACDLL_Init(&tac_list);
     generate_tac(program, &tac_list, &global_table);
     // optimize_tac(&tac_list);
     print_tac_list(&tac_list);
-    //generate_code(&tac_list, &global_table);
+    generate_code(&tac_list, &global_table);
     TACDLL_Dispose(&tac_list);
     symtable_free(&global_table);
     ast_node_free_recursive(program);
+    fclose(file);
 }
 
 
 
 int main() {
 
-    //test_all();
-
+    test_all();
+  //test_lexer();
+    
+/*
     FILE *file = fopen("example.IFJ25", "r");
     if (file == NULL) {
         fprintf(stderr, "Error opening file.\n");
         return 0;
     }
+        */
     // Lexer *lexer = lexer_init();
     // Token token;
 
@@ -1005,7 +1010,7 @@ int main() {
     //     fprintf(stderr, "Error closing file.\n");
     // }
 	// Запускаем парсер, передавая ему стандартный ввод
-    AstNode *program = parser_run(file);
+   /* AstNode *program = parser_run(file);
     if (program == NULL) {
         fprintf(stderr, "Parsing failed.\n");
         return 0;
@@ -1013,6 +1018,6 @@ int main() {
     ast_print_debug(program);
     ast_node_free_recursive(program);
 
-
+*/
     return 0;
 }

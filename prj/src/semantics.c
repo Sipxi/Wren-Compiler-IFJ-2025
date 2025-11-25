@@ -842,6 +842,18 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
         return true;
     }
 
+    case NODE_ID: {
+        DataType expr_type;
+
+        // Анализируем выражение, чтобы проверить существование переменных (например, __b)
+        // Если внутри возникнет ошибка (например, undefined variable), analyze_expression завершит программу.
+        if (!analyze_expression(node, stack, &expr_type)) {
+            exit(10);
+        }
+
+        return true;
+    }
+
     default:
         fprintf(stderr, "Internal Error (Line %d): Unexpected node type (%d) in statement list.\n", node->line_number, node->type);
         exit(99);
