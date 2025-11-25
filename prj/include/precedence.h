@@ -67,6 +67,14 @@ typedef enum {
 
 } GrammarSymbol;
 
+typedef enum {
+    GR_RULE_E_OP_E_START = 0,   // E -> E op E
+    GR_RULE_E_OP_E_END   = 9,
+
+    GR_RULE_E_IS_K = 10,        // E -> E is k
+    GR_RULE_PAREN_E = 11,     // E -> ( E )
+} GrammarRuleIndex;
+
 // --- Константы ---
 #define PRECEDENCE_TABLE_SIZE 16 // 16x16 (от T_PLUS до T_DOLLAR)
 #define NUM_GRAMMAR_RULES 13     // У нас 13 правил (0-12)
