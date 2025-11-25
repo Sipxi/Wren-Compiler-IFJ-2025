@@ -1045,7 +1045,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 // Čtení čísla s desetinnou tečkou
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
-                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
+                    lexer_error(lexer, SYNTAX_ERROR, "Invalid float format");
                 }
                 // Pokud je následující znak číslice, přejdeme do stavu
                 // čtení čísla s plovoucí desetinnou čárkou
