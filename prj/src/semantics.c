@@ -670,6 +670,25 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
             exit(99);
         }
 
+
+// --- ОТЛАДКА ---
+        TableEntry *debug_entry = symtable_lookup(current_table, name);
+        printf("DEBUG VAR_DEF: Looking for name: '%s' (len: %lu) in table: %p\n", 
+               name, (unsigned long)strlen(name), (void*)current_table);
+        
+        if (debug_entry) {
+            printf(" -> FOUND! Key in table: '%s'\n", debug_entry->key);
+        } else {
+            printf(" -> NOT FOUND. Printing table keys:\n");
+            for(size_t i=0; i < current_table->capacity; i++) {
+                 if (current_table->entries[i].status == SLOT_OCCUPIED) {
+                     printf("    Slot %lu: '%s'\n", i, current_table->entries[i].key);
+                 }
+            }
+        }
+        // ----------------
+
+
         // 2. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
         // Ищем только в текущей таблице уровня.
         if (symtable_lookup(current_table, name) != NULL) {
