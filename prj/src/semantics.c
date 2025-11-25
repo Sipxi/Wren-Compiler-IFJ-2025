@@ -1169,7 +1169,7 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
 
             // Check Ifj.floor (Expects NUM)
             if (strcmp(name, "Ifj.floor") == 0) {
-                if (arg_types[0] != TYPE_NUM && arg_types[0] != TYPE_UNKNOWN) ok = false;
+                if (arg_types[0] != TYPE_NUM && arg_types[0] != TYPE_FLOAT && arg_types[0] != TYPE_UNKNOWN) ok = false;
             }
             // Check Ifj.length (Expects STR)
             else if (strcmp(name, "Ifj.length") == 0) {
@@ -1218,12 +1218,3 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
         exit(99);
     }
 }
-
-
-
-
-
-
-
-
-

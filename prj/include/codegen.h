@@ -35,4 +35,6 @@ typedef enum {
  */
 int generate_code(TACDLList *instructions, Symtable *table);
 
+
+char* string_to_ifjcode(const char *original);
 #endif // CODEGEN_H

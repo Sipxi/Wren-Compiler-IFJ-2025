@@ -363,66 +363,6 @@ static void gen_jumpifneq(TacInstruction *instr){
 
 }
 
-// Функция принимает "сырую" строку и возвращает новую, экранированную для IFJcode25
-// ВАЖНО: Возвращаемая строка аллоцируется динамически, не забудьте сделать free()!
-char* string_to_ifjcode(const char *original) {
-    if (original == NULL) 
-        return NULL;
-
-    // 1. Проход: Вычисляем необходимый размер буфера
-    size_t length = 0;
-    for (int i = 0; original[i] != '\0'; i++) {
-        char c = original[i];
-        
-        // Условия экранирования согласно спецификации IFJcode25 (раздел 10.3):
-        // - ASCII 000-032 (управляющие и пробел)
-        // - ASCII 035 (#)
-        // - ASCII 092 (\)
-        if (c <= 32 || c == 35 || c == 92) {
-            length += 4; // \xyz -> 4 символа
-        } else {
-            length += 1; // Обычный символ
-        }
-    }
-
-    // Выделяем память (+1 для нуль-терминатора)
-    char *escaped = (char *)malloc(length + 1);
-    if (escaped == NULL) {
-        // Обработка ошибки выделения памяти (например, вызов вашей функции error_exit)
-        fprintf(stderr, "Internal compiler error: memory allocation failed\n");
-        exit(99); // Код 99 для внутренней ошибки [cite: 43]
-    }
-
-    // 2. Проход: Заполнение новой строки
-    size_t pos = 0;
-    for (int i = 0; original[i] != '\0'; i++) {
-        unsigned char c = (unsigned char)original[i];
-
-        if (c == 10) {
-            // Специальный случай для новой строки
-            sprintf(escaped + pos, "\\010");
-            pos += 4;
-        } else if (c == 13) {
-            // Специальный случай для новой строки
-            sprintf(escaped + pos, "\\013");
-            pos += 4;
-        
-        } else if (c <= 32 || c == 35 || c == 92) {
-            // Записываем escape-последовательность
-            // %03d гарантирует 3 цифры (например, \010, а не \10)
-            sprintf(escaped + pos, "\\%03d", c);
-            pos += 4;
-        } else {
-            // Копируем символ как есть
-            escaped[pos] = c;
-            pos += 1;
-        }
-    }
-
-    escaped[pos] = '\0'; // Завершаем строку
-    return escaped;
-}
-
 static void gen_operand(Operand *op){
     // Generování proměnné
     if (op->type == OPERAND_TYPE_SYMBOL) {
@@ -442,6 +382,7 @@ static void gen_operand(Operand *op){
         case TYPE_STR:
         {
             char *escaped_str = string_to_ifjcode(op->data.constant.value.str_value);
+            // char *escaped_str = op->data.constant.value.str_value;
             fprintf(stdout, "string@%s", escaped_str);
             free(escaped_str);
             break;
@@ -487,7 +428,7 @@ static void gen_divide(TacInstruction *instr){
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@float\n", label_div);
     fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 string@int\n", label_idiv);
     // pokud není float ani int, tak chyba
-    gen_jump("EXIT26");
+    gen_jump("$EXIT26");
 
     // dělení float
     gen_label(label_div);
@@ -516,10 +457,10 @@ static void gen_divide(TacInstruction *instr){
 static void gen_same_operand_check(TacInstruction *instr){
     
     // Kontrola na operandy nil a bool
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "nil");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "nil");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "bool");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
     // Uložení operandů do dočasných proměnných
     gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
@@ -529,10 +470,10 @@ static void gen_same_operand_check(TacInstruction *instr){
 
     // pro operaci CONCAT speciální kontrola
     if (instr->operation_code == OP_CONCAT) {
-        gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "int");
-        gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "int");
-        gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "float");
-        gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "float");
+        gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "int");
+        gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "int");
+        gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "float");
+        gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "float");
     }
 
     // Vytvoření štítků
@@ -540,8 +481,8 @@ static void gen_same_operand_check(TacInstruction *instr){
     char *label_arg_2_float= create_unique_label("ARG2_TO_FLOAT");
 
     // Kontrola na shodné typy
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "string");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
 
     // Pokud jsou oba int nebo float, pokračuj
     gen_jumpifeq_str(label_start_operation, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
@@ -723,18 +664,18 @@ static void gen_mul_str(TacInstruction *instr){
     // Kontrola typů operandů
     gen_type(instr);
     
-    gen_jumpifneq_str("EXIT26", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifneq_str("$EXIT26", "GF", "$tmp_type_1", "string", "string");
 
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "string");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "nil");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
     gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg2), 
                 instr->arg2->data.symbol_entry->data->unique_name);
 
     // kontrola že druhý operand je int
     fprintf(stdout, "ISINT GF@$tmp GF@$tmp_op_2\n");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp", "bool", "false");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp", "bool", "false");
     
     // Konverze na int pokud je float
     gen_jumpifeq_str(label_end_convert, "GF", "$tmp_type_2", "string", "int");
@@ -745,7 +686,7 @@ static void gen_mul_str(TacInstruction *instr){
 
     // Kontrola na nenegativnost
     fprintf(stdout, "LT GF@$tmp_2 GF@$tmp_op_2 int@0\n");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_2", "bool", "true");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_2", "bool", "true");
 
     // Inicializace výsledné string proměnné a počítadla
     gen_move_str(get_frame(instr->result), 
@@ -785,8 +726,8 @@ static void gen_comprasion(TacInstruction *instr){
 
     // Kontrola typů a příprava operandů
     gen_type(instr);
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "nil");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
     
     gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1), 
                 instr->arg1->data.symbol_entry->data->unique_name);
@@ -797,10 +738,10 @@ static void gen_comprasion(TacInstruction *instr){
     gen_jumpifeq_str(label_start_operation, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
 
     // Pokud operandy nejsou stejného typu, chyba pro string a bool
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "string");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "string");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_1", "string", "bool");
-    gen_jumpifeq_str("EXIT26", "GF", "$tmp_type_2", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
     // Konverze int na float, pokud je jeden z operandů float
     gen_jumpifeq_str(label_arg_2_float, "GF", "$tmp_type_1", "string", "int");
@@ -990,9 +931,12 @@ static void gen_read_num(){
     // Čtění floatu
     fprintf(stdout, "READ GF@$ret_ifj_fun float\n");
 
+    // Pokud null, vrátíme nil
+    gen_jumpifeq_str(label_end, "GF", "$ret_ifj_fun", "nil", "nil");
+
     // Pokud celé číslo convertujeme do int
     fprintf(stdout, "ISINT GF@$tmp GF@$ret_ifj_fun\n");
-    gen_jumpifeq_str(label_end, "GF", "tmp", "bool", "false");
+    gen_jumpifeq_str(label_end, "GF", "$tmp", "bool", "false");
     fprintf(stdout, "FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun\n");
 
     gen_label(label_end);
@@ -1015,10 +959,8 @@ static void gen_write(TACDLList *instructions){
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
     gen_jumpifneq_str(label_write, "GF", "$tmp_type_1", "string", "float");
     // Pokud je float, convertujeme na int pokud je to celé číslo
-    fprintf(stdout, "ISINT GF@$tmp ");
-    gen_operand(instr->arg1);
-    fprintf(stdout, "\n");
-    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp_type_1 bool@false\n", label_write);
+    fprintf(stdout, "ISINT GF@$tmp GF@$tmp_op_1\n");
+    fprintf(stdout, "JUMPIFEQ $%s GF@$tmp bool@false\n", label_write);
     fprintf(stdout, "FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1\n");
     
     // Vypis hodnoty
@@ -1042,7 +984,7 @@ static void gen_floor(TACDLList *instructions){
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$ret_ifj_fun\n");
     gen_jumpifeq_str(label_end, "GF", "$tmp_type_1", "string", "int");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_1", "string", "float");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "float");
 
     // Provádíme floor
     fprintf(stdout, "FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun\n");
@@ -1134,7 +1076,7 @@ static void gen_length(TACDLList *instructions){
 
     // Kontrola na string
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$ret_ifj_fun\n");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "string");
 
     // Získání délky stringu
     fprintf(stdout, "STRLEN GF@$ret_ifj_fun GF@$ret_ifj_fun\n");
@@ -1159,7 +1101,7 @@ static void gen_substring(TACDLList *instructions) {
     
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp\n");
-    gen_jumpifeq_str("EXIT25", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "string");
 
     // Získaní delky stringu
     fprintf(stdout, "STRLEN GF@$tmp_2 GF@$tmp\n");
@@ -1173,16 +1115,16 @@ static void gen_substring(TACDLList *instructions) {
                 instr->arg1->data.symbol_entry->data->unique_name);
 
     gen_label(label_check_23_arg);
-    fprintf(stdout, "ADD GF@$tmp_type_2 int@1\n");
+    fprintf(stdout, "ADD GF@$tmp_type_2 GF@$tmp_type_2 int@1\n");
     
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_2\n");
     gen_jumpifeq_str(label_zero_arg, "GF", "$tmp_type_1", "string", "int");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_1", "string", "float");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "float");
 
     // Konverze float na int
     fprintf(stdout, "ISINT GF@$tmp_type_1 GF@$tmp_op_2\n");
-    gen_jumpifeq_str("EXIT25", "GF", "$tmp_type_1", "bool", "false");
+    gen_jumpifeq_str("$EXIT25", "GF", "$tmp_type_1", "bool", "false");
     fprintf(stdout, "FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2\n");
 
     // kontrola i < 0 j < 0
@@ -1203,6 +1145,7 @@ static void gen_substring(TACDLList *instructions) {
 
 
     // i > j
+    gen_label(label_check_with_len);
     fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp_op_1 GF@$tmp_op_2\n");
     gen_jumpifeq_str(label_end, "GF", "$tmp_type_1", "bool", "true");
 
@@ -1220,13 +1163,14 @@ static void gen_substring(TACDLList *instructions) {
 
     gen_label(label_while);
     // Kontrola konce podřetezce
-    gen_jumpifeq_str(label_end, "GF", "$tmp_op_1", "GF", "tmp_op_2");
+    gen_jumpifeq_str(label_end, "GF", "$tmp_op_1", "GF", "$tmp_op_2");
 
     // Získaní a konkatinace char
     fprintf(stdout, "GETCHAR GF@$tmp_2 GF@$tmp GF@$tmp_op_1\n");
     fprintf(stdout, "CONCAT GF@$ret_ifj_fun GF@$ret_ifj_fun GF@$tmp_2\n");
     // Inc počitadla
     fprintf(stdout, "ADD GF@$tmp_op_1 GF@$tmp_op_1 int@1\n");
+    gen_jump(label_while);
 
     gen_label(label_end);
 
@@ -1248,35 +1192,35 @@ static void gen_strcmp(TACDLList *instructions){
     // Získaní 1. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "tmp_op_1", get_frame(instr->arg1),
+    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
 
     // Získaní 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "tmp_op_2", get_frame(instr->arg1),
+    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
 
     // Kontrola typů
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "string");
     fprintf(stdout, "TYPE GF@$tmp_type_2 GF@$tmp_op_2\n");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_2", "string", "string");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_2", "string", "string");
 
-    // Pro pohodlnost na žačatku nastavíme return na -1
-    gen_move_str("GF", "$ret_ifj_fun", "int", "-1");
+    // Pro pohodlnost na žačatku nastavíme return na 1
+    gen_move_str("GF", "$ret_ifj_fun", "int", "1");
 
     // Ve tmp je minimalní delka, ve tmp_2 je počitadlo
     // Minimalní delka
     fprintf(stdout, "STRLEN GF@$tmp GF@$tmp_op_1\n");
     fprintf(stdout, "STRLEN GF@$tmp_2 GF@$tmp_op_2\n");
     gen_jumpifeq_str(label_eq_len, "GF", "$tmp", "GF", "$tmp_2");
-    fprintf(stdout, "GT GF@$tmp_type_1 GF@$tmp_2 GF@$tmp\n");
+    fprintf(stdout, "LT GF@$tmp_type_1 GF@$tmp_2 GF@$tmp\n");
     gen_jumpifeq_str(label_min_len, "GF", "$tmp_type_1", "bool", "true");
 
-    // Ve pokud 1. str delší je minimalní delka a navratova hodnota bude 1
-    gen_move_str("GF", "$tmp", "GF", "$tmp_2");
-    gen_move_str("GF", "$ret_ifj_fun", "int", "1");
+    // Ve pokud 1. str delší je minimalní delka a navratova hodnota bude -1
+    gen_move_str("GF", "$tmp_2", "GF", "$tmp");
+    gen_move_str("GF", "$ret_ifj_fun", "int", "-1");
     gen_jump(label_min_len);
     
     // Pokud stejná delka navratova hodnota bude 0
@@ -1294,11 +1238,11 @@ static void gen_strcmp(TACDLList *instructions){
     // Kontrala konce nejmenšího řetězce
     gen_jumpifeq_str(label_end, "GF", "$tmp", "GF", "$tmp_2");
     // Porovnaní charů
-    fprintf(stdout, "GETCHAR GF@$tmp_type_1 GF@$tmp_op_1 GF@$tmp_2\n");
-    fprintf(stdout, "GETCHAR GF@$tmp_type_2 GF@$tmp_op_2 GF@$tmp_2\n");
+    fprintf(stdout, "GETCHAR GF@$tmp_type_1 GF@$tmp_op_1 GF@$tmp\n");
+    fprintf(stdout, "GETCHAR GF@$tmp_type_2 GF@$tmp_op_2 GF@$tmp\n");
     gen_jumpifneq_str(label_gt_lt, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
     // Inc počitadla
-    fprintf(stdout, "ADD GF@$tmp_2 GF@$tmp_2 int@1\n");
+    fprintf(stdout, "ADD GF@$tmp GF@$tmp int@1\n");
     gen_jump(label_while);
 
 
@@ -1335,7 +1279,7 @@ static void gen_ord(TACDLList *instructions){
     // Získání 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
-    gen_move_str("GF", "$tmp_op_1", get_frame(instr->arg1),
+    gen_move_str("GF", "$tmp_op_2", get_frame(instr->arg1),
                 instr->arg1->data.symbol_entry->data->unique_name);
     
     // Kontrola typů
@@ -1347,7 +1291,7 @@ static void gen_ord(TACDLList *instructions){
     fprintf(stdout, "EQ GF@$tmp_2 GF@$tmp_type_2 string@int\n");
     fprintf(stdout, "EQ GF@$tmp GF@$tmp_type_2 string@float\n");
     fprintf(stdout, "OR GF@$tmp GF@$tmp_2 GF@$tmp\n");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp", "bool", "true");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp", "bool", "true");
     gen_jumpifeq_str(label_start_check, "GF", "$tmp_2", "bool", "true");
 
     // Konverze 2. argumentu
@@ -1387,9 +1331,9 @@ static void gen_chr(TACDLList *instructions){
     // Kontrola typu
     fprintf(stdout, "TYPE GF@$tmp_type_1 GF@$tmp_op_1\n");
     gen_jumpifeq_str(label_start_check, "GF", "$tmp_type_1", "string", "int");
-    gen_jumpifneq_str("EXIT25", "GF", "$tmp_type_1", "string", "float");
+    gen_jumpifneq_str("$EXIT25", "GF", "$tmp_type_1", "string", "float");
     fprintf(stdout, "ISINT GF@$tmp GF@$tmp_op_1\n");
-    gen_jumpifeq_str("EXIT25", "GF", "$tmp_", "string", "false");
+    gen_jumpifeq_str("$EXIT25", "GF", "$tmp_", "string", "false");
     fprintf(stdout, "FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1\n");
 
     // chr
@@ -1455,7 +1399,7 @@ int generate_code(TACDLList *instructions, Symtable *table) {
 
         // ! test output
         fprintf(stdout, "\n# ======================= NEW INSTRUCTION =======================\n");
-        // fprintf(stdout, "#"); print_single_tac_instruction(instr);
+        fprintf(stdout, "#"); print_single_tac_instruction_gencode(instr);
 
         switch (instr->operation_code) {
             case OP_JUMP:
@@ -1520,4 +1464,64 @@ int generate_code(TACDLList *instructions, Symtable *table) {
         TACDLL_Next(instructions);
     }
     return 0;
+}
+
+// Функция принимает "сырую" строку и возвращает новую, экранированную для IFJcode25
+// ВАЖНО: Возвращаемая строка аллоцируется динамически, не забудьте сделать free()!
+char* string_to_ifjcode(const char *original) {
+    if (original == NULL) 
+        return NULL;
+
+    // 1. Проход: Вычисляем необходимый размер буфера
+    size_t length = 0;
+    for (int i = 0; original[i] != '\0'; i++) {
+        char c = original[i];
+        
+        // Условия экранирования согласно спецификации IFJcode25 (раздел 10.3):
+        // - ASCII 000-032 (управляющие и пробел)
+        // - ASCII 035 (#)
+        // - ASCII 092 (\)
+        if (c <= 32 || c == 35 || c == 92) {
+            length += 4; // \xyz -> 4 символа
+        } else {
+            length += 1; // Обычный символ
+        }
+    }
+
+    // Выделяем память (+1 для нуль-терминатора)
+    char *escaped = (char *)malloc(length + 1);
+    if (escaped == NULL) {
+        // Обработка ошибки выделения памяти (например, вызов вашей функции error_exit)
+        fprintf(stderr, "Internal compiler error: memory allocation failed\n");
+        exit(99); // Код 99 для внутренней ошибки [cite: 43]
+    }
+
+    // 2. Проход: Заполнение новой строки
+    size_t pos = 0;
+    for (int i = 0; original[i] != '\0'; i++) {
+        unsigned char c = (unsigned char)original[i];
+
+        if (c == 10) {
+            // Специальный случай для новой строки
+            sprintf(escaped + pos, "\\010");
+            pos += 4;
+        } else if (c == 13) {
+            // Специальный случай для новой строки
+            sprintf(escaped + pos, "\\013");
+            pos += 4;
+        
+        } else if (c <= 32 || c == 35 || c == 92) {
+            // Записываем escape-последовательность
+            // %03d гарантирует 3 цифры (например, \010, а не \10)
+            sprintf(escaped + pos, "\\%03d", c);
+            pos += 4;
+        } else {
+            // Копируем символ как есть
+            escaped[pos] = c;
+            pos += 1;
+        }
+    }
+
+    escaped[pos] = '\0'; // Завершаем строку
+    return escaped;
 }

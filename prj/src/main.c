@@ -24,11 +24,13 @@ int main() {
         fprintf(stderr, "Parsing failed.\n");
         return 1;
     }
+    // ast_print_debug(program);
     analyze_semantics(program);
     TACDLList tac_list;
     TACDLL_Init(&tac_list);
     generate_tac(program, &tac_list, &global_table);
     optimize_tac(&tac_list);
+    // print_tac_list(&tac_list); // Отладочный вывод оптимизированного TAC
     generate_code(&tac_list, &global_table);
     TACDLL_Dispose(&tac_list);
     symtable_free(&global_table);

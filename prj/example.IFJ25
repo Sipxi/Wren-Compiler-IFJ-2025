@@ -1,7 +1,8 @@
 import "ifj25" for Ifj
 class Program {
     static main() {
-        if () { // Chyba: Пустое условие в while
-        }
+        var a
+        a = 1 + 2
+        a = Ifj.write(a)
     }
 }

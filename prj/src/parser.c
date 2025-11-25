@@ -805,7 +805,7 @@ static void parser_prolog(Lexer *lexer, FILE *file) {
     get_token(lexer, file);
 
     if (peek_token(lexer, file).type != TOKEN_STRING ||
-        strcmp(peek_token(lexer, file).data, "\"ifj25\"") != 0) {
+        strcmp(peek_token(lexer, file).data, "ifj25") != 0) {
         printf("Expected string literal after 'import' keyword.\n");
         get_token(lexer, file); // consume invalid token
         exit(SYNTAX_ERROR);
