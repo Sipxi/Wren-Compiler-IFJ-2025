@@ -3,5 +3,6 @@ class Program {
     static main(){
         var a
         __b
+        __b = 7
     }
 }
