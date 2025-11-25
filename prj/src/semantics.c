@@ -526,18 +526,32 @@ static bool analyze_function_body(AstNode *func_node)
         exit(2);
     }
 
-    // Запускаем рекурсивный анализ
-    if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
-        H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
-        exit(10);
+
+    // Итерируемся по внутренностям блока вручную
+    for (AstNode *stmt = body_node->child; stmt != NULL; stmt = stmt->sibling) {
+
+        // --- ОТЛАДКА ---
+        // printf("DEBUG: Analyzing statement type: %d on line %d\n", stmt->type, stmt->line_number);
+        // ----------------
+
+        // block_cnt и scope_id передаем как есть
+        if (!analyze_statement(stmt, &stack, &local_block_cnt, current_scope_id)) {
+            H_Stack_Pop(&stack);
+            exit(10); // Ошибки уже выведены внутри
+        }
     }
+
+    // // Запускаем рекурсивный анализ
+    // if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
+    //     H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
+    //     exit(10);
+    // }
 
     // 8. Если мы дошли сюда без ошибок:
     func_entry->data->is_defined = true;
 
     // 9. Очищаем стек
     H_Stack_Pop(&stack);
-    // (стек теперь пуст)
 
     return true;
 }
