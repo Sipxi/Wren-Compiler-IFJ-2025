@@ -217,6 +217,8 @@ static NodeType token_to_node(Token token) {
             return NODE_LITERAL_NUM;
         case TOKEN_STRING:
             return NODE_LITERAL_STRING;
+        case TOKEN_KEYWORD:
+            return NODE_LITERAL_NULL;
         default:
             exit(SYNTAX_ERROR); // Не оператор
     }

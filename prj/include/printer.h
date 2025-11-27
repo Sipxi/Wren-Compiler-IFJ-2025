@@ -11,6 +11,7 @@
 
 #include "tac.h" 
 #include "ast.h"
+#include "codegen.h"
 
 /**
  * @brief (Для отладки) Печатает дерево, начиная с 'node'.
@@ -26,12 +27,18 @@ void ast_print_debug(AstNode* node);
 void print_tac_list(TACDLList *tac_list);
 
  /**
+  * @brief Печатает 3AC в экранированом читаемом виде.
+  *
+  * @param instr Инструкция.
+  */
+void print_single_tac_instruction_gencode(TacInstruction *instr);
+
+ /**
   * @brief Печатает 3AC в читаемом виде.
   *
   * @param instr Инструкция.
   */
 void print_single_tac_instruction(TacInstruction *instr);
-
 /**
  * @brief Функция для TACDLL_Dispose для очистки памяти из-под TacInstruction.
  * (Вызывается из dll.c)

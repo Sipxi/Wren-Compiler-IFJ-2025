@@ -526,18 +526,32 @@ static bool analyze_function_body(AstNode *func_node)
         exit(2);
     }
 
-    // Запускаем рекурсивный анализ
-    if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
-        H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
-        exit(10);
+
+    // Итерируемся по внутренностям блока вручную
+    for (AstNode *stmt = body_node->child; stmt != NULL; stmt = stmt->sibling) {
+
+        // --- ОТЛАДКА ---
+        // printf("DEBUG: Analyzing statement type: %d on line %d\n", stmt->type, stmt->line_number);
+        // ----------------
+
+        // block_cnt и scope_id передаем как есть
+        if (!analyze_statement(stmt, &stack, &local_block_cnt, current_scope_id)) {
+            H_Stack_Pop(&stack);
+            exit(10); // Ошибки уже выведены внутри
+        }
     }
+
+    // // Запускаем рекурсивный анализ
+    // if (!analyze_statement(body_node, &stack, &local_block_cnt, current_scope_id)) {
+    //     H_Stack_Pop(&stack); // Стек мог остаться грязным, если ошибка была в блоке
+    //     exit(10);
+    // }
 
     // 8. Если мы дошли сюда без ошибок:
     func_entry->data->is_defined = true;
 
     // 9. Очищаем стек
     H_Stack_Pop(&stack);
-    // (стек теперь пуст)
 
     return true;
 }
@@ -655,6 +669,25 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
         if (current_table == NULL) {
             exit(99);
         }
+
+
+// --- ОТЛАДКА ---
+        // TableEntry *debug_entry = symtable_lookup(current_table, name);
+        // printf("DEBUG VAR_DEF: Looking for name: '%s' (len: %lu) in table: %p\n", 
+        //        name, (unsigned long)strlen(name), (void*)current_table);
+        
+        // if (debug_entry) {
+        //     printf(" -> FOUND! Key in table: '%s'\n", debug_entry->key);
+        // } else {
+        //     printf(" -> NOT FOUND. Printing table keys:\n");
+        //     for(size_t i=0; i < current_table->capacity; i++) {
+        //          if (current_table->entries[i].status == SLOT_OCCUPIED) {
+        //              printf("    Slot %lu: '%s'\n", i, current_table->entries[i].key);
+        //          }
+        //     }
+        // }
+        // ----------------
+
 
         // 2. Проверка (Ошибка 4 - Ре-дефиниция в *этом* блоке)
         // Ищем только в текущей таблице уровня.
@@ -1144,8 +1177,33 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
         TableEntry *func_entry = symtable_lookup(&global_table, mangled_name);
 
         if (!func_entry) {
-            fprintf(stderr, "Error 3/5: Undefined function '%s' with %d args (Line %d).\n", name, arity, node->line_number);
-            exit(3);
+            bool found_with_other_arity = false;
+            size_t name_len = strlen(name);
+
+            // Пробегаем по всей глобальной таблице и ищем функцию с тем же именем
+            for (size_t i = 0; i < global_table.capacity; i++) {
+                TableEntry *func = &global_table.entries[i];
+                
+                // Проверяем только занятые слоты с функциями
+                if (func->status == SLOT_OCCUPIED && func->data->kind == KIND_FUNC) {
+                    // Проверяем, начинается ли ключ с "name" + "$"
+                    // Это гарантирует, что мы нашли именно "test$...", а не "testing$..."
+                    if (strncmp(func->key, name, name_len) == 0 && func->key[name_len] == '$') {
+                        found_with_other_arity = true;
+                        break;
+                    }
+                }
+            }
+
+            if (found_with_other_arity) {
+                // Функция есть, но арность не совпала
+                fprintf(stderr, "Semantic Error (Line %d): Function '%s' called with wrong number of arguments (expected another, got %d).\n", node->line_number, name, arity);
+                exit(5); // Ошибка арности
+            } else {
+                // Функции с таким именем вообще нет
+                fprintf(stderr, "Semantic Error (Line %d): Undefined function '%s'.\n", node->line_number, name);
+                exit(3); // Ошибка неопределенной функции
+            }
         }
 
         id_node->table_entry = func_entry;
@@ -1181,7 +1239,7 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
 
             // Check Ifj.floor (Expects NUM)
             if (strcmp(name, "Ifj.floor") == 0) {
-                if (arg_types[0] != TYPE_NUM && arg_types[0] != TYPE_UNKNOWN) ok = false;
+                if (arg_types[0] != TYPE_NUM && arg_types[0] != TYPE_FLOAT && arg_types[0] != TYPE_UNKNOWN) ok = false;
             }
             // Check Ifj.length (Expects STR)
             else if (strcmp(name, "Ifj.length") == 0) {
@@ -1230,12 +1288,3 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
         exit(99);
     }
 }
-
-
-
-
-
-
-
-
-
