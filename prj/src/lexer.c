@@ -75,6 +75,7 @@ typedef enum {
 
     // Viceřádkové řetězce
     STATE_SECOND_QUOT,         // ""                            * Přechodový stav po druhé uvozovce
+    STATE_STRING_WHITESPACE,    // "" "                          * Přechodový stav pro nechávání bílého znaku
     STATE_MULTIPLE_STRING,     // """example..                  * Přechodový stav pro víceřádkový řetězec
     STATE_CLOSING_QUOT,        // """example"                   * Přechodový stav pro zavírací uvozovku
     STATE_SECOND_CLOSING_QUOT, // """example""                  * Přechodový stav pro druhou zavírací uvozovku
@@ -436,15 +437,23 @@ static void write_str(FILE *file, int count, char **str) {
 
 static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str) {
     // Seek zpět na začátek řetězce
+    if (quote_len > 3) {
+        total_chars -= 3;
+    }
     if (fseek(file, -total_chars, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to seek back in file");
     }
-    if (fseek(file, quote_len, SEEK_CUR) != 0) {
+    if (quote_len <= 3 && fseek(file, quote_len, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to skip opening quotes");
     }
 
     // Spočítat skutečnou délku obsahu a alokovat paměť
-    int raw_content_len = total_chars - (2 * quote_len);
+    int raw_content_len;
+    if (quote_len > 3){
+        raw_content_len = total_chars - quote_len;
+    } else {
+        raw_content_len = total_chars - (2 * quote_len);
+    }
     
     char *temp = realloc(*str, raw_content_len + 1);
     if (temp == NULL) {
@@ -462,7 +471,7 @@ static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char *
 
         if (c == EOF) break;
         //! Quick fix for non-printable characters
-        if (quote_len != 3) {
+        if (quote_len < 3) {
             if (c <= 31){
                 fprintf(stderr, "Lexer error: Invalid character in string literal\n");
                 exit(LEXER_ERROR); // Nekorektní znak v řetězci
@@ -1220,7 +1229,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 // Jinak je to další uvozovka, pokračujeme ve čtení řetězce
                 quote_len = 3;
                 characters_read++;
-                state = STATE_MULTIPLE_STRING;
+                state = STATE_STRING_WHITESPACE;
                 break;
 
             case STATE_STRING_END:
@@ -1230,6 +1239,37 @@ void scan_token(Lexer *lexer, FILE *file) {
             // =========================
             // ===== Stavy víceřádkové řetězce =====
             // =========================
+            case STATE_STRING_WHITESPACE:
+                if (is_whitespace(current_char)) {
+                    characters_read++;
+                    break;
+                }
+                else if (current_char == '\n') {
+                    // lexer_consume_char(lexer, file);
+                    characters_read = 3;
+                    quote_len = 3;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+
+                }
+                else if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_CLOSING_QUOT;
+                    break;
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                else {
+                    characters_read++;
+                    quote_len = 3;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+                }
+                break;
+
             case STATE_MULTIPLE_STRING:
                 if (current_char == '"') {
                     characters_read++;
@@ -1240,6 +1280,12 @@ void scan_token(Lexer *lexer, FILE *file) {
                     lexer_error(lexer, LEXER_ERROR,
                         "Unterminated string literal");
                     break;
+                } else if (current_char == '\n' && quote_len != 4) {
+                    quote_len = 4;
+                } else if (quote_len > 3 && is_whitespace(current_char)) {
+                    quote_len++;
+                } else if (quote_len > 3) {
+                    quote_len = 3;
                 }
                 characters_read++;
                 break;
@@ -1257,6 +1303,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 }
                 else {
                     characters_read++;
+                    quote_len = 3;
                     state = STATE_MULTIPLE_STRING;
                     break;
                 }
@@ -1274,6 +1321,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 }
                 else {
                     characters_read++;
+                    quote_len = 3;
                     state = STATE_MULTIPLE_STRING;
                     break;
                 }

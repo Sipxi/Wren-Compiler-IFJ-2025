@@ -1,26 +1,8 @@
 import "ifj25" for Ifj
 class Program {
     static main() {
-        var a
-        a = 0
-        b = 5
-        // __b = 5
-        a = b 
-        // a = 5
-        b = a
-        // b = 10
-        a = b
-        // a = 10
+        var a 
+        a = "   asdasd   "
         a = Ifj.write(a)
-    }
-    static b {
-        return __b
-    }
-    static b=(a) {
-        if (__b){
-            __b = __b + a
-        } else {
-            __b = a
-        }
     }
 }

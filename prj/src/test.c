@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.h"
+#include "printer.h"
 #include "semantics.h"
 #include "tac.h"
 #include "codegen.h"
@@ -18,8 +19,8 @@ int main() {
         fclose(file);
         return EXIT_FAILURE;
     }
-    
     printf("Parsing succeeded\n");
+    symtable_print(&global_table);
     analyze_semantics(root);
     printf("Semantic analysis completed\n");
     TACDLList tac_list;
