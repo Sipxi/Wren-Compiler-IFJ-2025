@@ -1,11 +1,13 @@
 import "ifj25" for Ifj
 class Program {
     static main() {
-        var x 
-        x = 5
-        var result 
-        result = x > 3 - 10  // ERROR: missing : and else branch
-        __a = Ifj.write(result)
-        __a = Ifj.write("\n")
+        var a
+        a = 0
+        __b = 5
+        a = b
+        a = Ifj.write(a)
+    }
+    static b {
+        return __b
     }
 }
