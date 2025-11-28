@@ -1,8 +1,18 @@
 import "ifj25" for Ifj
 class Program {
+<<<<<<< HEAD
     // funkce bez parametru
     static getAnswer() {
         return 42  // prikaz navratu z funkce
+=======
+    static main() {
+        var x 
+        x = 5
+        var result 
+        result = x > 3 - 10  // ERROR: missing : and else branch
+        __a = Ifj.write(result)
+        __a = Ifj.write("\n")
+>>>>>>> main
     }
 
     // pretizena verze funkce vyse s jednim parametrem
