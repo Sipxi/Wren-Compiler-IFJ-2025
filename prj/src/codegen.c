@@ -501,7 +501,7 @@ static void gen_same_operand_check(TacInstruction *instr){
     
     // Uložení operandů do dočasných proměnných
     if (getter_check(instr))
-        gen_move_str("GF", "$tmp_op_1", "GF", "$setter_1");
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
     else {
         fprintf(stdout, "MOVE GF@$tmp_op_1 ");
         gen_operand(instr->arg1, 1);
@@ -509,7 +509,7 @@ static void gen_same_operand_check(TacInstruction *instr){
     }
 
     if (getter_check(instr))
-        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_2");
     else {
         fprintf(stdout, "MOVE GF@$tmp_op_2 ");
         gen_operand(instr->arg2, 1);
@@ -666,9 +666,6 @@ static void gen_param(TACDLList *instructions){
 
     TacInstruction *instr;  // Actualní volající instrukce
     TACDLL_GetValue(instructions, &instr);
-    bool is_setter = false;
-    if (instr->operation_code == OP_ASSIGN)
-        is_setter = true;
 
 
     char *label_name; // Jmeno funkce
@@ -679,11 +676,11 @@ static void gen_param(TACDLList *instructions){
 
     // Kontrola přítomnosti parametrů funkce 
     TACDLL_Next(instructions);
-    TACDLL_GetValue(instructions, &instr);
-    if (is_setter ||
-        (TACDLL_IsActive(instructions) && instr->operation_code != OP_PARAM))
-    {
-        return;
+    
+    if (TACDLL_IsActive(instructions)){
+        TACDLL_GetValue(instructions, &instr);
+        if (instr->operation_code != OP_PARAM)
+            return;
     }
     TACDLL_Previous(instructions);
 
@@ -694,8 +691,6 @@ static void gen_param(TACDLList *instructions){
     
     // Od začatku hledáme žačatek funkce
     TACDLL_First(&instrs_fun);
-    if (!is_setter)
-        TACDLL_Next(instructions);
     while (TACDLL_IsActive(&instrs_fun)) {
         TACDLL_GetValue(&instrs_fun, &instr_param);
         TACDLL_Next(&instrs_fun);
@@ -704,18 +699,6 @@ static void gen_param(TACDLList *instructions){
             break;
     }
     TACDLL_Next(&instrs_fun);    
-
-    // Declarace a přiřazení pro setter
-    if (is_setter) {
-        // definueme parametr pro setter
-        TACDLL_GetValue(&instrs_fun, &instr_param);
-        char *param_name = instr_param->result->data.symbol_entry->data->unique_name;
-        gen_defvar_str("TF", param_name);
-        fprintf(stdout, "MOVE TF@%s ", param_name);
-        gen_operand(instr->arg1, 1);
-        fprintf(stdout, "\n");
-        return;
-    }
 
     // Teď kdy máme active_element na parametrech a argumentech
     // Přirazíme paremetrům hodnoty argumentů  
@@ -757,7 +740,7 @@ static void gen_mul_str(TacInstruction *instr){
     gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
 
     if (getter_check(instr))
-        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_2");
     else{
         fprintf(stdout, "MOVE GF@$tmp_op_2 ");
         gen_operand(instr->arg2, 1);
@@ -821,14 +804,14 @@ static void gen_comprasion(TacInstruction *instr){
     
     
     if (getter_check(instr))
-        gen_move_str("GF", "$tmp_op_1", "GF", "$setter_1");
+        gen_move_str("GF", "$tmp_op_1", "GF", "$getter_1");
     else{
         fprintf(stdout, "MOVE GF@$tmp_op_1 ");
         gen_operand(instr->arg1, 1);
         fprintf(stdout, "\n");
     }
     if (getter_check(instr))
-        gen_move_str("GF", "$tmp_op_2", "GF", "$setter_2");
+        gen_move_str("GF", "$tmp_op_2", "GF", "$getter_2");
     else{
         fprintf(stdout, "MOVE GF@$tmp_op_2 ");
         gen_operand(instr->arg2, 1);
@@ -1200,7 +1183,7 @@ static void gen_length(TACDLList *instructions){
     TACDLL_GetValue(instructions, &instr);
 
     if (getter_check(instr))
-        gen_move_str("GF", "$ret_ifj_fun", "GF", "$setter_1");
+        gen_move_str("GF", "$ret_ifj_fun", "GF", "$getter_1");
     else {
         fprintf(stdout, "MOVE GF@$ret_ifj_fun ");
         gen_operand(instr->arg1, 1);
@@ -1578,6 +1561,32 @@ static int getter_check(TacInstruction *instr){
     return result;
 }
 
+static void gen_param_setter(TACDLList Instructions) {
+    TacInstruction *instr; // Aktuální instrukce
+    TACDLL_GetValue(&Instructions, &instr);
+    char *setter_name = instr->result->data.symbol_entry->key;
+    Operand *arg1 = instr->arg1;
+
+    TACDLL_First(&Instructions);
+    while (TACDLL_IsActive(&Instructions)) {
+        TACDLL_GetValue(&Instructions, &instr);
+        TACDLL_Next(&Instructions);
+        // Kontrola na konec volání setteru
+        if (instr->operation_code == OP_LABEL &&
+            strcmp(instr->arg1->data.label_name, setter_name) == 0) {
+            TACDLL_Next(&Instructions);
+            break;
+        }
+    }
+
+    TACDLL_GetValue(&Instructions, &instr);
+    gen_create_frame();
+    gen_defvar_str("TF", instr->result->data.symbol_entry->data->unique_name);
+    fprintf(stdout, "MOVE TF@%s ", instr->result->data.symbol_entry->data->unique_name);
+    gen_operand(arg1, 1);
+    fprintf(stdout, "\n");
+}
+
 /* ================================================================= */
 /* ===== Implementace veřejných funkcí generátoru cílového kódu ==== */
 /* ================================================================= */
@@ -1677,9 +1686,9 @@ int generate_code(TACDLList *instructions, Symtable *table) {
                 break;
             case OP_ASSIGN:
                 // Kontrola zda je volání setteru
-                if (instr->result->type == OPERAND_TYPE_LABEL) {
-                    gen_param(instructions);
-                    gen_call(instr->result->data.label_name);
+                if (strstr(instr->result->data.symbol_entry->key, "$setter") != NULL) {
+                    gen_param_setter(*instructions);
+                    gen_call(instr->result->data.symbol_entry->key);
                 } else
                     gen_move(instr->result, instr->arg1);
                 break;
