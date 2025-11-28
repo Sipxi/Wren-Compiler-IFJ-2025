@@ -1,8 +1,33 @@
 import "ifj25" for Ifj
 class Program {
     static main() {
-        var a 
-        a = "   asdasd   "
+        var a
+        var b
+        //a = 2
+        a = int
+        b = int
+        a = a / b
+        a = Ifj.str(a)
         a = Ifj.write(a)
+    }
+    static str {
+        var a
+        a = "str"
+        return a
+    }
+    static nil {
+        var a
+        a = null
+        return a
+    }
+    static int {
+        var a
+        a = 123
+        return a
+    }
+    static float {
+        var a
+        a = 1.23
+        return a
     }
 }

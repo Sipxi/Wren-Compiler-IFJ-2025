@@ -1525,6 +1525,122 @@ static void gen_param_setter(TACDLList Instructions) {
     fprintf(stdout, "\n");
 }
 
+static void gen_multiply(TacInstruction *instr){
+    char *label_loop = create_unique_label("MUL_STR_LOOP");
+    char *label_loop_end = create_unique_label("MUL_STR_LOOP_END");
+    char *label_end_convert = create_unique_label("END_CONVERT");
+    char *label_mul_str = create_unique_label("MUL_STR");
+    char *label_arg_2_float = create_unique_label("ARG2_TO_FLOAT");
+    char *label_start_operation = create_unique_label("START_OPERATION");
+    
+    // Kontrola typů operandů
+    gen_type(instr);
+
+    // Kontrola typu druheho operandu
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
+    
+    // Kontrola typu prvního operandu
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_1", "string", "nil");
+    // Kontrola že první operand je int
+    gen_jumpifeq_str(label_mul_str, "GF", "$tmp_type_1", "string", "string");
+
+
+
+    // Multiplikace čísel
+
+    fprintf(stdout, "MOVE GF@$tmp_op_1 ");
+    gen_operand(instr->arg1, 1);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "MOVE GF@$tmp_op_2 ");
+    gen_operand(instr->arg2, 1);
+    fprintf(stdout, "\n");
+    
+    // Pokud jsou oba int nebo float, pokračuj
+    gen_jumpifeq_str(label_start_operation, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
+
+    // Convertace int na float, pokud je jeden z operandů float
+    gen_jumpifeq_str(label_arg_2_float, "GF", "$tmp_type_1", "string", "float");
+
+    // Konverze prvního operandu
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1\n");
+    gen_jump(label_start_operation);
+
+    // Konverze druhého operandu
+    gen_label(label_arg_2_float);
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2\n");
+
+    // Začátek operace
+    gen_label(label_start_operation);
+
+    fprintf(stdout, "MUL ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
+    gen_jump(label_loop_end);
+
+
+
+    // Multiplikace string
+    gen_label(label_mul_str);
+
+    // Přiřazení druhého operandu do pomocné proměnné
+    fprintf(stdout, "MOVE GF@$tmp_op_2 ");
+    gen_operand(instr->arg2, 1);
+    fprintf(stdout, "\n");
+
+    // kontrola že druhý operand je int
+    fprintf(stdout, "ISINT GF@$tmp GF@$tmp_op_2\n");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp", "bool", "false");
+    
+    // Konverze na int pokud je float
+    gen_jumpifeq_str(label_end_convert, "GF", "$tmp_type_2", "string", "int");
+    fprintf(stdout, "FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2\n");
+
+    // Konec konverze
+    gen_label(label_end_convert);
+
+    // Kontrola na nenegativnost
+    fprintf(stdout, "LT GF@$tmp_2 GF@$tmp_op_2 int@0\n");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_2", "bool", "true");
+
+    // Inicializace výsledné string proměnné a počítadla
+    fprintf(stdout, "MOVE ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " string@\n");
+
+    // Začátek smyčky
+    gen_label(label_loop);
+    
+    // Kontrola počítadla
+    gen_jumpifeq_str(label_loop_end, "GF", "$tmp_op_2", "int", "0");
+    
+    // Konkatenace řetězce
+    fprintf(stdout, "CONCAT ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " ");
+    gen_operand(instr->arg1, 1);
+    fprintf(stdout, "\n");
+
+    // DEC počítadla
+    fprintf(stdout, "SUB GF@$tmp_op_2 GF@$tmp_op_2 int@1\n");
+    // Pokračování smyčky
+    fprintf(stdout, "JUMP $%s\n", label_loop);
+
+    // Konec smyčky
+    gen_label(label_loop_end);
+
+    free(label_loop);
+    free(label_loop_end);
+    free(label_end_convert);
+    free(label_mul_str);
+    free(label_arg_2_float);
+    free(label_start_operation);
+}
+
 /* ================================================================= */
 /* ===== Implementace veřejných funkcí generátoru cílového kódu ==== */
 /* ================================================================= */
@@ -1558,9 +1674,11 @@ int generate_code(TACDLList *instructions, Symtable *table) {
                 break;
             case OP_ADD:
             case OP_SUBTRACT:
-            case OP_MULTIPLY:
             case OP_CONCAT:
                 gen_arithmetic(instr);
+                break;
+            case OP_MULTIPLY:
+                gen_multiply(instr);
                 break;
             case OP_LESS:
             case OP_GREATER:
