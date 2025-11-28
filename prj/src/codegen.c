@@ -1594,7 +1594,8 @@ int generate_code(TACDLList *instructions, Symtable *table) {
                 break;
             case OP_ASSIGN:
                 // Kontrola zda je volání setteru
-                if (strstr(instr->result->data.symbol_entry->key, "$setter") != NULL) {
+                if (instr->result->type == OPERAND_TYPE_SYMBOL  &&
+                    strstr(instr->result->data.symbol_entry->key, "$setter") != NULL) {
                     gen_param_setter(*instructions);
                     gen_call(instr->result->data.symbol_entry->key);
                 } else

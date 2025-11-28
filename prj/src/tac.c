@@ -38,6 +38,14 @@ int global_label_counter = 0;
 /* ======================================*/
 
 /**
+ * @brief Проверяет, есть ли в строке имя геттера.
+ * 
+ * @param name Имя функции для проверки.
+ * @return true если имя соответствует геттеру, false иначе.
+ */
+static bool has_getter(const char *name);
+
+/**
  * @brief Главная рекурсивная функция. Обходит AST и генерирует TAC.
  *
  * Функция рекурсивно обходит дерево (post-order для выражений)
@@ -409,6 +417,9 @@ bool TACDLL_IsActive(TACDLList *list) {
 /* ===== Имплементация приватных функций =====*/
 /* ======================================*/
 
+static bool has_getter(const char *name) {
+   return strstr(name, "getter") != NULL;
+}
 
 static void tac_gen_children_list(AstNode *node, TACDLList *tac_list,
     Symtable *symtable) {
@@ -993,6 +1004,19 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         if (var_entry == NULL) {
             // Ошибка: переменная не найдена в таблице символов
             return NULL;
+        }
+        if (has_getter(var_entry->key)) {
+            // Создаем временный операнд для результата геттера
+            Operand *result_op = create_temp_operand(tac_list);
+            
+            // Вызов геттера для свойства
+            Operand *getter_label_op = create_label_operand(var_entry->key);
+            generate_instruction(tac_list, OP_CALL, NULL, getter_label_op,
+                NULL);
+            // Генерируем инструкцию получения результата геттера
+            generate_instruction(tac_list, OP_ASSIGN, result_op, getter_label_op,
+                NULL);
+            return result_op;
         }
         // Создаем операнд-символ для переменной
         return create_symbol_operand(var_entry);
