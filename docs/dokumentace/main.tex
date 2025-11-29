@@ -1,0 +1,60 @@
+\documentclass[12pt, a4paper]{article}
+
+% Подключение пакетов для кодировки и шрифтов
+\usepackage[utf8]{inputenc} % Кодировка исходного файла
+\usepackage[T2A]{fontenc}   % Кодировка шрифтов для кириллицы
+\usepackage[russian, czech, english]{babel} % Поддержка языков
+
+% Пакет для вставки изображений
+\usepackage{graphicx}
+
+% Пакет для настройки отступов
+\usepackage{geometry}
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2cm,
+    right=2cm
+}
+
+\begin{document}
+
+\begin{titlepage}
+    % --- Логотип слева сверху ---
+    % Убедись, что файл logo.png находится в папке с .tex файлом
+    % width=4cm задает ширину логотипа
+    \begin{flushleft}
+        % Если нет реального логотипа, можно использовать \rule{4cm}{2cm} как заглушку
+        \includegraphics[width=7.5cm]{images/VUT-FIT-logo-cs.png} 
+    \end{flushleft}
+
+    \vspace{0cm} % Отступ после логотипа
+
+    % --- Центральная часть ---
+    \begin{center}
+
+        % --- Название проекта ---
+        \Huge \textbf{Projektová dokumentace} \\
+        \vspace{0.5cm}
+        \LARGE Implementace překladače imperativního jazyka IFJ25 \\
+        \vspace{0.5cm}
+        \large \textbf{Tým x253038, varianta TRP-izp}
+    \end{center}
+
+    % --- Информация о команде (слева)
+    \begin{minipage}{0.6\textwidth}
+        \begin{flushleft}
+            \large
+            \textbf{Členové týmu:} \\
+            Serhij Čepil (x253038) 25 \% ← vedoucí\\
+            Dmytro Kravchenko (xkravcd00) 25 \%  \\
+            Veronika Turbaievska (xturbav00) 25 \%  \\
+            Mykhailo Tarnavskyi (xtarnam00) 25 \%  \\
+        \end{flushleft}
+    \end{minipage}
+
+\end{titlepage}
+
+% Здесь начинается основной текст документа
+
+\end{document}

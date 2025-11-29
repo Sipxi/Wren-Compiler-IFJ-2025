@@ -129,6 +129,10 @@ LABEL $END_DIV_2
 MOVE LF@a$0 LF@$t$2
 
 # ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | ""              | ____
+MOVE LF@a$0 string@
+
+# ======================= NEW INSTRUCTION =======================
 #CALL               | ____            | Ifj.str$1       | ____
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$ret_ifj_fun LF@a$0
