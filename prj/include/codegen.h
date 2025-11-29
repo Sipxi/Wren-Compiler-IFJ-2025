@@ -14,18 +14,6 @@
 #include "tac.h"
 #include "utils.h"
 
-// ? Потом если не нужно удалить
-typedef enum {
-    GF,
-    LF,
-    TF,
-    INT_FRAME,
-    FLOAT_FRAME,
-    STRING_FRAME,
-    BOOL_FRAME,
-    NIL_FRAME,
-} FrameType;
-
 /**
  * @brief Hlavní funkce pro generování cílového kódu z TAC instrukcí.
  * 

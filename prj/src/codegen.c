@@ -1750,7 +1750,7 @@ char* string_to_ifjcode(const char *original) {
         // - ASCII 000-032 (управляющие и пробел)
         // - ASCII 035 (#)
         // - ASCII 092 (\)
-        if (c <= 32 || c == 35 || c == 92) {
+        if (c <= 32 || c == '#' || c == '\\') {
             length += 4; // \xyz -> 4 символа
         } else {
             length += 1; // Обычный символ
@@ -1770,16 +1770,7 @@ char* string_to_ifjcode(const char *original) {
     for (int i = 0; original[i] != '\0'; i++) {
         unsigned char c = (unsigned char)original[i];
 
-        if (c == 10) {
-            // Специальный случай для новой строки
-            sprintf(escaped + pos, "\\010");
-            pos += 4;
-        } else if (c == 13) {
-            // Специальный случай для новой строки
-            sprintf(escaped + pos, "\\013");
-            pos += 4;
-        
-        } else if (c <= 32 || c == 35 || c == 92) {
+        if (c <= 32 || c == '#' || c == '\\') {
             // Записываем escape-последовательность
             // %03d гарантирует 3 цифры (например, \010, а не \10)
             sprintf(escaped + pos, "\\%03d", c);

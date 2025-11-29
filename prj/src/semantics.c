@@ -558,20 +558,6 @@ static bool analyze_function_body(AstNode *func_node)
 
 
 
-
-/*
-        Young dope dealer, sellin' dope, is you like that? (If you like that, yeah, yeah)
-        Kickin' doors, kickin' in doors, is you like that? (How?, yeah)
-        Young throwed nigga, sellin' lows, is you like that? (Holy water, Holy water, yeah)
-        All 24, you on go, is you like that? (If you like that)
-        Niggas from the bottom really like that (if you like that) (he was once a thug, he was, he-)
-        Steppin' in Balencis if you like that (if you like that) (he was once a thug, he was, he-)
-        Pop another bottle if you like that (if you like that) (he was once a thug, he was, he-)
-
-    (c) "Like That" - Future, Kendrick Lamar, and Metro Boomin (2024)
-*/
-
-
 // Нам нужен счетчик для УНИКАЛЬНЫХ имен блоков (напр., "__block_0", "__block_1")
 // Мы можем сделать его глобальным для этого .c файла.
 static int block_counter = 0;
