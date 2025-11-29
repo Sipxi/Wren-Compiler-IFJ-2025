@@ -1,0 +1,1924 @@
+
+=== GLOBAL TABLE AFTER PASS 2A ===
+
+======================================================
+                ОТЛАДОЧНЫЙ ВЫВОД ТАБЛИЦЫ
+======================================================
+--- Таблица Символов (Уровень 0) ---
+  Вместимость: 256
+  Количество:  12
+  Загрузка:    4.69% (Порог: 50%)
+------------------------------------
+Слот   0: [EMPTY   ] 
+Слот   1: [EMPTY   ] 
+Слот   2: [EMPTY   ] 
+Слот   3: [OCCUPIED] -> Ключ: "Ifj.floor$1"
+    Вид:     Function
+    Тип:     Number
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот   4: [EMPTY   ] 
+Слот   5: [EMPTY   ] 
+Слот   6: [EMPTY   ] 
+Слот   7: [EMPTY   ] 
+Слот   8: [EMPTY   ] 
+Слот   9: [EMPTY   ] 
+Слот  10: [EMPTY   ] 
+Слот  11: [EMPTY   ] 
+Слот  12: [EMPTY   ] 
+Слот  13: [EMPTY   ] 
+Слот  14: [EMPTY   ] 
+Слот  15: [EMPTY   ] 
+Слот  16: [EMPTY   ] 
+Слот  17: [EMPTY   ] 
+Слот  18: [EMPTY   ] 
+Слот  19: [EMPTY   ] 
+Слот  20: [OCCUPIED] -> Ключ: "Ifj.read_str$0"
+    Вид:     Function
+    Тип:     String
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот  21: [EMPTY   ] 
+Слот  22: [EMPTY   ] 
+Слот  23: [EMPTY   ] 
+Слот  24: [EMPTY   ] 
+Слот  25: [EMPTY   ] 
+Слот  26: [OCCUPIED] -> Ключ: "Ifj.str$1"
+    Вид:     Function
+    Тип:     String
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот  27: [EMPTY   ] 
+Слот  28: [EMPTY   ] 
+Слот  29: [EMPTY   ] 
+Слот  30: [EMPTY   ] 
+Слот  31: [EMPTY   ] 
+Слот  32: [EMPTY   ] 
+Слот  33: [EMPTY   ] 
+Слот  34: [EMPTY   ] 
+Слот  35: [EMPTY   ] 
+Слот  36: [EMPTY   ] 
+Слот  37: [EMPTY   ] 
+Слот  38: [EMPTY   ] 
+Слот  39: [EMPTY   ] 
+Слот  40: [EMPTY   ] 
+Слот  41: [EMPTY   ] 
+Слот  42: [EMPTY   ] 
+Слот  43: [EMPTY   ] 
+Слот  44: [OCCUPIED] -> Ключ: "Ifj.write$1"
+    Вид:     Function
+    Тип:     Nil
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот  45: [EMPTY   ] 
+Слот  46: [EMPTY   ] 
+Слот  47: [EMPTY   ] 
+Слот  48: [EMPTY   ] 
+Слот  49: [EMPTY   ] 
+Слот  50: [EMPTY   ] 
+Слот  51: [EMPTY   ] 
+Слот  52: [EMPTY   ] 
+Слот  53: [EMPTY   ] 
+Слот  54: [EMPTY   ] 
+Слот  55: [EMPTY   ] 
+Слот  56: [EMPTY   ] 
+Слот  57: [EMPTY   ] 
+Слот  58: [EMPTY   ] 
+Слот  59: [EMPTY   ] 
+Слот  60: [EMPTY   ] 
+Слот  61: [EMPTY   ] 
+Слот  62: [EMPTY   ] 
+Слот  63: [EMPTY   ] 
+Слот  64: [EMPTY   ] 
+Слот  65: [EMPTY   ] 
+Слот  66: [EMPTY   ] 
+Слот  67: [OCCUPIED] -> Ключ: "Ifj.length$1"
+    Вид:     Function
+    Тип:     Number
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот  68: [EMPTY   ] 
+Слот  69: [EMPTY   ] 
+Слот  70: [EMPTY   ] 
+Слот  71: [EMPTY   ] 
+Слот  72: [EMPTY   ] 
+Слот  73: [EMPTY   ] 
+Слот  74: [EMPTY   ] 
+Слот  75: [EMPTY   ] 
+Слот  76: [EMPTY   ] 
+Слот  77: [EMPTY   ] 
+Слот  78: [EMPTY   ] 
+Слот  79: [EMPTY   ] 
+Слот  80: [EMPTY   ] 
+Слот  81: [EMPTY   ] 
+Слот  82: [EMPTY   ] 
+Слот  83: [EMPTY   ] 
+Слот  84: [EMPTY   ] 
+Слот  85: [EMPTY   ] 
+Слот  86: [EMPTY   ] 
+Слот  87: [EMPTY   ] 
+Слот  88: [EMPTY   ] 
+Слот  89: [EMPTY   ] 
+Слот  90: [EMPTY   ] 
+Слот  91: [EMPTY   ] 
+Слот  92: [EMPTY   ] 
+Слот  93: [EMPTY   ] 
+Слот  94: [EMPTY   ] 
+Слот  95: [EMPTY   ] 
+Слот  96: [EMPTY   ] 
+Слот  97: [EMPTY   ] 
+Слот  98: [EMPTY   ] 
+Слот  99: [EMPTY   ] 
+Слот 100: [EMPTY   ] 
+Слот 101: [EMPTY   ] 
+Слот 102: [EMPTY   ] 
+Слот 103: [EMPTY   ] 
+Слот 104: [EMPTY   ] 
+Слот 105: [EMPTY   ] 
+Слот 106: [EMPTY   ] 
+Слот 107: [EMPTY   ] 
+Слот 108: [EMPTY   ] 
+Слот 109: [EMPTY   ] 
+Слот 110: [EMPTY   ] 
+Слот 111: [EMPTY   ] 
+Слот 112: [EMPTY   ] 
+Слот 113: [EMPTY   ] 
+Слот 114: [EMPTY   ] 
+Слот 115: [EMPTY   ] 
+Слот 116: [EMPTY   ] 
+Слот 117: [EMPTY   ] 
+Слот 118: [EMPTY   ] 
+Слот 119: [EMPTY   ] 
+Слот 120: [EMPTY   ] 
+Слот 121: [EMPTY   ] 
+Слот 122: [EMPTY   ] 
+Слот 123: [EMPTY   ] 
+Слот 124: [EMPTY   ] 
+Слот 125: [EMPTY   ] 
+Слот 126: [OCCUPIED] -> Ключ: "Ifj.chr$1"
+    Вид:     Function
+    Тип:     String
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот 127: [EMPTY   ] 
+Слот 128: [EMPTY   ] 
+Слот 129: [EMPTY   ] 
+Слот 130: [EMPTY   ] 
+Слот 131: [EMPTY   ] 
+Слот 132: [EMPTY   ] 
+Слот 133: [EMPTY   ] 
+Слот 134: [EMPTY   ] 
+Слот 135: [EMPTY   ] 
+Слот 136: [EMPTY   ] 
+Слот 137: [EMPTY   ] 
+Слот 138: [EMPTY   ] 
+Слот 139: [EMPTY   ] 
+Слот 140: [EMPTY   ] 
+Слот 141: [EMPTY   ] 
+Слот 142: [EMPTY   ] 
+Слот 143: [EMPTY   ] 
+Слот 144: [EMPTY   ] 
+Слот 145: [EMPTY   ] 
+Слот 146: [EMPTY   ] 
+Слот 147: [EMPTY   ] 
+Слот 148: [EMPTY   ] 
+Слот 149: [EMPTY   ] 
+Слот 150: [EMPTY   ] 
+Слот 151: [EMPTY   ] 
+Слот 152: [EMPTY   ] 
+Слот 153: [EMPTY   ] 
+Слот 154: [EMPTY   ] 
+Слот 155: [OCCUPIED] -> Ключ: "Ifj.strcmp$2"
+    Вид:     Function
+    Тип:     Number
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот 156: [EMPTY   ] 
+Слот 157: [EMPTY   ] 
+Слот 158: [EMPTY   ] 
+Слот 159: [EMPTY   ] 
+Слот 160: [EMPTY   ] 
+Слот 161: [EMPTY   ] 
+Слот 162: [EMPTY   ] 
+Слот 163: [EMPTY   ] 
+Слот 164: [EMPTY   ] 
+Слот 165: [EMPTY   ] 
+Слот 166: [EMPTY   ] 
+Слот 167: [EMPTY   ] 
+Слот 168: [EMPTY   ] 
+Слот 169: [EMPTY   ] 
+Слот 170: [EMPTY   ] 
+Слот 171: [OCCUPIED] -> Ключ: "Ifj.read_num$0"
+    Вид:     Function
+    Тип:     Number
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот 172: [EMPTY   ] 
+Слот 173: [EMPTY   ] 
+Слот 174: [EMPTY   ] 
+Слот 175: [EMPTY   ] 
+Слот 176: [EMPTY   ] 
+Слот 177: [EMPTY   ] 
+Слот 178: [EMPTY   ] 
+Слот 179: [EMPTY   ] 
+Слот 180: [EMPTY   ] 
+Слот 181: [EMPTY   ] 
+Слот 182: [EMPTY   ] 
+Слот 183: [EMPTY   ] 
+Слот 184: [EMPTY   ] 
+Слот 185: [EMPTY   ] 
+Слот 186: [EMPTY   ] 
+Слот 187: [EMPTY   ] 
+Слот 188: [EMPTY   ] 
+Слот 189: [EMPTY   ] 
+Слот 190: [OCCUPIED] -> Ключ: "main$0"
+    Вид:     Function
+    Тип:     UNKNOWN_TYPE
+    Опред:   false
+    Unique:  -
+    Лок. таблица:
+    --- Таблица Символов (Уровень 1) ---
+      Вместимость: 256
+      Количество:  0
+      Загрузка:    0.00% (Порог: 50%)
+    ------------------------------------
+    Слот   0: [EMPTY   ] 
+    Слот   1: [EMPTY   ] 
+    Слот   2: [EMPTY   ] 
+    Слот   3: [EMPTY   ] 
+    Слот   4: [EMPTY   ] 
+    Слот   5: [EMPTY   ] 
+    Слот   6: [EMPTY   ] 
+    Слот   7: [EMPTY   ] 
+    Слот   8: [EMPTY   ] 
+    Слот   9: [EMPTY   ] 
+    Слот  10: [EMPTY   ] 
+    Слот  11: [EMPTY   ] 
+    Слот  12: [EMPTY   ] 
+    Слот  13: [EMPTY   ] 
+    Слот  14: [EMPTY   ] 
+    Слот  15: [EMPTY   ] 
+    Слот  16: [EMPTY   ] 
+    Слот  17: [EMPTY   ] 
+    Слот  18: [EMPTY   ] 
+    Слот  19: [EMPTY   ] 
+    Слот  20: [EMPTY   ] 
+    Слот  21: [EMPTY   ] 
+    Слот  22: [EMPTY   ] 
+    Слот  23: [EMPTY   ] 
+    Слот  24: [EMPTY   ] 
+    Слот  25: [EMPTY   ] 
+    Слот  26: [EMPTY   ] 
+    Слот  27: [EMPTY   ] 
+    Слот  28: [EMPTY   ] 
+    Слот  29: [EMPTY   ] 
+    Слот  30: [EMPTY   ] 
+    Слот  31: [EMPTY   ] 
+    Слот  32: [EMPTY   ] 
+    Слот  33: [EMPTY   ] 
+    Слот  34: [EMPTY   ] 
+    Слот  35: [EMPTY   ] 
+    Слот  36: [EMPTY   ] 
+    Слот  37: [EMPTY   ] 
+    Слот  38: [EMPTY   ] 
+    Слот  39: [EMPTY   ] 
+    Слот  40: [EMPTY   ] 
+    Слот  41: [EMPTY   ] 
+    Слот  42: [EMPTY   ] 
+    Слот  43: [EMPTY   ] 
+    Слот  44: [EMPTY   ] 
+    Слот  45: [EMPTY   ] 
+    Слот  46: [EMPTY   ] 
+    Слот  47: [EMPTY   ] 
+    Слот  48: [EMPTY   ] 
+    Слот  49: [EMPTY   ] 
+    Слот  50: [EMPTY   ] 
+    Слот  51: [EMPTY   ] 
+    Слот  52: [EMPTY   ] 
+    Слот  53: [EMPTY   ] 
+    Слот  54: [EMPTY   ] 
+    Слот  55: [EMPTY   ] 
+    Слот  56: [EMPTY   ] 
+    Слот  57: [EMPTY   ] 
+    Слот  58: [EMPTY   ] 
+    Слот  59: [EMPTY   ] 
+    Слот  60: [EMPTY   ] 
+    Слот  61: [EMPTY   ] 
+    Слот  62: [EMPTY   ] 
+    Слот  63: [EMPTY   ] 
+    Слот  64: [EMPTY   ] 
+    Слот  65: [EMPTY   ] 
+    Слот  66: [EMPTY   ] 
+    Слот  67: [EMPTY   ] 
+    Слот  68: [EMPTY   ] 
+    Слот  69: [EMPTY   ] 
+    Слот  70: [EMPTY   ] 
+    Слот  71: [EMPTY   ] 
+    Слот  72: [EMPTY   ] 
+    Слот  73: [EMPTY   ] 
+    Слот  74: [EMPTY   ] 
+    Слот  75: [EMPTY   ] 
+    Слот  76: [EMPTY   ] 
+    Слот  77: [EMPTY   ] 
+    Слот  78: [EMPTY   ] 
+    Слот  79: [EMPTY   ] 
+    Слот  80: [EMPTY   ] 
+    Слот  81: [EMPTY   ] 
+    Слот  82: [EMPTY   ] 
+    Слот  83: [EMPTY   ] 
+    Слот  84: [EMPTY   ] 
+    Слот  85: [EMPTY   ] 
+    Слот  86: [EMPTY   ] 
+    Слот  87: [EMPTY   ] 
+    Слот  88: [EMPTY   ] 
+    Слот  89: [EMPTY   ] 
+    Слот  90: [EMPTY   ] 
+    Слот  91: [EMPTY   ] 
+    Слот  92: [EMPTY   ] 
+    Слот  93: [EMPTY   ] 
+    Слот  94: [EMPTY   ] 
+    Слот  95: [EMPTY   ] 
+    Слот  96: [EMPTY   ] 
+    Слот  97: [EMPTY   ] 
+    Слот  98: [EMPTY   ] 
+    Слот  99: [EMPTY   ] 
+    Слот 100: [EMPTY   ] 
+    Слот 101: [EMPTY   ] 
+    Слот 102: [EMPTY   ] 
+    Слот 103: [EMPTY   ] 
+    Слот 104: [EMPTY   ] 
+    Слот 105: [EMPTY   ] 
+    Слот 106: [EMPTY   ] 
+    Слот 107: [EMPTY   ] 
+    Слот 108: [EMPTY   ] 
+    Слот 109: [EMPTY   ] 
+    Слот 110: [EMPTY   ] 
+    Слот 111: [EMPTY   ] 
+    Слот 112: [EMPTY   ] 
+    Слот 113: [EMPTY   ] 
+    Слот 114: [EMPTY   ] 
+    Слот 115: [EMPTY   ] 
+    Слот 116: [EMPTY   ] 
+    Слот 117: [EMPTY   ] 
+    Слот 118: [EMPTY   ] 
+    Слот 119: [EMPTY   ] 
+    Слот 120: [EMPTY   ] 
+    Слот 121: [EMPTY   ] 
+    Слот 122: [EMPTY   ] 
+    Слот 123: [EMPTY   ] 
+    Слот 124: [EMPTY   ] 
+    Слот 125: [EMPTY   ] 
+    Слот 126: [EMPTY   ] 
+    Слот 127: [EMPTY   ] 
+    Слот 128: [EMPTY   ] 
+    Слот 129: [EMPTY   ] 
+    Слот 130: [EMPTY   ] 
+    Слот 131: [EMPTY   ] 
+    Слот 132: [EMPTY   ] 
+    Слот 133: [EMPTY   ] 
+    Слот 134: [EMPTY   ] 
+    Слот 135: [EMPTY   ] 
+    Слот 136: [EMPTY   ] 
+    Слот 137: [EMPTY   ] 
+    Слот 138: [EMPTY   ] 
+    Слот 139: [EMPTY   ] 
+    Слот 140: [EMPTY   ] 
+    Слот 141: [EMPTY   ] 
+    Слот 142: [EMPTY   ] 
+    Слот 143: [EMPTY   ] 
+    Слот 144: [EMPTY   ] 
+    Слот 145: [EMPTY   ] 
+    Слот 146: [EMPTY   ] 
+    Слот 147: [EMPTY   ] 
+    Слот 148: [EMPTY   ] 
+    Слот 149: [EMPTY   ] 
+    Слот 150: [EMPTY   ] 
+    Слот 151: [EMPTY   ] 
+    Слот 152: [EMPTY   ] 
+    Слот 153: [EMPTY   ] 
+    Слот 154: [EMPTY   ] 
+    Слот 155: [EMPTY   ] 
+    Слот 156: [EMPTY   ] 
+    Слот 157: [EMPTY   ] 
+    Слот 158: [EMPTY   ] 
+    Слот 159: [EMPTY   ] 
+    Слот 160: [EMPTY   ] 
+    Слот 161: [EMPTY   ] 
+    Слот 162: [EMPTY   ] 
+    Слот 163: [EMPTY   ] 
+    Слот 164: [EMPTY   ] 
+    Слот 165: [EMPTY   ] 
+    Слот 166: [EMPTY   ] 
+    Слот 167: [EMPTY   ] 
+    Слот 168: [EMPTY   ] 
+    Слот 169: [EMPTY   ] 
+    Слот 170: [EMPTY   ] 
+    Слот 171: [EMPTY   ] 
+    Слот 172: [EMPTY   ] 
+    Слот 173: [EMPTY   ] 
+    Слот 174: [EMPTY   ] 
+    Слот 175: [EMPTY   ] 
+    Слот 176: [EMPTY   ] 
+    Слот 177: [EMPTY   ] 
+    Слот 178: [EMPTY   ] 
+    Слот 179: [EMPTY   ] 
+    Слот 180: [EMPTY   ] 
+    Слот 181: [EMPTY   ] 
+    Слот 182: [EMPTY   ] 
+    Слот 183: [EMPTY   ] 
+    Слот 184: [EMPTY   ] 
+    Слот 185: [EMPTY   ] 
+    Слот 186: [EMPTY   ] 
+    Слот 187: [EMPTY   ] 
+    Слот 188: [EMPTY   ] 
+    Слот 189: [EMPTY   ] 
+    Слот 190: [EMPTY   ] 
+    Слот 191: [EMPTY   ] 
+    Слот 192: [EMPTY   ] 
+    Слот 193: [EMPTY   ] 
+    Слот 194: [EMPTY   ] 
+    Слот 195: [EMPTY   ] 
+    Слот 196: [EMPTY   ] 
+    Слот 197: [EMPTY   ] 
+    Слот 198: [EMPTY   ] 
+    Слот 199: [EMPTY   ] 
+    Слот 200: [EMPTY   ] 
+    Слот 201: [EMPTY   ] 
+    Слот 202: [EMPTY   ] 
+    Слот 203: [EMPTY   ] 
+    Слот 204: [EMPTY   ] 
+    Слот 205: [EMPTY   ] 
+    Слот 206: [EMPTY   ] 
+    Слот 207: [EMPTY   ] 
+    Слот 208: [EMPTY   ] 
+    Слот 209: [EMPTY   ] 
+    Слот 210: [EMPTY   ] 
+    Слот 211: [EMPTY   ] 
+    Слот 212: [EMPTY   ] 
+    Слот 213: [EMPTY   ] 
+    Слот 214: [EMPTY   ] 
+    Слот 215: [EMPTY   ] 
+    Слот 216: [EMPTY   ] 
+    Слот 217: [EMPTY   ] 
+    Слот 218: [EMPTY   ] 
+    Слот 219: [EMPTY   ] 
+    Слот 220: [EMPTY   ] 
+    Слот 221: [EMPTY   ] 
+    Слот 222: [EMPTY   ] 
+    Слот 223: [EMPTY   ] 
+    Слот 224: [EMPTY   ] 
+    Слот 225: [EMPTY   ] 
+    Слот 226: [EMPTY   ] 
+    Слот 227: [EMPTY   ] 
+    Слот 228: [EMPTY   ] 
+    Слот 229: [EMPTY   ] 
+    Слот 230: [EMPTY   ] 
+    Слот 231: [EMPTY   ] 
+    Слот 232: [EMPTY   ] 
+    Слот 233: [EMPTY   ] 
+    Слот 234: [EMPTY   ] 
+    Слот 235: [EMPTY   ] 
+    Слот 236: [EMPTY   ] 
+    Слот 237: [EMPTY   ] 
+    Слот 238: [EMPTY   ] 
+    Слот 239: [EMPTY   ] 
+    Слот 240: [EMPTY   ] 
+    Слот 241: [EMPTY   ] 
+    Слот 242: [EMPTY   ] 
+    Слот 243: [EMPTY   ] 
+    Слот 244: [EMPTY   ] 
+    Слот 245: [EMPTY   ] 
+    Слот 246: [EMPTY   ] 
+    Слот 247: [EMPTY   ] 
+    Слот 248: [EMPTY   ] 
+    Слот 249: [EMPTY   ] 
+    Слот 250: [EMPTY   ] 
+    Слот 251: [EMPTY   ] 
+    Слот 252: [EMPTY   ] 
+    Слот 253: [EMPTY   ] 
+    Слот 254: [EMPTY   ] 
+    Слот 255: [EMPTY   ] 
+Слот 191: [EMPTY   ] 
+Слот 192: [EMPTY   ] 
+Слот 193: [EMPTY   ] 
+Слот 194: [EMPTY   ] 
+Слот 195: [EMPTY   ] 
+Слот 196: [EMPTY   ] 
+Слот 197: [EMPTY   ] 
+Слот 198: [EMPTY   ] 
+Слот 199: [OCCUPIED] -> Ключ: "Ifj.ord$2"
+    Вид:     Function
+    Тип:     Number
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот 200: [EMPTY   ] 
+Слот 201: [EMPTY   ] 
+Слот 202: [EMPTY   ] 
+Слот 203: [EMPTY   ] 
+Слот 204: [EMPTY   ] 
+Слот 205: [EMPTY   ] 
+Слот 206: [EMPTY   ] 
+Слот 207: [EMPTY   ] 
+Слот 208: [EMPTY   ] 
+Слот 209: [EMPTY   ] 
+Слот 210: [EMPTY   ] 
+Слот 211: [EMPTY   ] 
+Слот 212: [EMPTY   ] 
+Слот 213: [EMPTY   ] 
+Слот 214: [EMPTY   ] 
+Слот 215: [EMPTY   ] 
+Слот 216: [OCCUPIED] -> Ключ: "printChars$1"
+    Вид:     Function
+    Тип:     UNKNOWN_TYPE
+    Опред:   false
+    Unique:  -
+    Лок. таблица:
+    --- Таблица Символов (Уровень 1) ---
+      Вместимость: 256
+      Количество:  0
+      Загрузка:    0.00% (Порог: 50%)
+    ------------------------------------
+    Слот   0: [EMPTY   ] 
+    Слот   1: [EMPTY   ] 
+    Слот   2: [EMPTY   ] 
+    Слот   3: [EMPTY   ] 
+    Слот   4: [EMPTY   ] 
+    Слот   5: [EMPTY   ] 
+    Слот   6: [EMPTY   ] 
+    Слот   7: [EMPTY   ] 
+    Слот   8: [EMPTY   ] 
+    Слот   9: [EMPTY   ] 
+    Слот  10: [EMPTY   ] 
+    Слот  11: [EMPTY   ] 
+    Слот  12: [EMPTY   ] 
+    Слот  13: [EMPTY   ] 
+    Слот  14: [EMPTY   ] 
+    Слот  15: [EMPTY   ] 
+    Слот  16: [EMPTY   ] 
+    Слот  17: [EMPTY   ] 
+    Слот  18: [EMPTY   ] 
+    Слот  19: [EMPTY   ] 
+    Слот  20: [EMPTY   ] 
+    Слот  21: [EMPTY   ] 
+    Слот  22: [EMPTY   ] 
+    Слот  23: [EMPTY   ] 
+    Слот  24: [EMPTY   ] 
+    Слот  25: [EMPTY   ] 
+    Слот  26: [EMPTY   ] 
+    Слот  27: [EMPTY   ] 
+    Слот  28: [EMPTY   ] 
+    Слот  29: [EMPTY   ] 
+    Слот  30: [EMPTY   ] 
+    Слот  31: [EMPTY   ] 
+    Слот  32: [EMPTY   ] 
+    Слот  33: [EMPTY   ] 
+    Слот  34: [EMPTY   ] 
+    Слот  35: [EMPTY   ] 
+    Слот  36: [EMPTY   ] 
+    Слот  37: [EMPTY   ] 
+    Слот  38: [EMPTY   ] 
+    Слот  39: [EMPTY   ] 
+    Слот  40: [EMPTY   ] 
+    Слот  41: [EMPTY   ] 
+    Слот  42: [EMPTY   ] 
+    Слот  43: [EMPTY   ] 
+    Слот  44: [EMPTY   ] 
+    Слот  45: [EMPTY   ] 
+    Слот  46: [EMPTY   ] 
+    Слот  47: [EMPTY   ] 
+    Слот  48: [EMPTY   ] 
+    Слот  49: [EMPTY   ] 
+    Слот  50: [EMPTY   ] 
+    Слот  51: [EMPTY   ] 
+    Слот  52: [EMPTY   ] 
+    Слот  53: [EMPTY   ] 
+    Слот  54: [EMPTY   ] 
+    Слот  55: [EMPTY   ] 
+    Слот  56: [EMPTY   ] 
+    Слот  57: [EMPTY   ] 
+    Слот  58: [EMPTY   ] 
+    Слот  59: [EMPTY   ] 
+    Слот  60: [EMPTY   ] 
+    Слот  61: [EMPTY   ] 
+    Слот  62: [EMPTY   ] 
+    Слот  63: [EMPTY   ] 
+    Слот  64: [EMPTY   ] 
+    Слот  65: [EMPTY   ] 
+    Слот  66: [EMPTY   ] 
+    Слот  67: [EMPTY   ] 
+    Слот  68: [EMPTY   ] 
+    Слот  69: [EMPTY   ] 
+    Слот  70: [EMPTY   ] 
+    Слот  71: [EMPTY   ] 
+    Слот  72: [EMPTY   ] 
+    Слот  73: [EMPTY   ] 
+    Слот  74: [EMPTY   ] 
+    Слот  75: [EMPTY   ] 
+    Слот  76: [EMPTY   ] 
+    Слот  77: [EMPTY   ] 
+    Слот  78: [EMPTY   ] 
+    Слот  79: [EMPTY   ] 
+    Слот  80: [EMPTY   ] 
+    Слот  81: [EMPTY   ] 
+    Слот  82: [EMPTY   ] 
+    Слот  83: [EMPTY   ] 
+    Слот  84: [EMPTY   ] 
+    Слот  85: [EMPTY   ] 
+    Слот  86: [EMPTY   ] 
+    Слот  87: [EMPTY   ] 
+    Слот  88: [EMPTY   ] 
+    Слот  89: [EMPTY   ] 
+    Слот  90: [EMPTY   ] 
+    Слот  91: [EMPTY   ] 
+    Слот  92: [EMPTY   ] 
+    Слот  93: [EMPTY   ] 
+    Слот  94: [EMPTY   ] 
+    Слот  95: [EMPTY   ] 
+    Слот  96: [EMPTY   ] 
+    Слот  97: [EMPTY   ] 
+    Слот  98: [EMPTY   ] 
+    Слот  99: [EMPTY   ] 
+    Слот 100: [EMPTY   ] 
+    Слот 101: [EMPTY   ] 
+    Слот 102: [EMPTY   ] 
+    Слот 103: [EMPTY   ] 
+    Слот 104: [EMPTY   ] 
+    Слот 105: [EMPTY   ] 
+    Слот 106: [EMPTY   ] 
+    Слот 107: [EMPTY   ] 
+    Слот 108: [EMPTY   ] 
+    Слот 109: [EMPTY   ] 
+    Слот 110: [EMPTY   ] 
+    Слот 111: [EMPTY   ] 
+    Слот 112: [EMPTY   ] 
+    Слот 113: [EMPTY   ] 
+    Слот 114: [EMPTY   ] 
+    Слот 115: [EMPTY   ] 
+    Слот 116: [EMPTY   ] 
+    Слот 117: [EMPTY   ] 
+    Слот 118: [EMPTY   ] 
+    Слот 119: [EMPTY   ] 
+    Слот 120: [EMPTY   ] 
+    Слот 121: [EMPTY   ] 
+    Слот 122: [EMPTY   ] 
+    Слот 123: [EMPTY   ] 
+    Слот 124: [EMPTY   ] 
+    Слот 125: [EMPTY   ] 
+    Слот 126: [EMPTY   ] 
+    Слот 127: [EMPTY   ] 
+    Слот 128: [EMPTY   ] 
+    Слот 129: [EMPTY   ] 
+    Слот 130: [EMPTY   ] 
+    Слот 131: [EMPTY   ] 
+    Слот 132: [EMPTY   ] 
+    Слот 133: [EMPTY   ] 
+    Слот 134: [EMPTY   ] 
+    Слот 135: [EMPTY   ] 
+    Слот 136: [EMPTY   ] 
+    Слот 137: [EMPTY   ] 
+    Слот 138: [EMPTY   ] 
+    Слот 139: [EMPTY   ] 
+    Слот 140: [EMPTY   ] 
+    Слот 141: [EMPTY   ] 
+    Слот 142: [EMPTY   ] 
+    Слот 143: [EMPTY   ] 
+    Слот 144: [EMPTY   ] 
+    Слот 145: [EMPTY   ] 
+    Слот 146: [EMPTY   ] 
+    Слот 147: [EMPTY   ] 
+    Слот 148: [EMPTY   ] 
+    Слот 149: [EMPTY   ] 
+    Слот 150: [EMPTY   ] 
+    Слот 151: [EMPTY   ] 
+    Слот 152: [EMPTY   ] 
+    Слот 153: [EMPTY   ] 
+    Слот 154: [EMPTY   ] 
+    Слот 155: [EMPTY   ] 
+    Слот 156: [EMPTY   ] 
+    Слот 157: [EMPTY   ] 
+    Слот 158: [EMPTY   ] 
+    Слот 159: [EMPTY   ] 
+    Слот 160: [EMPTY   ] 
+    Слот 161: [EMPTY   ] 
+    Слот 162: [EMPTY   ] 
+    Слот 163: [EMPTY   ] 
+    Слот 164: [EMPTY   ] 
+    Слот 165: [EMPTY   ] 
+    Слот 166: [EMPTY   ] 
+    Слот 167: [EMPTY   ] 
+    Слот 168: [EMPTY   ] 
+    Слот 169: [EMPTY   ] 
+    Слот 170: [EMPTY   ] 
+    Слот 171: [EMPTY   ] 
+    Слот 172: [EMPTY   ] 
+    Слот 173: [EMPTY   ] 
+    Слот 174: [EMPTY   ] 
+    Слот 175: [EMPTY   ] 
+    Слот 176: [EMPTY   ] 
+    Слот 177: [EMPTY   ] 
+    Слот 178: [EMPTY   ] 
+    Слот 179: [EMPTY   ] 
+    Слот 180: [EMPTY   ] 
+    Слот 181: [EMPTY   ] 
+    Слот 182: [EMPTY   ] 
+    Слот 183: [EMPTY   ] 
+    Слот 184: [EMPTY   ] 
+    Слот 185: [EMPTY   ] 
+    Слот 186: [EMPTY   ] 
+    Слот 187: [EMPTY   ] 
+    Слот 188: [EMPTY   ] 
+    Слот 189: [EMPTY   ] 
+    Слот 190: [EMPTY   ] 
+    Слот 191: [EMPTY   ] 
+    Слот 192: [EMPTY   ] 
+    Слот 193: [EMPTY   ] 
+    Слот 194: [EMPTY   ] 
+    Слот 195: [EMPTY   ] 
+    Слот 196: [EMPTY   ] 
+    Слот 197: [EMPTY   ] 
+    Слот 198: [EMPTY   ] 
+    Слот 199: [EMPTY   ] 
+    Слот 200: [EMPTY   ] 
+    Слот 201: [EMPTY   ] 
+    Слот 202: [EMPTY   ] 
+    Слот 203: [EMPTY   ] 
+    Слот 204: [EMPTY   ] 
+    Слот 205: [EMPTY   ] 
+    Слот 206: [EMPTY   ] 
+    Слот 207: [EMPTY   ] 
+    Слот 208: [EMPTY   ] 
+    Слот 209: [EMPTY   ] 
+    Слот 210: [EMPTY   ] 
+    Слот 211: [EMPTY   ] 
+    Слот 212: [EMPTY   ] 
+    Слот 213: [EMPTY   ] 
+    Слот 214: [EMPTY   ] 
+    Слот 215: [EMPTY   ] 
+    Слот 216: [EMPTY   ] 
+    Слот 217: [EMPTY   ] 
+    Слот 218: [EMPTY   ] 
+    Слот 219: [EMPTY   ] 
+    Слот 220: [EMPTY   ] 
+    Слот 221: [EMPTY   ] 
+    Слот 222: [EMPTY   ] 
+    Слот 223: [EMPTY   ] 
+    Слот 224: [EMPTY   ] 
+    Слот 225: [EMPTY   ] 
+    Слот 226: [EMPTY   ] 
+    Слот 227: [EMPTY   ] 
+    Слот 228: [EMPTY   ] 
+    Слот 229: [EMPTY   ] 
+    Слот 230: [EMPTY   ] 
+    Слот 231: [EMPTY   ] 
+    Слот 232: [EMPTY   ] 
+    Слот 233: [EMPTY   ] 
+    Слот 234: [EMPTY   ] 
+    Слот 235: [EMPTY   ] 
+    Слот 236: [EMPTY   ] 
+    Слот 237: [EMPTY   ] 
+    Слот 238: [EMPTY   ] 
+    Слот 239: [EMPTY   ] 
+    Слот 240: [EMPTY   ] 
+    Слот 241: [EMPTY   ] 
+    Слот 242: [EMPTY   ] 
+    Слот 243: [EMPTY   ] 
+    Слот 244: [EMPTY   ] 
+    Слот 245: [EMPTY   ] 
+    Слот 246: [EMPTY   ] 
+    Слот 247: [EMPTY   ] 
+    Слот 248: [EMPTY   ] 
+    Слот 249: [EMPTY   ] 
+    Слот 250: [EMPTY   ] 
+    Слот 251: [EMPTY   ] 
+    Слот 252: [EMPTY   ] 
+    Слот 253: [EMPTY   ] 
+    Слот 254: [EMPTY   ] 
+    Слот 255: [EMPTY   ] 
+Слот 217: [EMPTY   ] 
+Слот 218: [EMPTY   ] 
+Слот 219: [EMPTY   ] 
+Слот 220: [EMPTY   ] 
+Слот 221: [EMPTY   ] 
+Слот 222: [EMPTY   ] 
+Слот 223: [EMPTY   ] 
+Слот 224: [EMPTY   ] 
+Слот 225: [EMPTY   ] 
+Слот 226: [EMPTY   ] 
+Слот 227: [EMPTY   ] 
+Слот 228: [OCCUPIED] -> Ключ: "Ifj.substring$3"
+    Вид:     Function
+    Тип:     String
+    Опред:   true
+    Unique:  -
+    Лок. таблица: (NULL)
+Слот 229: [EMPTY   ] 
+Слот 230: [EMPTY   ] 
+Слот 231: [EMPTY   ] 
+Слот 232: [EMPTY   ] 
+Слот 233: [EMPTY   ] 
+Слот 234: [EMPTY   ] 
+Слот 235: [EMPTY   ] 
+Слот 236: [EMPTY   ] 
+Слот 237: [EMPTY   ] 
+Слот 238: [EMPTY   ] 
+Слот 239: [EMPTY   ] 
+Слот 240: [EMPTY   ] 
+Слот 241: [EMPTY   ] 
+Слот 242: [EMPTY   ] 
+Слот 243: [EMPTY   ] 
+Слот 244: [EMPTY   ] 
+Слот 245: [EMPTY   ] 
+Слот 246: [EMPTY   ] 
+Слот 247: [EMPTY   ] 
+Слот 248: [EMPTY   ] 
+Слот 249: [EMPTY   ] 
+Слот 250: [EMPTY   ] 
+Слот 251: [EMPTY   ] 
+Слот 252: [EMPTY   ] 
+Слот 253: [EMPTY   ] 
+Слот 254: [EMPTY   ] 
+Слот 255: [EMPTY   ] 
+======================================================
+
+==================================
+.IFJcode25
+DEFVAR GF@$tmp_2
+DEFVAR GF@$tmp
+DEFVAR GF@$tmp_type_1
+DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_op_1
+DEFVAR GF@$tmp_op_2
+DEFVAR GF@$ret_ifj_fun
+DEFVAR GF@__d$0
+MOVE GF@__d$0 nil@nil
+CREATEFRAME
+CALL $$main
+
+EXIT int@0
+LABEL $EXIT25
+EXIT int@25
+LABEL $EXIT26
+EXIT int@26
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $$main
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+DEFVAR LF@s$0
+
+# ======================= NEW INSTRUCTION =======================
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@===\032Priklady\032nize\032se\032vytisknou\032stejne:\032===\010
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_22 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_22 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_22 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_22 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@===\032Priklady\032nize\032se\032vytisknou\032stejne:\032===\010
+JUMPIFEQ $WRITE_22 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@===\032Priklady\032nize\032se\032vytisknou\032stejne:\032===\010
+LABEL $WRITE_22
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@ahoj
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@ahoj\010\032\032\032\032
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@\032\032\032\032\032\010ahoj
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@\009\009\010ahoj\010
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@\009\009\010ahoj\010\032\032\032\032\032\032
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\010===\032Dalsi\032priklady:\032===\010
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_23 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_23 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_23 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_23 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\010===\032Dalsi\032priklady:\032===\010
+JUMPIFEQ $WRITE_23 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\010===\032Dalsi\032priklady:\032===\010
+LABEL $WRITE_23
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@\032\032\009\032\032ahoj
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@ahoj\010\032\032\032\032x\032
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@\032\032\032\032\010\032\032\032\032\010ahoj
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@s$0 string@ahoj\010\032\032\032\032\032\032\032\032\010\032\032\032\032\032\032\032\032
+
+# ======================= NEW INSTRUCTION =======================
+CREATEFRAME
+DEFVAR TF@s$0
+MOVE TF@s$0 LF@s$0
+CALL $printChars$1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+POPFRAME
+RETURN
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $printChars$1
+PUSHFRAME
+DEFVAR LF@ret
+MOVE LF@ret nil@nil
+DEFVAR LF@l$0
+DEFVAR LF@i$0
+DEFVAR LF@char$0
+DEFVAR LF@$t$0
+DEFVAR LF@$t$1
+DEFVAR LF@$t$2
+DEFVAR LF@$t$3
+DEFVAR LF@$t$4
+DEFVAR LF@$t$5
+DEFVAR LF@$t$6
+DEFVAR LF@$t$7
+DEFVAR LF@$t$8
+DEFVAR LF@$t$9
+DEFVAR LF@$t$10
+DEFVAR LF@$t$11
+DEFVAR LF@$t$12
+DEFVAR LF@$t$13
+DEFVAR LF@$t$14
+
+# ======================= NEW INSTRUCTION =======================
+
+# ======================= NEW INSTRUCTION =======================
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@l$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+STRLEN GF@$ret_ifj_fun LF@s$0
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@l$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@i$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@i$0 int@0
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@char$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_WHILE_CONDITION_0
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 LF@l$0
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 LF@l$0
+JUMPIFEQ $START_OPERATION_24 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_25 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP START_OPERATION_24
+LABEL $ARG2_TO_FLOAT_25
+INT2FLOAT GF@$tmp_op_2 LF@l$0
+LABEL $START_OPERATION_24
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+LT LF@$t$0 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ENDWHILE_1 LF@$t$0 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$ret_ifj_fun int@0
+MOVE GF@$tmp_op_1 LF@s$0
+MOVE GF@$tmp_op_2 LF@i$0
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+TYPE GF@$tmp_type_2 GF@$tmp_op_2
+JUMPIFNEQ $EXIT25 GF@$tmp_type_1 string@string
+EQ GF@$tmp_2 GF@$tmp_type_2 string@int
+EQ GF@$tmp GF@$tmp_type_2 string@float
+OR GF@$tmp GF@$tmp_2 GF@$tmp
+JUMPIFNEQ $EXIT25 GF@$tmp bool@true
+JUMPIFEQ $ORD_START_CHECK_26 GF@$tmp_2 bool@true
+ISINT GF@$tmp GF@$tmp_op_2
+JUMPIFEQ $EXIT26 GF@$tmp bool@false
+FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2
+LABEL $ORD_START_CHECK_26
+LT GF@$tmp GF@$tmp_op_2 int@0
+JUMPIFEQ $ORD_END_27 GF@$tmp bool@true
+STRLEN GF@$tmp GF@$tmp_op_1
+LT GF@$tmp_2 GF@$tmp_op_2 GF@$tmp
+JUMPIFEQ $ORD_END_27 GF@$tmp_2 bool@false
+JUMPIFEQ $ORD_END_27 GF@$tmp int@0
+STRI2INT GF@$ret_ifj_fun GF@$tmp_op_1 GF@$tmp_op_2
+LABEL $ORD_END_27
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@char$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$1 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@100
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@100
+JUMPIFEQ $START_OPERATION_28 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_29 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_28
+LABEL $ARG2_TO_FLOAT_29
+INT2FLOAT GF@$tmp_op_2 int@100
+LABEL $START_OPERATION_28
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+LT LF@$t$1 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_2 LF@$t$1 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$2 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@10
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@10
+JUMPIFEQ $START_OPERATION_30 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_31 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_30
+LABEL $ARG2_TO_FLOAT_31
+INT2FLOAT GF@$tmp_op_2 int@10
+LABEL $START_OPERATION_30
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+GT LF@$t$2 GF@$tmp_op_1 GF@$tmp_op_2
+EQ GF@$tmp LF@char$0 int@10
+OR LF@$t$2 GF@$tmp LF@$t$2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_4 LF@$t$2 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_32 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_32 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_32 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_32 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032
+JUMPIFEQ $WRITE_32 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032
+LABEL $WRITE_32
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_5
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_4
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\032
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_33 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_33 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_33 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_33 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\032
+JUMPIFEQ $WRITE_33 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\032
+LABEL $WRITE_33
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_5
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_3
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_2
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_3
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp LF@char$0
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_34 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_34 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_34 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_34 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 LF@char$0
+JUMPIFEQ $WRITE_34 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp LF@char$0
+LABEL $WRITE_34
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$3 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@l$0
+TYPE GF@$tmp_type_2 int@1
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+MOVE GF@$tmp_op_1 LF@l$0
+MOVE GF@$tmp_op_2 int@1
+JUMPIFEQ $START_OPERATION_35 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_36 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@l$0
+JUMP $START_OPERATION_35
+LABEL $ARG2_TO_FLOAT_36
+INT2FLOAT GF@$tmp_op_2 int@1
+LABEL $START_OPERATION_35
+SUB LF@$t$3 GF@$tmp_op_1 GF@$tmp_op_2
+ISINT GF@$tmp LF@$t$3
+JUMPIFEQ $END_CONVERT_37 GF@$tmp bool@false
+TYPE GF@$tmp_type_1 LF@$t$3
+JUMPIFEQ $END_CONVERT_37 GF@$tmp_type_1 string@int
+FLOAT2INT LF@$t$3 LF@$t$3
+LABEL $END_CONVERT_37
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$4 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 LF@$t$3
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 LF@$t$3
+JUMPIFEQ $START_OPERATION_38 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_39 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP START_OPERATION_38
+LABEL $ARG2_TO_FLOAT_39
+INT2FLOAT GF@$tmp_op_2 LF@$t$3
+LABEL $START_OPERATION_38
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$4 GF@$tmp_op_1 GF@$tmp_op_2
+NOT LF@$t$4 LF@$t$4
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_6 LF@$t$4 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@,\032
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_40 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_40 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_40 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_40 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@,\032
+JUMPIFEQ $WRITE_40 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@,\032
+LABEL $WRITE_40
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_7
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_6
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\010
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_41 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_41 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_41 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_41 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\010
+JUMPIFEQ $WRITE_41 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\010
+LABEL $WRITE_41
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_7
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$5 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 int@1
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 int@1
+JUMPIFEQ $START_OPERATION_42 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_43 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP $START_OPERATION_42
+LABEL $ARG2_TO_FLOAT_43
+INT2FLOAT GF@$tmp_op_2 int@1
+LABEL $START_OPERATION_42
+ADD LF@$t$5 GF@$tmp_op_1 GF@$tmp_op_2
+ISINT GF@$tmp LF@$t$5
+JUMPIFEQ $END_CONVERT_44 GF@$tmp bool@false
+TYPE GF@$tmp_type_1 LF@$t$5
+JUMPIFEQ $END_CONVERT_44 GF@$tmp_type_1 string@int
+FLOAT2INT LF@$t$5 LF@$t$5
+LABEL $END_CONVERT_44
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@i$0 LF@$t$5
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_WHILE_CONDITION_0
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDWHILE_1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+STRLEN GF@$ret_ifj_fun LF@s$0
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@l$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@i$0 int@0
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_WHILE_CONDITION_8
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$6 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 LF@l$0
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 LF@l$0
+JUMPIFEQ $START_OPERATION_45 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_46 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP START_OPERATION_45
+LABEL $ARG2_TO_FLOAT_46
+INT2FLOAT GF@$tmp_op_2 LF@l$0
+LABEL $START_OPERATION_45
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+LT LF@$t$6 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ENDWHILE_9 LF@$t$6 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$ret_ifj_fun int@0
+MOVE GF@$tmp_op_1 LF@s$0
+MOVE GF@$tmp_op_2 LF@i$0
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+TYPE GF@$tmp_type_2 GF@$tmp_op_2
+JUMPIFNEQ $EXIT25 GF@$tmp_type_1 string@string
+EQ GF@$tmp_2 GF@$tmp_type_2 string@int
+EQ GF@$tmp GF@$tmp_type_2 string@float
+OR GF@$tmp GF@$tmp_2 GF@$tmp
+JUMPIFNEQ $EXIT25 GF@$tmp bool@true
+JUMPIFEQ $ORD_START_CHECK_47 GF@$tmp_2 bool@true
+ISINT GF@$tmp GF@$tmp_op_2
+JUMPIFEQ $EXIT26 GF@$tmp bool@false
+FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2
+LABEL $ORD_START_CHECK_47
+LT GF@$tmp GF@$tmp_op_2 int@0
+JUMPIFEQ $ORD_END_48 GF@$tmp bool@true
+STRLEN GF@$tmp GF@$tmp_op_1
+LT GF@$tmp_2 GF@$tmp_op_2 GF@$tmp
+JUMPIFEQ $ORD_END_48 GF@$tmp_2 bool@false
+JUMPIFEQ $ORD_END_48 GF@$tmp int@0
+STRI2INT GF@$ret_ifj_fun GF@$tmp_op_1 GF@$tmp_op_2
+LABEL $ORD_END_48
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@char$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$7 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@32
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@32
+JUMPIFEQ $START_OPERATION_49 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_50 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_49
+LABEL $ARG2_TO_FLOAT_50
+INT2FLOAT GF@$tmp_op_2 int@32
+LABEL $START_OPERATION_49
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+LT LF@$t$7 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_10 LF@$t$7 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$8 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@10
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@10
+JUMPIFEQ $START_OPERATION_51 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_52 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_51
+LABEL $ARG2_TO_FLOAT_52
+INT2FLOAT GF@$tmp_op_2 int@10
+LABEL $START_OPERATION_51
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$8 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_12 LF@$t$8 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\010
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_53 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_53 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_53 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_53 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\010
+JUMPIFEQ $WRITE_53 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\010
+LABEL $WRITE_53
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_13
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_12
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$9 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@13
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@13
+JUMPIFEQ $START_OPERATION_54 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_55 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_54
+LABEL $ARG2_TO_FLOAT_55
+INT2FLOAT GF@$tmp_op_2 int@13
+LABEL $START_OPERATION_54
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$9 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_14 LF@$t$9 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\013
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_56 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_56 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_56 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_56 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\013
+JUMPIFEQ $WRITE_56 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\013
+LABEL $WRITE_56
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_15
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_14
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$10 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@9
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@9
+JUMPIFEQ $START_OPERATION_57 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_58 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_57
+LABEL $ARG2_TO_FLOAT_58
+INT2FLOAT GF@$tmp_op_2 int@9
+LABEL $START_OPERATION_57
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$10 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_16 LF@$t$10 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\009
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_59 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_59 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_59 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_59 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\009
+JUMPIFEQ $WRITE_59 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\009
+LABEL $WRITE_59
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_17
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_16
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\032-
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_60 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_60 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_60 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_60 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\032-
+JUMPIFEQ $WRITE_60 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\032-
+LABEL $WRITE_60
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_17
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_15
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_13
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_11
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_10
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$11 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@char$0
+TYPE GF@$tmp_type_2 int@32
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@char$0
+MOVE GF@$tmp_op_2 int@32
+JUMPIFEQ $START_OPERATION_61 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_62 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@char$0
+JUMP START_OPERATION_61
+LABEL $ARG2_TO_FLOAT_62
+INT2FLOAT GF@$tmp_op_2 int@32
+LABEL $START_OPERATION_61
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$11 GF@$tmp_op_1 GF@$tmp_op_2
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_18 LF@$t$11 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@___
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_63 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_63 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_63 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_63 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@___
+JUMPIFEQ $WRITE_63 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@___
+LABEL $WRITE_63
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_19
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_18
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\032\032
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_64 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_64 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_64 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_64 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\032\032
+JUMPIFEQ $WRITE_64 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\032\032
+LABEL $WRITE_64
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp_op_1 LF@char$0
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+EQ GF@$tmp_2 GF@$tmp_type_1 string@int
+EQ GF@$tmp GF@$tmp_type_1 string@float
+OR GF@$tmp GF@$tmp_2 GF@$tmp
+JUMPIFEQ $CHR_START_CHECK_65 GF@$tmp_2 bool@true
+ISINT GF@$tmp GF@$tmp_op_1
+JUMPIFEQ $EXIT26 GF@$tmp bool@false
+FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
+LABEL $CHR_START_CHECK_65
+INT2CHAR GF@$ret_ifj_fun GF@$tmp_op_1
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@char$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp LF@char$0
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_66 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_66 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_66 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_66 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 LF@char$0
+JUMPIFEQ $WRITE_66 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp LF@char$0
+LABEL $WRITE_66
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_19
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_11
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$12 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@l$0
+TYPE GF@$tmp_type_2 int@1
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+MOVE GF@$tmp_op_1 LF@l$0
+MOVE GF@$tmp_op_2 int@1
+JUMPIFEQ $START_OPERATION_67 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_68 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@l$0
+JUMP $START_OPERATION_67
+LABEL $ARG2_TO_FLOAT_68
+INT2FLOAT GF@$tmp_op_2 int@1
+LABEL $START_OPERATION_67
+SUB LF@$t$12 GF@$tmp_op_1 GF@$tmp_op_2
+ISINT GF@$tmp LF@$t$12
+JUMPIFEQ $END_CONVERT_69 GF@$tmp bool@false
+TYPE GF@$tmp_type_1 LF@$t$12
+JUMPIFEQ $END_CONVERT_69 GF@$tmp_type_1 string@int
+FLOAT2INT LF@$t$12 LF@$t$12
+LABEL $END_CONVERT_69
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$13 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 LF@$t$12
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 LF@$t$12
+JUMPIFEQ $START_OPERATION_70 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $ARG2_TO_FLOAT_71 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP START_OPERATION_70
+LABEL $ARG2_TO_FLOAT_71
+INT2FLOAT GF@$tmp_op_2 LF@$t$12
+LABEL $START_OPERATION_70
+JUMPIFNEQ $EXIT26 GF@$tmp_type_1 GF@$tmp_type_2
+EQ LF@$t$13 GF@$tmp_op_1 GF@$tmp_op_2
+NOT LF@$t$13 LF@$t$13
+
+# ======================= NEW INSTRUCTION =======================
+JUMPIFEQ $L_ELSE_20 LF@$t$13 bool@false
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@,\032
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_72 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_72 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_72 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_72 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@,\032
+JUMPIFEQ $WRITE_72 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@,\032
+LABEL $WRITE_72
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_ENDIF_21
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ELSE_20
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp string@\010
+TYPE GF@$tmp_type_1 GF@$tmp
+JUMPIFEQ $WRITE_73 GF@$tmp_type_1 string@nil
+JUMPIFEQ $WRITE_73 GF@$tmp_type_1 string@string
+JUMPIFEQ $WRITE_73 GF@$tmp_type_1 string@bool
+JUMPIFEQ $WRITE_73 GF@$tmp_type_1 string@int
+ISINT GF@$tmp_type_1 string@\010
+JUMPIFEQ $WRITE_73 GF@$tmp_type_1 bool@false
+FLOAT2INT GF@$tmp string@\010
+LABEL $WRITE_73
+WRITE GF@$tmp
+
+# ======================= NEW INSTRUCTION =======================
+MOVE GF@__d$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDIF_21
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@$t$14 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+TYPE GF@$tmp_type_1 LF@i$0
+TYPE GF@$tmp_type_2 int@1
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $EXIT26 GF@$tmp_type_2 string@string
+MOVE GF@$tmp_op_1 LF@i$0
+MOVE GF@$tmp_op_2 int@1
+JUMPIFEQ $START_OPERATION_74 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_75 GF@$tmp_type_2 string@int
+INT2FLOAT GF@$tmp_op_1 LF@i$0
+JUMP $START_OPERATION_74
+LABEL $ARG2_TO_FLOAT_75
+INT2FLOAT GF@$tmp_op_2 int@1
+LABEL $START_OPERATION_74
+ADD LF@$t$14 GF@$tmp_op_1 GF@$tmp_op_2
+ISINT GF@$tmp LF@$t$14
+JUMPIFEQ $END_CONVERT_76 GF@$tmp bool@false
+TYPE GF@$tmp_type_1 LF@$t$14
+JUMPIFEQ $END_CONVERT_76 GF@$tmp_type_1 string@int
+FLOAT2INT LF@$t$14 LF@$t$14
+LABEL $END_CONVERT_76
+
+# ======================= NEW INSTRUCTION =======================
+MOVE LF@i$0 LF@$t$14
+
+# ======================= NEW INSTRUCTION =======================
+JUMP $L_WHILE_CONDITION_8
+
+# ======================= NEW INSTRUCTION =======================
+LABEL $L_ENDWHILE_9
+
+# ======================= NEW INSTRUCTION =======================
+POPFRAME
+RETURN
