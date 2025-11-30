@@ -1,7 +1,7 @@
 
 \begin{flushleft}
     \large
-    \textbf{Rozdělení práce:} \\
+    \section{Rozdělení práce:}
     \begin{itemize}
         \item Serhij Čepil\\
         \begin{itemize}
@@ -26,7 +26,7 @@
         \end{itemize}
     \end{itemize}
     \large
-    \textbf{Struktura projektu:} \\
+    \section{Struktura projektu:}
     \begin{multicols}{2}
         \begin{itemize}
             \item lexer.c
@@ -51,3 +51,22 @@
     \end{multicols}
     
 \end{flushleft}
+
+\section{Předávání informací mezi částmi překladače}
+
+V projektu komunikují 5 hlavní častí (lexer, parser, semantics, tac a codegen). Začátek jde od lexeru, který dostává znaky z stdin. S znaků skládá lexémy. Lexémy převádí na jednotlivé tokeny s nějakým typem (identifikátor, int, klíčové slovo, plus, open paren atd.), hodnotou, pokud je  potřeba, a pozicí v souboru. Lexer neodesílá všechny tokeny současně, odesílá tokeny zvlášť na vyžádání parseru.
+
+Parser dostává jednotlivé tokeny a používá je k detekci gramatických konstrukce (výrazy, deklarace, příkazy atd.) a podle nich skládá abstraktní syntaktický strom. Uzly stromu reprezentují konstrukce (binární operace, cykly, podmínky atd.). Taky se generuje tabulka symbolů, kam se zapisuje data o identifikátorech (jméno, typ atd.). Když parser se skončí své práce předává tabulku symbolů a AST do sémantického analyzátoru.
+
+Sémantického analyzátor dostává symbolů a AST a  ověřuje sémantická pravidla: zda jsou proměnné deklarovány před použitím, zda typy operandů ve výrazech odpovídají atd. Do uzlů AST doplňuje zjištěné typy a další informace. V tabulce symbolů vytvoří úrovně vnoření identifikátorů a provede přejmenování podle úrovně. Pak úplně hotové AST a tabulku přijme generátor vnitřního kódu.
+
+Generátor vnitřního kódu a optimalizátor přebírá AST a převádí složitější konstrukce na sekvenci jednoduchých instrukcí v formátě tříadresního kódu. Instrukce obsahuje operace a operadny (cíl a 2 argumentu), pokud operand je identifikátor přirazí odkaz na tabulku symbolu. Všechny instrukce budou uloženy do dvojsměrného seznamu. Použit dvojsměrného seznamu, protože někdy generátor cílového kódu potřebuje dívat do další instrukce a vrátit se zpět, např. při operace call pro ověření obsahu parametru funkce. 
+
+Generátor cílového kódu dostává tabulku symbolů a dvojsměrný seznam obsahující tříadresní kódy. Tabulku seznamů potřebuje pro deklarace na začátku globálné proměnné a pro generování typu framu proměnné. Podle operace z tříadresního kódu vypisuje na stdout sekvence příkazu v jazyce IFJcode25.
+
+\section{Vývojový cyklus, způsob práce v týmu}
+Pro většinu týmu to byl první týmový projekt související s programováním, proto bylo rozhodnuto, že nejprve všichni společně vytvoří lexikální analyzátor. Každý vytvořil svou část diagramu pomocí webu Lucidchart a implementoval ji. To všem pomohlo naučit se rychle komunikovat, používat git a vytvářet zprávy o práci.
+
+Po lexikálním analyzátoru se konalo setkání týmu, na kterém se diskutovalo o formátu, v jakém bude každá část programu přijímat data. Nejprve byly vytvořeny struktury, které se používají mezi moduly. Když byly struktury vytvořeny, každý začal implementovat své moduly. Náš tým organizoval pravidelné offline schůzky, na kterých se nejprve diskutovali o progresu každého člena a poté všichni několik hodin programovali. Bylo rozhodnuto zorganizovat programovací schůze, protože to zajišťuje rychlou komunikaci a vzájemnou pomoc. Zvolili jsme právě offline setkání, protože to minimalizovalo technické problémy, zaručovalo maximální soustředění na projekt a teambuilding.
+
+Před každým odevzdáním projektu byly organizovány schůze, během nichž se kontrolovala vzájemná interakce všech částí projektu a opravovaly chyby, které byly způsobeny nepřesností a subjektivností přirozeného jazyka.
