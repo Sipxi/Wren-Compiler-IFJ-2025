@@ -21,6 +21,7 @@
         "utils.h": "c",
         "string.h": "c",
         "error_codes.h": "c",
-        "parser.h": "c"
+        "parser.h": "c",
+        "random": "c"
     }
 }
