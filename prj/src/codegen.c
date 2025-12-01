@@ -1,8 +1,15 @@
-// Имплементация функций генератора целевого кода
-//
-// Авторы:
-// Dmytro Kravchenko (273125)
-//
+/**
+ * @file codegen.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Implementace generátoru cílového kódu IFJcode25
+ *
+ * @author
+ *     - Dmytro Kravchenko (273125)
+ */
+
 #include "codegen.h"
 #include "printer.h"
 #include <stdlib.h>
@@ -260,7 +267,101 @@ static void gen_str(TACDLList *instructions);
  */
 char *get_frame(Operand *op);
 
-static int getter_check(TacInstruction *instr);
+/**
+ * @brief Pomocná funkce pro kontrolu getteru v parametrech IFJ funkce.
+ * Funkce zkontroluje, zda je parametr getter, a pokud ano, vygeneruje
+ * potřebný kód pro jeho získání.
+ * 
+ * @param instructions Seznam TAC instrukcí celého programu.
+ * @param instr Ukazatel na instrukci TAC k kontrole.
+ */
+static void getter_check_ifj(TACDLList *instructions, TacInstruction **instr);
+
+/**
+ * @brief Pomocná funkce pro kontrolu getteru v parametrech funkce.
+ * Funkce zkontroluje, zda je parametr getter, a pokud ano, vygeneruje
+ * potřebný kód pro jeho získání.
+ * 
+ * @param instructions Seznam TAC instrukcí celého programu.
+ * @param instr Ukazatel na instrukci TAC k kontrole.
+ * @param param_name Název parametru pro chybové hlášení.
+ * @return int Návratový kód (0 pokud není getter, 1 pokud je getter).
+ */
+static int getter_check(TACDLList *instructions, TacInstruction **instr, char *param_name);
+
+/**
+ * @brief Generuje instrukci JUMPIFEQ pro podmíněný skok pomoci stringů.
+ * 
+ * @param label_name Název cílového štítku.
+ * @param frame_op_1 Rámec prvního operandu (GF nebo LF).
+ * @param op_1 První operand.
+ * @param frame_op_2 Rámec druhého operandu (GF nebo LF).
+ * @param op_2 Druhý operand.
+ */
+static void gen_jumpifeq_str(char *label_name, char *frame_op_1,
+                            char *op_1, char *frame_op_2, char *op_2);
+
+/**
+ * @brief Generuje instrukci JUMPIFNEQ pro podmíněný skok pomoci stringů.
+ * 
+ * @param label_name Název cílového štítku.
+ * @param frame_op_1 Rámec prvního operandu (GF nebo LF).
+ * @param op_1 První operand.
+ * @param frame_op_2 Rámec druhého operandu (GF nebo LF).
+ * @param op_2 Druhý operand.
+ */
+static void gen_jumpifneq_str(char *label_name, char *frame_op_1,
+    char *op_1, char *frame_op_2, char *op_2);
+
+/**
+ * @brief Generuje vestavěnou funkci pro vypočet delky řetězce.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_length(TACDLList *instructions);
+
+/**
+ * @brief Generuje vestavěnou funkci pro vyjadření podřetězce.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_substring(TACDLList *instructions);
+
+/**
+ * @brief Generuje vestavěnou funkci pro porovnání řetězců.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_strcmp(TACDLList *instructions);
+
+/**
+ * @brief Generuje vestavěnou funkci pro ordinální hodnotu znaku.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_ord(TACDLList *instructions);
+
+/**
+ * @brief Generuje vestavěnou funkci pro konvertace na jednoznakový řetězec se znakem.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_chr(TACDLList *instructions);
+
+/**
+ * @brief Generuje nastavovač parametrů pro volání setteru.
+ *
+ * @param instructions Seznam TAC instrukcí celého programu.
+ */
+static void gen_param_setter(TACDLList Instructions);
+
+/**
+ * @brief Generuje instrukci pro násobení.
+ * 
+ * @param instr Ukazatel na instrukci TAC k vygenerování.
+ */
+static void gen_multiply(TacInstruction *instr);
+
 
 /* =================================================================== */
 /* ===== Implementace privátních funkcí generátoru cílového kódu ===== */
@@ -293,7 +394,6 @@ static void gen_init(Symtable *table) {
 
     // Definice globálních proměnných z tabulky symbolů
     for (size_t i = 0; i < table->capacity; i++) {
-        // ? Прямое обращение к entries это нормально?
         TableEntry *entry = &table->entries[i];
         if (entry->status == SLOT_OCCUPIED) {
             if (entry->data->kind == KIND_VAR) {
@@ -652,6 +752,32 @@ static void gen_move(Operand *dest, Operand *src) {
     fprintf(stdout, "\n");
 }
 
+static int getter_check(TACDLList *instructions, TacInstruction **instr, char *param_name){
+    if ((*instr)->operation_code == OP_DECLARE) {
+        gen_push_frame();
+        // Vytvoření nového rámce pro getter
+        gen_create_frame();
+
+        // Volaní getteru
+        TACDLL_GetValue(instructions, instr);
+        gen_defvar_str("TF", "ret");
+        gen_move_str("TF", "ret", "nil", "nil");
+        gen_call((*instr)->arg1->data.label_name);
+        
+        // Přiřazení návratové hodnoty do deklarované proměnné
+        TACDLL_Next(instructions);
+        TACDLL_GetValue(instructions, instr);
+        fprintf(stdout, "MOVE LF@%s TF@ret\n", param_name);
+        gen_pop_frame();
+
+        // jdeme na parametr
+        TACDLL_Next(instructions);
+        TACDLL_Next(instructions);
+        return 1;
+    }
+    return 0;
+}
+
 static void gen_param(TACDLList *instructions) {
     // Vytvoříme nový rámec pro lokální proměnné
     gen_create_frame();
@@ -670,18 +796,6 @@ static void gen_param(TACDLList *instructions) {
         label_name = instr->result->data.label_name;
     else
         label_name = instr->arg1->data.label_name;
-
-    // Kontrola přítomnosti parametrů funkce 
-    TACDLL_Next(instructions);
-
-    if (TACDLL_IsActive(instructions)) {
-        TACDLL_GetValue(instructions, &instr);
-        TACDLL_Previous(instructions);
-        if (instr->operation_code != OP_PARAM)
-            return;
-    }
-
-
 
     TACDLList instrs_fun = *instructions;   // Copie seznamu instrukcí
     TacInstruction *instr_param; // Actualní instrukce funkce
@@ -706,20 +820,29 @@ static void gen_param(TACDLList *instructions) {
 
         // Pokud parametry se skončily vracíme o jednu instrukci zpět
         // a skončíme generace parametrů
-        if (instr->operation_code != OP_PARAM) {
+        if (instr_param->operation_code != OP_PARAM) {
             TACDLL_Previous(instructions);
             break;
         }
 
+        
         // Declarace a přiřazení hodnot
         char *param_name = instr_param->result->data.symbol_entry->data->unique_name;
-        gen_defvar_str("TF", param_name);
-        fprintf(stdout, "MOVE TF@%s ", param_name);
-        gen_operand(instr->arg1, 1);
-        fprintf(stdout, "\n");
 
         TACDLL_Next(instructions);
         TACDLL_Next(&instrs_fun);
+        
+        // Declarace parametru
+        gen_defvar_str("TF", param_name);
+
+        // Kontrola getteru
+        if (getter_check(instructions, &instr, param_name)) 
+            continue;
+
+        // Přiřazení argumentu do parametru
+        fprintf(stdout, "MOVE TF@%s ", param_name);
+        gen_operand(instr->arg1, 1);
+        fprintf(stdout, "\n");
     }
 }
 
@@ -929,7 +1052,6 @@ static void gen_function_begin(TACDLList *instructions) {
             // Definice lokální proměnné
         }
         else if (op_code == OP_DECLARE) {
-            // ? Деклариется ли глобальная переменная?
             // Kontrola neglobální proměnné
             if (instr->result != NULL) {
                 if (instr->result->type == OPERAND_TYPE_SYMBOL) {
@@ -960,9 +1082,8 @@ static void gen_label_from_instr(TACDLList *instructions) {
         TACDLL_GetValue(&instructions_copy, &instr);
     }
 
-    // ! потом выбрать что-то одно из двух
     // Kontrola, zda je další instrukce začátek funkce
-    if (instr->operation_code == OP_FUNCTION_BEGIN || instr->operation_code == OP_PARAM) {
+    if (instr->operation_code == OP_FUNCTION_BEGIN) {
         TACDLL_Previous(&instructions_copy);\
             gen_function_begin(&instructions_copy);
         // pokud ne, generujeme běžný label
@@ -1032,6 +1153,31 @@ static void gen_read_num() {
     free(label_end);
 }
 
+static void getter_check_ifj(TACDLList *instructions, TacInstruction **instr){
+    if ((*instr)->operation_code == OP_DECLARE) {
+        // Vytvoření nového rámce pro getter
+        gen_create_frame();
+
+        // Volaní getteru
+        TACDLL_Next(instructions);
+        TACDLL_GetValue(instructions, instr);
+        gen_defvar_str("TF", "ret");
+        gen_move_str("TF", "ret", "nil", "nil");
+        gen_call((*instr)->arg1->data.label_name);
+        
+        // Přiřazení návratové hodnoty do deklarované proměnné
+        TACDLL_Next(instructions);
+        TACDLL_GetValue(instructions, instr);
+        fprintf(stdout, "MOVE ");
+        gen_operand((*instr)->result, 0);
+        fprintf(stdout, " TF@ret\n");
+
+        // jdeme na parametr
+        TACDLL_Next(instructions);
+        TACDLL_GetValue(instructions, instr);
+    }
+} 
+
 static void gen_write(TACDLList *instructions) {
     TacInstruction *instr; // Aktuální instrukce
     char *label_write = create_unique_label("WRITE");
@@ -1039,6 +1185,8 @@ static void gen_write(TACDLList *instructions) {
     // Jdeme na argument
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    
+    getter_check_ifj(instructions, &instr);
 
     // Přířazujeme argument do pomocné proměnné
     fprintf(stdout, "MOVE GF@$tmp_op_1 ");
@@ -1066,6 +1214,8 @@ static void gen_floor(TACDLList *instructions) {
     // Jdeme na argument
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+
+    getter_check_ifj(instructions, &instr);
 
     // Přiřazení argumentu do návratové hodnoty
     fprintf(stdout, "MOVE GF@$ret_ifj_fun ");
@@ -1097,6 +1247,7 @@ static void gen_str(TACDLList *instructions) {
     // Jdeme na argument
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     // Přiřazení argumentu do návratové hodnoty
     fprintf(stdout, "MOVE GF@$ret_ifj_fun ");
     gen_operand(instr->arg1, 1);
@@ -1162,6 +1313,7 @@ static void gen_length(TACDLList *instructions) {
     // Jdeme na argument
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
 
     fprintf(stdout, "MOVE GF@$ret_ifj_fun ");
     gen_operand(instr->arg1, 1);
@@ -1187,6 +1339,7 @@ static void gen_substring(TACDLList *instructions) {
     // Získaní a kontrola 1. argument
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
 
 
     fprintf(stdout, "MOVE GF@$tmp ");
@@ -1205,6 +1358,7 @@ static void gen_substring(TACDLList *instructions) {
     gen_move_str("GF", "$tmp_type_2", "int", "0");
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1232,6 +1386,7 @@ static void gen_substring(TACDLList *instructions) {
 
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     gen_move_str("GF", "$tmp_op_1", "GF", "$tmp_op_2");
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg1, 1);
@@ -1289,6 +1444,7 @@ static void gen_strcmp(TACDLList *instructions) {
     // Získaní 1. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_1 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1296,6 +1452,7 @@ static void gen_strcmp(TACDLList *instructions) {
     // Získaní 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1372,6 +1529,7 @@ static void gen_ord(TACDLList *instructions) {
     // Získání 1. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_1 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1379,6 +1537,7 @@ static void gen_ord(TACDLList *instructions) {
     // Získání 2. argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_2 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1426,6 +1585,7 @@ static void gen_chr(TACDLList *instructions) {
     // Získání argumentu
     TACDLL_Next(instructions);
     TACDLL_GetValue(instructions, &instr);
+    getter_check_ifj(instructions, &instr);
     fprintf(stdout, "MOVE GF@$tmp_op_1 ");
     gen_operand(instr->arg1, 1);
     fprintf(stdout, "\n");
@@ -1488,32 +1648,6 @@ static void gen_ifj_fun(TACDLList *instructions) {
     else if (strstr(fun_name, "Ifj.chr") != NULL) {
         gen_chr(instructions);
     }
-}
-
-static int getter_check(TacInstruction *instr) {
-    int result = 0;
-    if (instr->arg1 != NULL &&
-        (instr->arg1->type == OPERAND_TYPE_LABEL) &&
-        instr->operation_code != OP_CALL)
-    {
-        gen_create_frame();
-        gen_defvar_str("TF", "ret");
-        gen_call(instr->arg1->data.label_name);
-        gen_move_str("GF", "$getter_1", "TF", "ret");
-        result = 1;
-    }
-
-    if (instr->arg2 != NULL &&
-        instr->arg2->type == OPERAND_TYPE_LABEL &&
-        instr->operation_code != OP_CALL)
-    {
-        gen_create_frame();
-        gen_defvar_str("TF", "ret");
-        gen_call(instr->arg1->data.label_name);
-        gen_move_str("GF", "$getter_2", "TF", "ret");
-        result = 2;
-    }
-    return result;
 }
 
 static void gen_param_setter(TACDLList Instructions) {
@@ -1675,7 +1809,6 @@ int generate_code(TACDLList *instructions, Symtable *table) {
         TacInstruction *instr;  // Aktuální tříadresná instrukce
         TACDLL_GetValue(instructions, &instr);
 
-        // ! test output
         fprintf(stdout, "\n# ======================= NEW INSTRUCTION =======================\n");
         fprintf(stdout, "#"); print_single_tac_instruction_gencode(instr);
 
@@ -1754,55 +1887,44 @@ int generate_code(TACDLList *instructions, Symtable *table) {
     return 0;
 }
 
-// Функция принимает "сырую" строку и возвращает новую, экранированную для IFJcode25
-// ВАЖНО: Возвращаемая строка аллоцируется динамически, не забудьте сделать free()!
 char *string_to_ifjcode(const char *original) {
+    // Kontrola vstupu
     if (original == NULL)
         return NULL;
 
-    // 1. Проход: Вычисляем необходимый размер буфера
+    // Průchod: Vypočítáme potřebnou velikost bufferu
     size_t length = 0;
     for (int i = 0; original[i] != '\0'; i++) {
         char c = original[i];
 
-        // Условия экранирования согласно спецификации IFJcode25 (раздел 10.3):
-        // - ASCII 000-032 (управляющие и пробел)
-        // - ASCII 035 (#)
-        // - ASCII 092 (\)
-        if (c <= 32 || c == '#' || c == '\\') {
-            length += 4; // \xyz -> 4 символа
-        }
-        else {
-            length += 1; // Обычный символ
-        }
+        // Kontrola escapování
+        if (c <= 32 || c == '#' || c == '\\')
+            length += 4; // \xyz -> 4 symboly
+        else
+            length += 1;
     }
 
-    // Выделяем память (+1 для нуль-терминатора)
+    // Vyhrazujeme paměť (+1 pro nulový terminátor)
     char *escaped = (char *)malloc(length + 1);
     if (escaped == NULL) {
-        // Обработка ошибки выделения памяти (например, вызов вашей функции error_exit)
-        fprintf(stderr, "Internal compiler error: memory allocation failed\n");
-        exit(99); // Код 99 для внутренней ошибки [cite: 43]
+        exit(99);
     }
 
-    // 2. Проход: Заполнение новой строки
+    // Vyplňujeme nový řetězec
     size_t pos = 0;
     for (int i = 0; original[i] != '\0'; i++) {
         unsigned char c = (unsigned char)original[i];
 
         if (c <= 32 || c == '#' || c == '\\') {
-            // Записываем escape-последовательность
-            // %03d гарантирует 3 цифры (например, \010, а не \10)
             sprintf(escaped + pos, "\\%03d", c);
             pos += 4;
         }
         else {
-            // Копируем символ как есть
             escaped[pos] = c;
             pos += 1;
         }
     }
 
-    escaped[pos] = '\0'; // Завершаем строку
+    escaped[pos] = '\0';
     return escaped;
 }

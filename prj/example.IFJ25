@@ -1,16 +1,25 @@
+// Correct: Getter and setter usage
 import "ifj25" for Ifj
 class Program {
-    /*   dsfsdfsdf
-    /**/
-    dasd
-    **/
-    static /*/*            
     
+    static main() {
+        value = 42
+        __a = fun(value, value)
+    }
+    static value {
+        if (__stored) {
+            return __stored
+        } else {
+            return 0
+        }
+    }
     
-    
-    
-    dasd scan_token
-    adresua stdboola STATE_DECIMAL_POINT*/*/main(){
+    static value=(v) {
+        __stored = v
+    }
 
+    static fun(a, b) {
+        a = Ifj.write(a)
+        b = Ifj.write(b)
     }
 }
