@@ -14,6 +14,7 @@
 #include "error_codes.h"
 #include "utils.h"
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -74,6 +75,7 @@ typedef enum {
 
     // Viceřádkové řetězce
     STATE_SECOND_QUOT,         // ""                            * Přechodový stav po druhé uvozovce
+    STATE_STRING_WHITESPACE,    // "" "                          * Přechodový stav pro nechávání bílého znaku
     STATE_MULTIPLE_STRING,     // """example..                  * Přechodový stav pro víceřádkový řetězec
     STATE_CLOSING_QUOT,        // """example"                   * Přechodový stav pro zavírací uvozovku
     STATE_SECOND_CLOSING_QUOT, // """example""                  * Přechodový stav pro druhou zavírací uvozovku
@@ -370,27 +372,35 @@ static char process_escape_sequence(FILE *file, int *chars_read, int limit_len) 
         case 't': return '\t';
         case '\\': return '\\';
         case '"': return '\"';
-        case '\'': return '\''; 
         case 'x': {
             // Hexadecimální escape sekvence \xAA
             char hex_buf[3] = {0};
 
-            // Ověření, zda jsou k dispozici další dva znaky
+            // 1. Ověření, zda máme dostatek znaků do limitu
             if (*chars_read + 2 > limit_len) {
-                lexer_error(NULL, INTERNAL_ERROR, "Incomplete hex sequence at end of string");
-                return '?';
+                // Toto nastane spíše na konci souboru/řádku
+                exit(LEXER_ERROR); // Lexikální chyba
             }
 
-            hex_buf[0] = fgetc(file);
-            hex_buf[1] = fgetc(file);
+            int h1 = fgetc(file);
+            int h2 = fgetc(file);
             (*chars_read) += 2;
 
-            // Převod hexadecimálního řetězce na celé číslo/znak
-            return (char)strtol(hex_buf, NULL, 16);
+            // Ověření, zda jsou to skutečně hexadecimální číslice 
+            if (!isxdigit(h1) || !isxdigit(h2)) {
+                // Pokud to nejsou hex čísla (např. \xZZ), je to lexikální chyba
+                exit(LEXER_ERROR); // Lexikální chyba
+            }
+
+            hex_buf[0] = (char)h1;
+            hex_buf[1] = (char)h2;
+
+            // Převod na číslo - vrátíme jako int (0-255), abychom se vyhnuli znaménku
+            return (int)strtol(hex_buf, NULL, 16);
         }
         default:
-            // Pokud je escape sekvence neznámá, obvykle se vrátí znak doslovně
-            return (char)escape_char;
+            // Neznámá escape sekvence
+            exit(LEXER_ERROR); // Lexikální chyba
     }
 }
 
@@ -427,15 +437,23 @@ static void write_str(FILE *file, int count, char **str) {
 
 static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char **str) {
     // Seek zpět na začátek řetězce
+    if (quote_len > 3) {
+        total_chars -= 3;
+    }
     if (fseek(file, -total_chars, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to seek back in file");
     }
-    if (fseek(file, quote_len, SEEK_CUR) != 0) {
+    if (quote_len <= 3 && fseek(file, quote_len, SEEK_CUR) != 0) {
         lexer_error(NULL, INTERNAL_ERROR, "Failed to skip opening quotes");
     }
 
     // Spočítat skutečnou délku obsahu a alokovat paměť
-    int raw_content_len = total_chars - (2 * quote_len);
+    int raw_content_len;
+    if (quote_len > 3){
+        raw_content_len = total_chars - quote_len;
+    } else {
+        raw_content_len = total_chars - (2 * quote_len);
+    }
     
     char *temp = realloc(*str, raw_content_len + 1);
     if (temp == NULL) {
@@ -452,6 +470,13 @@ static void write_str_trimmed(FILE *file, int total_chars, int quote_len, char *
         chars_read++;
 
         if (c == EOF) break;
+        //! Quick fix for non-printable characters
+        if (quote_len < 3) {
+            if (c <= 31){
+                fprintf(stderr, "Lexer error: Invalid character in string literal\n");
+                exit(LEXER_ERROR); // Nekorektní znak v řetězci
+            }
+        }
 
         // Ověření, zda jde o escape sekvenci
         if (quote_len == 1 && c == '\\') {
@@ -1031,7 +1056,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 // Čtení čísla s desetinnou tečkou
                 current_char = lexer_consume_char(lexer, file);
                 if (!is_digit(current_char)) {
-                    lexer_error(lexer, LEXER_ERROR, "Invalid float format");
+                    lexer_error(lexer, SYNTAX_ERROR, "Invalid float format");
                 }
                 // Pokud je následující znak číslice, přejdeme do stavu
                 // čtení čísla s plovoucí desetinnou čárkou
@@ -1204,7 +1229,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 // Jinak je to další uvozovka, pokračujeme ve čtení řetězce
                 quote_len = 3;
                 characters_read++;
-                state = STATE_MULTIPLE_STRING;
+                state = STATE_STRING_WHITESPACE;
                 break;
 
             case STATE_STRING_END:
@@ -1214,6 +1239,37 @@ void scan_token(Lexer *lexer, FILE *file) {
             // =========================
             // ===== Stavy víceřádkové řetězce =====
             // =========================
+            case STATE_STRING_WHITESPACE:
+                if (is_whitespace(current_char)) {
+                    characters_read++;
+                    break;
+                }
+                else if (current_char == '\n') {
+                    // lexer_consume_char(lexer, file);
+                    characters_read = 3;
+                    quote_len = 3;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+
+                }
+                else if (current_char == '"') {
+                    characters_read++;
+                    state = STATE_CLOSING_QUOT;
+                    break;
+                }
+                else if (current_char == EOF) {
+                    lexer_error(lexer, LEXER_ERROR,
+                        "Unterminated string literal");
+                    break;
+                }
+                else {
+                    characters_read++;
+                    quote_len = 3;
+                    state = STATE_MULTIPLE_STRING;
+                    break;
+                }
+                break;
+
             case STATE_MULTIPLE_STRING:
                 if (current_char == '"') {
                     characters_read++;
@@ -1224,6 +1280,12 @@ void scan_token(Lexer *lexer, FILE *file) {
                     lexer_error(lexer, LEXER_ERROR,
                         "Unterminated string literal");
                     break;
+                } else if (current_char == '\n' && quote_len != 4) {
+                    quote_len = 4;
+                } else if (quote_len > 3 && is_whitespace(current_char)) {
+                    quote_len++;
+                } else if (quote_len > 3) {
+                    quote_len = 3;
                 }
                 characters_read++;
                 break;
@@ -1241,6 +1303,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 }
                 else {
                     characters_read++;
+                    quote_len = 3;
                     state = STATE_MULTIPLE_STRING;
                     break;
                 }
@@ -1258,6 +1321,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                 }
                 else {
                     characters_read++;
+                    quote_len = 3;
                     state = STATE_MULTIPLE_STRING;
                     break;
                 }

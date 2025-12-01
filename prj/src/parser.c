@@ -229,6 +229,8 @@ static NodeType token_to_node(Token token) {
             return NODE_LITERAL_NUM;
         case TOKEN_STRING:
             return NODE_LITERAL_STRING;
+        case TOKEN_KEYWORD:
+            return NODE_LITERAL_NULL;
         default:
             exit(SYNTAX_ERROR); // Není operátor
     }
@@ -666,13 +668,13 @@ static void function_params(Lexer *lexer, FILE *file, AstNode *param_list) {
     skip_EOL(lexer, file);
     // Zde můžeme přidat zpracování parametrů funkce
     if (peek_token(lexer, file).type == TOKEN_IDENTIFIER) {
-        get_token(lexer, file); // přečteme identifikátor parametru
-
+        
         AstNode *param_node = ast_new_id_node(NODE_PARAM, peek_token(lexer, file).line, peek_token(lexer, file).data);
         // Přidáme param_node do stromu AST zde
         ast_node_add_child(param_list, param_node);
         
-        // Zpracování dalších parametrů
+        get_token(lexer, file); // přečteme identifikátor parametru
+        // Následující parametry oddělené čárkou
         while (peek_token(lexer, file).type == TOKEN_COMMA) {
             get_token(lexer, file); // přečteme ','
             if (peek_token(lexer, file).type == TOKEN_EOL) {

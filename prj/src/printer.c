@@ -195,6 +195,37 @@ void ast_print_debug(AstNode* node)
     printf("---------------------------\n");
 }
 
+void print_single_tac_instruction_gencode(TacInstruction *instr){
+
+    const int op_width = 18;
+    const int col_width = 15; // Ширина для столбцов RESULT, ARG1
+    
+    // Создаем буферы для отформатированных операндов
+    char result_buf[256];
+    char arg1_buf[256];
+    char arg2_buf[256];
+
+    // Заполняем буферы
+    format_operand(instr->result, result_buf);
+    format_operand(instr->arg1, arg1_buf);
+    format_operand(instr->arg2, arg2_buf);
+    
+    char *escaped_result = string_to_ifjcode(result_buf);
+    char *escaped_arg1 = string_to_ifjcode(arg1_buf);
+    char *escaped_arg2 = string_to_ifjcode(arg2_buf);
+
+    // Печатаем ОДНУ строку с идеальным выравниванием
+    printf("%-*s | %-*s | %-*s | %s\n",
+            op_width, op_code_to_string[instr->operation_code], // OPCODE
+            col_width, escaped_result,                              // RESULT
+            col_width, escaped_arg1,                                // ARG1
+            escaped_arg2);                                          // ARG2
+
+    free(escaped_result);
+    free(escaped_arg1);
+    free(escaped_arg2);
+}
+
 void print_single_tac_instruction(TacInstruction *instr){
 
     const int op_width = 18;
