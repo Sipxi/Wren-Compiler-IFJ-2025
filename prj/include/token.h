@@ -10,6 +10,7 @@
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)
+ *     - Mykhailo Tarnavskyi (272479)
  */
 
 #ifndef TOKEN_H

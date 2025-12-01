@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.1)  1 DEC 2025 12:21
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.1)  1 DEC 2025 18:07
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -372,4 +372,167 @@ File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
 Package graphics Info: Driver file: pdftex.def on input line 106.
  (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/graphics-def\pdftex.def
 File: pdftex.def 2025/09/29 v1.2d Graphics/color driver for pdftex
+))
+\Gin@req@height=\dimen159
+\Gin@req@width=\dimen160
+) (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/geometry\geometry.sty
+Package: geometry 2020/01/02 v5.9 Page Geometry
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/generic/iftex\ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/generic/iftex\iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+))
+\Gm@cnth=\count297
+\Gm@cntv=\count298
+\c@Gm@tempcnt=\count299
+\Gm@bindingoffset=\dimen161
+\Gm@wd@mp=\dimen162
+\Gm@odd@mp=\dimen163
+\Gm@even@mp=\dimen164
+\Gm@layoutwidth=\dimen165
+\Gm@layoutheight=\dimen166
+\Gm@layouthoffset=\dimen167
+\Gm@layoutvoffset=\dimen168
+\Gm@dimlist=\toks20
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/geometry\geometry.cfg)) (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/l3backend\l3backend-pdftex.def
+File: l3backend-pdftex.def 2025-10-09 L3 backend support: PDF output (pdfTeX)
+\l__color_backend_stack_int=\count300
+) (main.aux)
+\openout1 = `main.aux'.
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Font Info:    Checking defaults for T2A/cmr/m/n on input line 21.
+LaTeX Font Info:    ... okay on input line 21.
+LaTeX Info: Redefining \th on input line 21.
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/context/base/mkii\supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count301
+\scratchdimen=\dimen169
+\scratchbox=\box99
+\nofMPsegments=\count302
+\nofMParguments=\count303
+\everyMPshowfont=\toks21
+\MPscratchCnt=\count304
+\MPscratchDim=\dimen170
+\MPnumerator=\count305
+\makeMPintoPDFobject=\count306
+\everyMPtoPDFconversion=\toks22
+) (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/epstopdf-pkg\epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/00miktex\epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
+))
+*geometry* driver: auto-detecting
+*geometry* detected driver: pdftex
+*geometry* verbose mode - [ preamble ] result:
+* driver: pdftex
+* paper: a4paper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(56.9055pt, 483.69687pt, 56.9055pt)
+* v-part:(T,H,B)=(71.13188pt, 702.78308pt, 71.13188pt)
+* \paperwidth=597.50787pt
+* \paperheight=845.04684pt
+* \textwidth=483.69687pt
+* \textheight=702.78308pt
+* \oddsidemargin=-15.36449pt
+* \evensidemargin=-15.36449pt
+* \topmargin=-38.1381pt
+* \headheight=12.0pt
+* \headsep=25.0pt
+* \topskip=12.0pt
+* \footskip=30.0pt
+* \marginparwidth=35.0pt
+* \marginparsep=10.0pt
+* \columnsep=10.0pt
+* \skip\footins=10.8pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+<image//VUT-FIT-logo-cs.png, id=1, 2713.13625pt x 602.25pt>
+File: image//VUT-FIT-logo-cs.png Graphic file (type png)
+<use image//VUT-FIT-logo-cs.png>
+Package pdftex.def Info: image//VUT-FIT-logo-cs.png  used on input line 29.
+(pdftex.def)             Requested size: 213.39566pt x 47.3631pt.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <14.4> on input line 49.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 49.
+[1
+
+{C:/Users/Sipxi/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map} <./image//VUT-FIT-logo-cs.png>] (rozdeleni.tex [1]
+Overfull \hbox (2.32732pt too wide) in paragraph at lines 65--66
+[]\T2A/cmr/m/n/12 Gener^^Aator c^^A^^Ylov^^Aeho k^^Aodu dost^^Aav^^Aa tab-ulku sym-bol^^Fu a dvo-jsm^^Gern^^Ay sez-nam ob-sahuj^^A^^Yc^^A^^Y t^^Gr^^A^^Yadresn^^A^^Y
+ []
+
+) (scaner.tex) (parse.tex) (semantics.tex) (3ac.tex
+LaTeX Font Info:    Trying to load font information for T2A+cmtt on input line 3.
+ (C:\All Stuff\Stuff\LaTeXLibs\tex/latex/cyrillic\t2acmtt.fd
+File: t2acmtt.fd 2001/08/11 v1.0a Computer Modern Cyrillic font definitions
+) [2]
+Overfull \hbox (4.74495pt too wide) in paragraph at lines 18--19
+\T2A/cmr/m/n/12 skok^^Fu (\T2A/cmtt/m/n/12 OP_JUMP\T2A/cmr/m/n/12 , \T2A/cmtt/m/n/12 OP_JUMP_IF_FALSE\T2A/cmr/m/n/12 ) a n^^Aav^^Ge^^Gst^^A^^Y (\T2A/cmtt/m/n/12 OP_LABEL\T2A/cmr/m/n/12 ). Funkce \T2A/cmtt/m/n/12 create_unique_label
+ []
+
+[3]
+Overfull \hbox (10.68912pt too wide) in paragraph at lines 49--50
+[]\T2A/cmr/bx/n/12 Unreachable Code Elim-i-na-tion (Odstran^^Gen^^A^^Y ne-dosa^^Gziteln^^Aeho k^^Aodu): \T2A/cmr/m/n/12 Odstra^^Gnujeme
+ []
+
+) (gencode.tex
+Overfull \hbox (17.3362pt too wide) in paragraph at lines 53--1
+[]\T2A/cmr/m/n/12 Pro efek-tivn^^A^^Y fun-gov^^Aan^^A^^Y t^^Gechto metod vyu^^Gz^^A^^Yv^^Aa modul po-mocn^^Ae struk-tury, jako je \T2A/cmtt/m/n/12 PropagatorMap
+ []
+
+[4]
+Overfull \hbox (6.59955pt too wide) in paragraph at lines 11--12
+\T2A/cmtt/m/n/12 gen_defvar\T2A/cmr/m/n/12 , \T2A/cmtt/m/n/12 gen_move\T2A/cmr/m/n/12 . M^^Fu^^Gze tak^^Ae volat funkce, kter^^Ae generuj^^A^^Y ho-tovou s^^Aerii in-strukc^^A^^Y (\T2A/cmtt/m/n/12 gen_type\T2A/cmr/m/n/12 ,
+ []
+
 )
+Overfull \hbox (13.55473pt too wide) in paragraph at lines 19--67
+[]\T2A/cmr/m/n/12 Druhou v^^Getv^^A^^Y je tab-ulka sym-bol^^Fu. Pom^^Aah^^Aa na za^^Gc^^Aatku gen-erov^^Aan^^A^^Y gen-erovat glob^^Aaln^^A^^Y prom^^Genn^^Ae,
+ []
+
+[5] (main.aux)
+ ***********
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-11-06>
+ ***********
+ ) 
+Here is how much of TeX's memory you used:
+ 4337 strings out of 467871
+ 71585 string characters out of 5426038
+ 500308 words of memory out of 5000000
+ 33158 multiletter control sequences out of 15000+600000
+ 637224 words of font info for 56 fonts, out of 8000000 for 9000
+ 1141 hyphenation exceptions out of 8191
+ 57i,9n,65p,836b,285s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\latt1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1728.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm2074.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx2488.pk>
+Output written on main.pdf (6 pages, 191595 bytes).
+PDF statistics:
+ 417 PDF objects out of 1000 (max. 8388607)
+ 0 named destinations out of 1000 (max. 500000)
+ 6 words of extra memory for PDF output out of 10000 (max. 10000000)
+

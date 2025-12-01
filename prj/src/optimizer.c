@@ -7,61 +7,126 @@
  * @brief Implementace optimalizátoru tříadresného kódu (TAC).
  *
  * @author
- *     - Serhij Čepil (253038)
+ * - Serhij Čepil (253038)
  */
 
 #include "optimizer.h"
 #include "symtable.h"
+#include "tac.h"
 
 #include <stdbool.h>
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
 
+#define MAX_PROPAGATED_VARS 64
+// Maximální ID pro dočasné proměnné $tX
+// Uděláno kvůli alokaci pole pro sledování použití v DCE
+#define MAX_TEMP_ID 16384
 
- /* ======================================*/
- /* ===== Globální proměnné ========*/
- /* ======================================*/
+/* ======================================*/
+/* ===== Globální proměnné ========*/
+/* ======================================*/
 
 bool optimization_performed;
 
 /* ======================================*/
-/* ===== Prototypy privátních funkcí =====*/
+/* ===== Pomocné struktury pro DCE =====*/
 /* ======================================*/
 
-/* ========================================*/
-/* ===== Techniky optimalizace =====*/
-/* ========================================*/
+typedef struct VarUsage {
+    bool is_temp;           // True pro $tX, False pro proměnné
+    union {
+        char *key;          // Jméno proměnné (pro SYMBOL)
+        int temp_id;        // ID (pro TEMP)
+    } data;
+    int count;              // Počet použití
+    struct VarUsage *next;
+} VarUsage;
 
- /**
-  * @brief Provádí optimalizaci "Constant Folding" na seznamu TAC instrukcí.
-  *
-  * Tato funkce hledá aritmetické operace s konstantními operandy
-  * a vypočítává je během kompilace, nahrazuje instrukci
-  * přiřazením výsledku.
-  * @note Nastavuje globální proměnnou 'optimization_performed' na true
-  * pokud byla provedena alespoň jedna optimalizace.
-  * 
-  * Například :
-  * t1 = 2 + 3  ->  t1 = 5
-  *
-  * @param tac_list Seznam TAC instrukcí pro optimalizaci.
-  */
-void constant_folding(TACDLList *tac_list);
+/* ======================================*/
+/* ===== Pomocná struktura pro Propagation =====*/
+/* ======================================*/
+
+typedef struct {
+    char *key;              // Jméno proměnné (ze symtable)
+    TacConstant constant;   // Hodnota konstanty
+    bool active;            // Je slot obsazený
+} PropagatorSlot;
+
+typedef struct {
+    PropagatorSlot slots[MAX_PROPAGATED_VARS];
+} PropagatorMap;
+
+/* ======================================*/
+/* ===== Deklarace technik optimalizace =====*/
+/* ======================================*/
 
 /**
- * @brief Odstraňuje nedostupný kód ze seznamu TAC instrukcí.
+ * @brief Provádí optimalizaci Constant Folding na zadaném seznamu TAC instrukcí.
  *
- * Tato funkce hledá instrukce, které nikdy nebudou provedeny
- * (například instrukce po bezpodmínečném skoku nebo návratu z funkce)
- * a odstraňuje je ze seznamu.
+ * Tato funkce prochází seznam TAC instrukcí a hledá instrukce, které mohou být
+ * vyhodnoceny během kompilace (tj. jejich operandy jsou konstanty).
+ * Příklad:
+ *         Původní instrukce: ADD 5, 10 -> $t1
+ *         Optimalizovaná instrukce: ASSIGN 15 -> $t1
  * 
- * @note Nastavuje globální proměnnou 'optimization_performed' na true
- * pokud byla provedena alespoň jedna optimalizace.
- *
- * @param tac_list Seznam TAC instrukcí pro optimalizaci.
+ * @note nastaví globální příznak optimization_performed na true, pokud dojde k jakékoli optimalizaci. 
+ * @param tac_list Seznam TAC instrukcí k optimalizaci.
  */
-void unreachable_code(TACDLList *tac_list);
+static void constant_folding(TACDLList *tac_list);
+
+/**
+ * @brief Provádí optimalizaci Dead Code Elimination na zadaném seznamu TAC instrukcí.
+ *
+ * Tato funkce prochází seznam TAC instrukcí a odstraňuje ty, které nikdy nebudou
+ * vykonány (například instrukce za nepodmíněným skokem).
+ * Příklad:
+ *         Původní instrukce:
+ *              JUMP L1
+ *              ASSIGN 5 -> a   ; Tato instrukce je mrtvý kód
+ *        Optimalizovaná instrukce:
+ *              JUMP L1
+ * 
+ * @note nastaví globální příznak optimization_performed na true, pokud dojde k jakékoli optimalizaci.
+ * @param tac_list Seznam TAC instrukcí k optimalizaci.
+ * 
+ */
+static void unreachable_code(TACDLList *tac_list);
+
+/**
+ * @brief Provádí propagaci konstant na zadaném seznamu TAC instrukcí.
+ * 
+ * Tato funkce prochází seznam TAC instrukcí a nahrazuje proměnné,
+ * které mají známé konstantní hodnoty, těmito hodnotami.
+ * Příklad:
+ *        Původní instrukce:
+ *              ASSIGN 10 -> a
+ *              ADD a, 5 -> $t1
+ *        Optimalizovaná instrukce:
+ *              ASSIGN 15 -> $t1
+ * @note nastaví globální příznak optimization_performed na true, pokud dojde k jakékoli optimalizaci.
+ * @param tac_list Seznam TAC instrukcí k optimalizaci.
+ */
+static void constant_propagation(TACDLList *tac_list);
+
+/**
+ * @brief Provádí optimalizaci Dead Code Elimination (DCE) na zadaném seznamu TAC instrukcí.
+ *
+ * Tato funkce analyzuje použití proměnných v seznamu TAC instrukcí
+ * a odstraňuje ty instrukce, které přiřazují hodnoty do proměnných,
+ * které nejsou nikdy použity.
+ * Příklad:
+ *         Původní instrukce:
+ *              ASSIGN 5 -> a   ; Proměnná 'a' není nikdy použita
+ *              ADD 10, 20 -> $t1
+ *        Optimalizovaná instrukce:
+ *              ADD 10, 20 -> $t1
+ * 
+ * @note nastaví globální příznak optimization_performed na true, pokud dojde k jakékoli optimalizaci.
+ * @param tac_list Seznam TAC instrukcí k optimalizaci.
+ */
+static void dead_code_elimination(TACDLList *tac_list);
 
 
 /* ======================================*/
@@ -69,80 +134,200 @@ void unreachable_code(TACDLList *tac_list);
 /* ======================================*/
 
 /**
- * @brief Kontroluje, zda je operace aritmetická.
- *
- * @param op_code Kód operace TAC.
- * @return true pokud je operace aritmetická, jinak false.
+ * @brief Kontroluje, zda může být daná instrukce složena (folded).
+ * 
+ * @param op_code Kód operace instrukce.
+ * @return true Pokud instrukce může být složena (folded).
  */
-bool can_be_folded(TacOperationCode op_code);
+static bool can_be_folded(TacOperationCode op_code);
 
 /**
  * @brief Kontroluje, zda jsou oba argumenty instrukce konstanty.
- *
+ * 
  * @param instr Ukazatel na TAC instrukci.
- * @return true pokud jsou oba argumenty konstanty, jinak false.
+ * @return true Pokud jsou oba argumenty konstanty.
  */
-bool are_args_constant(TacInstruction *instr);
+static bool are_args_constant(TacInstruction *instr);
 
 /**
- * @brief Kontroluje, zda je číslo celé a nastavuje vhodný typ v TacConstant.
- *
- * @param result_const Ukazatel na TacConstant pro nastavení typu a hodnoty.
- * @param result_value Vypočítaná hodnota.
+ * @brief Nastavuje hodnotu číselné konstanty.
+ * 
+ * @param result_const Ukazatel na konstantu, do které se nastaví hodnota.
+ * @param result_value Hodnota, která se nastaví.
  */
-void set_num_constant_value(TacConstant *result_const, float result_value);
+static void set_num_constant_value(TacConstant *result_const, float result_value);
 
 /**
- * @brief Spojuje dvě řetězcové konstanty z TAC instrukce.
- *
- * @param instr Ukazatel na TAC instrukci s operací spojování.
- * @return Ukazatel na nový řetězec obsahující výsledek spojení.
- *         Paměť je alokována na haldě a musí být uvolněna volající stranou.
+ * @brief Provádí složení (folding) číselných konstant pro danou instrukci.
+ * 
+ * @param instr Ukazatel na TAC instrukci.
+ * @return Hodnota výsledné číselné konstanty.
  */
-char *concat_string_constants(TacInstruction *instr);
+static char *concat_string_constants(TacInstruction *instr);
 
 /**
- * @brief Vypočítává výsledek aritmetické operace s číselnými konstantami.
- *
- * @param instr Ukazatel na TAC instrukci s aritmetickou operací.
- * @param args_type Typ argumentů (TYPE_NUM nebo TYPE_FLOAT).
- * @return Vypočítaná číselná hodnota.
+ * @brief Provádí složení (folding) číselných konstant pro danou instrukci.
+ * 
+ * @param instr Ukazatel na TAC instrukci.
+ * @return Hodnota výsledné číselné konstanty.
  */
-float calculate_num_constant(TacInstruction *instr);
+static float calculate_num_constant(TacInstruction *instr);
 
 /**
- * @brief Kontroluje, zda je float celé číslo.
- *
- * @param value Číslo pro kontrolu.
- * @return true pokud je číslo celé, jinak false.
+ * @brief Kontroluje, zda je zadaná hodnota float celé číslo.
+ * 
+ * @param value Hodnota float k kontrole.
+ * @return true Pokud je hodnota celé číslo.
  */
-bool check_whole_number(float value);
+static bool check_whole_number(float value);
 
 /**
- * @brief Násobí řetězcovou konstantu číslenou konstantou z TAC instrukce.
- *
- * @param instr Ukazatel na TAC instrukci s operací násobení řetězce číslem.
- * @return Ukazatel na nový řetězec obsahující výsledek násobení.
- *         Paměť je alokována na haldě a musí být uvolněna volající stranou.
+ * @brief Provádí složení (folding) řetězcových konstant pro danou instrukci.
+ * 
+ * @param instr Ukazatel na TAC instrukci.
+ * @return Hodnota výsledné číselné konstanty.
  */
-char *multiply_string_constant(TacInstruction *instr);
+static char *multiply_string_constant(TacInstruction *instr);
 
-/* ====================================== */
-/* ===== Implementace soukromých funkcí ===== */
-/* ====================================== */
 
+/* ======================================*/
+/* ===== Pomocné funkce pro DCE ===== */
+/* ======================================*/
+
+/**
+ * @brief Kontroluje, zda má instrukce vedlejší efekty.
+ * 
+ * Vedlejší efekty jsou operace, které mění stav programu nebo mají vliv mimo svůj výstup,
+ * například volání funkcí, skoky, návraty z funkcí apod.
+ * 
+ * @param op Kód operace instrukce.
+ * @return true Pokud instrukce má vedlejší efekty.
+ */
+static bool has_side_effects(TacOperationCode op);
+
+/**
+ * @brief Kontroluje, zda je proměnná globální.
+ * 
+ * @param name Jméno proměnné.
+ * @return true Pokud je proměnná globální.
+ */
+static bool is_global_var(const char *name);
+
+/* ======================================*/
+/* ===== Funkce pro VarUsage strukturu =====*/
+/* ======================================*/
+
+static void usage_inc(VarUsage **head, char *key, int temp_id, bool is_temp) {
+    VarUsage *curr = *head;
+    while (curr) {
+        bool match = false;
+        
+        if (is_temp) {
+            // Porovnáváme ID pouze pokud je uzel také TEMP
+            if (curr->is_temp && curr->data.temp_id == temp_id) match = true;
+        } else {
+            // Porovnáváme klíč pouze pokud uzel není TEMP
+            if (!curr->is_temp && strcmp(curr->data.key, key) == 0) match = true;
+        }
+
+        if (match) {
+            curr->count++;
+            return;
+        }
+        curr = curr->next;
+    }
+
+    // Pokud neexistuje, vytvoříme nový uzel
+    VarUsage *new_node = malloc(sizeof(VarUsage));
+    if (new_node) {
+        new_node->is_temp = is_temp;
+        if (is_temp) {
+            new_node->data.temp_id = temp_id;
+        } else {
+            new_node->data.key = key;
+        }
+        new_node->count = 1;
+        new_node->next = *head;
+        *head = new_node;
+    }
+}
+
+static int usage_get(VarUsage *head, char *key, int temp_id, bool is_temp) {
+    while (head) {
+        if (is_temp) {
+            if (head->is_temp && head->data.temp_id == temp_id) return head->count;
+        } else {
+            if (!head->is_temp && strcmp(head->data.key, key) == 0) return head->count;
+        }
+        head = head->next;
+    }
+    return 0; // Pokud není v seznamu, použití je 0
+}
+
+static void usage_list_free(VarUsage *head) {
+    while (head) {
+        VarUsage *tmp = head;
+        head = head->next;
+        free(tmp);
+    }
+}
+
+/* ======================================*/
+/* ===== Funkce pro PropagatorMap strukturu =====*/
+/* ======================================*/
+
+static void prop_map_clear(PropagatorMap *map) {
+    for (int i = 0; i < MAX_PROPAGATED_VARS; i++) {
+        map->slots[i].active = false;
+    }
+}
+
+static void prop_map_set(PropagatorMap *map, char *key, TacConstant val) {
+    for (int i = 0; i < MAX_PROPAGATED_VARS; i++) {
+        if (map->slots[i].active && strcmp(map->slots[i].key, key) == 0) {
+            map->slots[i].constant = val;
+            return;
+        }
+    }
+    for (int i = 0; i < MAX_PROPAGATED_VARS; i++) {
+        if (!map->slots[i].active) {
+            map->slots[i].active = true;
+            map->slots[i].key = key;
+            map->slots[i].constant = val;
+            return;
+        }
+    }
+}
+
+static bool prop_map_get(PropagatorMap *map, char *key, TacConstant *out_val) {
+    for (int i = 0; i < MAX_PROPAGATED_VARS; i++) {
+        if (map->slots[i].active && strcmp(map->slots[i].key, key) == 0) {
+            *out_val = map->slots[i].constant;
+            return true;
+        }
+    }
+    return false;
+}
+
+static void prop_map_remove(PropagatorMap *map, char *key) {
+    for (int i = 0; i < MAX_PROPAGATED_VARS; i++) {
+        if (map->slots[i].active && strcmp(map->slots[i].key, key) == 0) {
+            map->slots[i].active = false;
+            return;
+        }
+    }
+}
 
 
 /* ====================================== */
 /* ===== Implementace pomocných funkcí pro Constant Folding ===== */
 /* =========================================*/
 
-char *multiply_string_constant(TacInstruction *instr) {
-    // Extrahujeme řetězcovou hodnotu a počet opakování
-    // Očekáváme, že arg1 - řetězec, arg2 - číslo
+static char *multiply_string_constant(TacInstruction *instr) {
     TacConstant str_const = instr->arg1->data.constant;
     TacConstant num_const = instr->arg2->data.constant;
     int repeat_count = 0;
+    
     if (num_const.type == TYPE_NUM) {
         repeat_count = num_const.value.int_value;
     }
@@ -150,37 +335,28 @@ char *multiply_string_constant(TacInstruction *instr) {
         repeat_count = (int)num_const.value.float_value;
     }
     else {
-        // Nesprávný typ pro násobení řetězce
         return NULL;
     }
 
-    if (repeat_count < 0) {
-        // Záporný počet opakování nemá smysl
-        return NULL;
-    }
+    if (repeat_count < 0) return NULL;
 
-    // Alokujeme paměť pro nový řetězec
     size_t str_length = strlen(str_const.value.str_value);
     size_t new_length = str_length * repeat_count + 1;
 
     char *result_str = (char *)malloc(new_length);
-    if (result_str == NULL) {
-        // Chyba paměti
-        return NULL;
-    }
+    if (result_str == NULL) return NULL;
 
-    result_str[0] = '\0'; // Výsledek - prázdný řetězec ""
-    // Efektivně kopírujeme řetězec N krát
+    result_str[0] = '\0';
     char *current_pos = result_str;
     for (int i = 0; i < repeat_count; i++) {
         memcpy(current_pos, str_const.value.str_value, str_length);
         current_pos += str_length;
     }
-    *current_pos = '\0'; // Nastavujeme ukončující nulu
+    *current_pos = '\0';
     return result_str;
 }
 
-void set_num_constant_value(TacConstant *result_const, float result_value) {
+static void set_num_constant_value(TacConstant *result_const, float result_value) {
     if (check_whole_number(result_value)) {
         result_const->type = TYPE_NUM;
         result_const->value.int_value = (int)result_value;
@@ -191,100 +367,304 @@ void set_num_constant_value(TacConstant *result_const, float result_value) {
     }
 }
 
-bool check_whole_number(float value) {
+static bool check_whole_number(float value) {
     return value == (int)value;
 }
 
-char *concat_string_constants(TacInstruction *instr) {
-    // Extrahujeme řetězcové hodnoty
+static char *concat_string_constants(TacInstruction *instr) {
     TacConstant arg1_const = instr->arg1->data.constant;
     TacConstant arg2_const = instr->arg2->data.constant;
 
-    // Alokujeme paměť pro nový řetězec
     size_t new_length = strlen(arg1_const.value.str_value) + strlen(arg2_const.value.str_value) + 1;
     char *result_str = (char *)malloc(new_length);
-    if (result_str == NULL) {
-        // Chyba paměti
-        //! Zpracovat chybu alokace paměti vhodným způsobem
-        return NULL;
-    }
+    if (result_str == NULL) return NULL;
 
-    // Spojujeme řetězce
     strcpy(result_str, arg1_const.value.str_value);
     strcat(result_str, arg2_const.value.str_value);
 
     return result_str;
 }
 
-float calculate_num_constant(TacInstruction *instr) {
-    // Extrahujeme konstantní hodnoty
+static float calculate_num_constant(TacInstruction *instr) {
     TacConstant arg1_const = instr->arg1->data.constant;
     TacConstant arg2_const = instr->arg2->data.constant;
 
-    // Převádíme na float pro výpočty
     float arg1_value = arg1_const.type == TYPE_NUM ? (float)arg1_const.value.int_value : arg1_const.value.float_value;
     float arg2_value = arg2_const.type == TYPE_NUM ? (float)arg2_const.value.int_value : arg2_const.value.float_value;
-    float result;
+    float result = 0.0f;
 
     switch (instr->operation_code) {
-    case OP_ADD:
-        result = arg1_value + arg2_value;
-        break;
-    case OP_SUBTRACT:
-        result = arg1_value - arg2_value;
-        break;
-    case OP_MULTIPLY:
-        result = arg1_value * arg2_value;
-        break;
+    case OP_ADD: result = arg1_value + arg2_value; break;
+    case OP_SUBTRACT: result = arg1_value - arg2_value; break;
+    case OP_MULTIPLY: result = arg1_value * arg2_value; break;
     case OP_DIVIDE:
-        // Kontrola dělení nulou
-        if (arg2_value == 0.0f) {
-            // Chyba dělení nulou
-            //! Zpracovat chybu dělení nulou vhodným způsobem
-            return nanf("");
-        }
+        if (arg2_value == 0.0f) return nanf("");
         result = arg1_value / arg2_value;
         break;
-    default:
-        // Neznámá operace
-        //! Možná stojí za to přidat zpracování chyb nebo logování
-        return nanf("");
-        break;
+    default: return nanf("");
     }
     return result;
 }
 
-bool can_be_folded(TacOperationCode op_code) {
-    return (op_code == OP_ADD ||
-        op_code == OP_SUBTRACT ||
-        op_code == OP_DIVIDE ||
-        op_code == OP_MULTIPLY ||
-        op_code == OP_CONCAT ||
-        op_code == OP_MULTIPLY_STRING);
+static bool can_be_folded(TacOperationCode op_code) {
+    return (op_code == OP_ADD || op_code == OP_SUBTRACT ||
+        op_code == OP_DIVIDE || op_code == OP_MULTIPLY ||
+        op_code == OP_CONCAT || op_code == OP_MULTIPLY_STRING);
 }
 
-bool are_args_constant(TacInstruction *instr) {
+static bool are_args_constant(TacInstruction *instr) {
     return (instr->arg1->type == OPERAND_TYPE_CONSTANT &&
         instr->arg2->type == OPERAND_TYPE_CONSTANT);
+}
+
+
+/* ======================================*/
+/* ===== Implementace pomocných funkcí pro DCE =====*/
+/* ======================================*/
+
+static bool has_side_effects(TacOperationCode op) {
+    switch (op) {
+        case OP_CALL: 
+        case OP_JUMP:
+        case OP_JUMP_IF_FALSE:
+        case OP_LABEL:
+        case OP_FUNCTION_BEGIN:
+        case OP_FUNCTION_END:
+        case OP_RETURN:
+        case OP_PARAM:
+            return true;
+        default:
+            return false;
+    }
+}
+
+static bool is_global_var(const char *name) {
+    // Předpokládáme, že globální proměnné začínají prefixem "__"
+    return strncmp(name, "__", 2) == 0;
 }
 
 /* ======================================*/
 /* ===== Implementace technik optimalizace =====*/
 /* ======================================*/
 
-void constant_folding(TACDLList *tac_list) {
+static void dead_code_elimination(TACDLList *tac_list) {
+    // Seznam pro počítání referencí (Temp i Symbol)
+    VarUsage *usage_list = NULL;
+
+    // Počítání použití (Counting)
+    TACDLL_First(tac_list);
+    while (TACDLL_IsActive(tac_list)) {
+        TacInstruction *instr;
+        TACDLL_GetValue(tac_list, &instr);
+
+        // Kontrola ARG1
+        if (instr->arg1) {
+            if (instr->arg1->type == OPERAND_TYPE_TEMP) {
+                int id = instr->arg1->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID) {
+                    usage_inc(&usage_list, NULL, id, true);
+                }
+            } 
+            else if (instr->arg1->type == OPERAND_TYPE_SYMBOL) {
+                char *key = instr->arg1->data.symbol_entry->key;
+                // Pokud to není globální proměnná
+                if (!is_global_var(key)) {
+                    usage_inc(&usage_list, key, 0, false);
+                }
+            }
+        }
+
+        // Kontrola ARG2
+        if (instr->arg2) {
+            if (instr->arg2->type == OPERAND_TYPE_TEMP) {
+                int id = instr->arg2->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID) {
+                    usage_inc(&usage_list, NULL, id, true);
+                }
+            }
+            else if (instr->arg2->type == OPERAND_TYPE_SYMBOL) {
+                char *key = instr->arg2->data.symbol_entry->key;
+                if (!is_global_var(key)) {
+                    usage_inc(&usage_list, key, 0, false);
+                }
+            }
+        }
+
+        TACDLL_Next(tac_list);
+    }
+
+    // Mazání 
+    TACDLL_First(tac_list);
+    while (TACDLL_IsActive(tac_list)) {
+        TacInstruction *instr;
+        TACDLL_GetValue(tac_list, &instr);
+
+        bool should_remove = false;
+
+        // Kontrolujeme instrukce, které zapisují do RESULT
+        if (instr->result) {
+            // Zápis do TEMP
+            if (instr->result->type == OPERAND_TYPE_TEMP) {
+                int id = instr->result->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID) {
+                    int count = usage_get(usage_list, NULL, id, true);
+                    if (count == 0 && !has_side_effects(instr->operation_code)) {
+                        should_remove = true;
+                    }
+                }
+            }
+            // Zápis do lokálního symbolu
+            else if (instr->result->type == OPERAND_TYPE_SYMBOL) {
+                char *key = instr->result->data.symbol_entry->key;
+                if (!is_global_var(key)) {
+                    int count = usage_get(usage_list, key, 0, false);
+                    if (count == 0 && !has_side_effects(instr->operation_code)) {
+                        should_remove = true;
+                    }
+                }
+            }
+        }
+        // Provádíme odstranění instrukce, pokud je to potřeba
+        if (should_remove) {
+            if (tac_list->active_element == tac_list->first_element) {
+                TACDLL_DeleteFirst(tac_list);
+                TACDLL_First(tac_list);
+            } else {
+                TACDLL_Previous(tac_list);
+                TACDLL_DeleteAfter(tac_list);
+                TACDLL_Next(tac_list);
+            }
+            optimization_performed = true;
+        } else {
+            TACDLL_Next(tac_list);
+        }
+    }
+
+    usage_list_free(usage_list);
+}
+
+static void constant_propagation(TACDLList *tac_list) {
+    // Mapa pro pojmenované proměnné (symtable)
+    PropagatorMap map;
+    prop_map_clear(&map);
+
+    // Pole pro sledování dočasných proměnných (TEMPS)
+    TacConstant temp_values[MAX_TEMP_ID];
+    bool temp_active[MAX_TEMP_ID];
+    
+    // Inicializace temp pole (vše neaktivní)
+    for(int i = 0; i < MAX_TEMP_ID; i++) temp_active[i] = false;
+
+    TACDLL_First(tac_list);
+    while (TACDLL_IsActive(tac_list)) {
+        TacInstruction *instr;
+        TACDLL_GetValue(tac_list, &instr);
+
+        // Pokud narazíme na kontrolní tok, vyčistíme mapu a temp pole
+        if (instr->operation_code == OP_LABEL || 
+            instr->operation_code == OP_JUMP || 
+            instr->operation_code == OP_JUMP_IF_FALSE || 
+            instr->operation_code == OP_FUNCTION_BEGIN ||
+            instr->operation_code == OP_CALL) {
+            
+            prop_map_clear(&map);
+            for(int i = 0; i < MAX_TEMP_ID; i++) temp_active[i] = false;
+
+            TACDLL_Next(tac_list);
+            continue;
+        }
+
+        // Nahrazování (Substitution) v ARG1
+        if (instr->arg1) {
+            // Pokud je SYMBOL
+            if (instr->arg1->type == OPERAND_TYPE_SYMBOL) {
+                TacConstant known_val;
+                if (prop_map_get(&map, instr->arg1->data.symbol_entry->key, &known_val)) {
+                    free_operand(instr->arg1);
+                    instr->arg1 = create_constant_operand(known_val);
+                    optimization_performed = true;
+                }
+            }
+            // Pokud je TEMP
+            else if (instr->arg1->type == OPERAND_TYPE_TEMP) {
+                int id = instr->arg1->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID && temp_active[id]) {
+                    free_operand(instr->arg1);
+                    instr->arg1 = create_constant_operand(temp_values[id]);
+                    optimization_performed = true;
+                }
+            }
+        }
+
+        // Nahrazování (Substitution) v ARG2
+        if (instr->arg2) {
+            // Pokud je SYMBOL
+            if (instr->arg2->type == OPERAND_TYPE_SYMBOL) {
+                TacConstant known_val;
+                if (prop_map_get(&map, instr->arg2->data.symbol_entry->key, &known_val)) {
+                    free_operand(instr->arg2);
+                    instr->arg2 = create_constant_operand(known_val);
+                    optimization_performed = true;
+                }
+            }
+            // Pokud je TEMP
+            else if (instr->arg2->type == OPERAND_TYPE_TEMP) {
+                int id = instr->arg2->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID && temp_active[id]) {
+                    free_operand(instr->arg2);
+                    instr->arg2 = create_constant_operand(temp_values[id]);
+                    optimization_performed = true;
+                }
+            }
+        }
+
+        // Ukládání RESULT
+        if (instr->result) {
+            // Zjištění, zda se jedná o přiřazení konstanty
+            bool is_assignment_of_const = (instr->operation_code == OP_ASSIGN && 
+                                           instr->arg1 && 
+                                           instr->arg1->type == OPERAND_TYPE_CONSTANT);
+            // Pokud je SYMBOL
+            if (instr->result->type == OPERAND_TYPE_SYMBOL) {
+                char *result_key = instr->result->data.symbol_entry->key;
+                if (is_assignment_of_const) {
+                    prop_map_set(&map, result_key, instr->arg1->data.constant);
+                } else {
+                    // Výsledek není konstanta, odstraníme z mapy
+                    prop_map_remove(&map, result_key);
+                }
+            }
+            // Pokud je TEMP
+            else if (instr->result->type == OPERAND_TYPE_TEMP) {
+                int id = instr->result->data.temp_id;
+                if (id >= 0 && id < MAX_TEMP_ID) {
+                    if (is_assignment_of_const) {
+                        temp_values[id] = instr->arg1->data.constant;
+                        temp_active[id] = true;
+                    } else {
+                        temp_active[id] = false;
+                    }
+                }
+            }
+        }
+
+        TACDLL_Next(tac_list);
+    }
+}
+
+static void constant_folding(TACDLList *tac_list) {
     TACDLL_First(tac_list);
 
     while (TACDLL_IsActive(tac_list)) {
         TacInstruction *instr;
         TACDLL_GetValue(tac_list, &instr);
 
-        // Kontrolujeme, zda je operace aritmetická
+        // Kontrola, zda je typ operace vhodný pro folding (aritmetika, stringy atd.)
         if (!can_be_folded(instr->operation_code)) {
             TACDLL_Next(tac_list);
             continue;
         }
-        // Kontrolujeme, že oba argumenty - konstanty
+        // Kontrola, zda jsou oba operandy skutečně konstanty (ne proměnné)
         if (!are_args_constant(instr)) {
             TACDLL_Next(tac_list);
             continue;
@@ -292,34 +672,25 @@ void constant_folding(TACDLList *tac_list) {
 
         bool optimized = false;
         TacConstant result_const;
+        memset(&result_const, 0, sizeof(TacConstant));
 
+        // Načtení hodnot konstant z operandů
         TacConstant arg1_const = instr->arg1->data.constant;
         TacConstant arg2_const = instr->arg2->data.constant;
-        // Oba argumenty - konstanty, provádíme výpočet
-        // Kontrolujeme typ konstant
 
-        // =====
-        // Případ: "a" + "b"
-        // =====
-        if (arg1_const.type == TYPE_STR &&
-            arg2_const.type == TYPE_STR &&
-            instr->operation_code == OP_CONCAT) {
+        // Spojování řetězců ("a" + "b")
+        if (arg1_const.type == TYPE_STR && arg2_const.type == TYPE_STR && instr->operation_code == OP_CONCAT) {
             char *result_str = concat_string_constants(instr);
-
             if (result_str != NULL) {
-
                 result_const.type = TYPE_STR;
                 result_const.value.str_value = result_str;
                 optimized = true;
             }
-
         }
-        // =====
-        // Případ: "a" * 5 nebo "a" * 5.0
-        // =====
-        else if (arg1_const.type == TYPE_STR &&
-            (arg2_const.type == TYPE_NUM || arg2_const.type == TYPE_FLOAT) &&
-            instr->operation_code == OP_MULTIPLY_STRING) {
+        // Násobení řetězce číslem ("a" * 3)
+        else if (arg1_const.type == TYPE_STR && 
+                (arg2_const.type == TYPE_NUM || arg2_const.type == TYPE_FLOAT) && 
+                instr->operation_code == OP_MULTIPLY_STRING) {
             char *result_str = multiply_string_constant(instr);
             if (result_str != NULL) {
                 result_const.type = TYPE_STR;
@@ -327,88 +698,71 @@ void constant_folding(TACDLList *tac_list) {
                 optimized = true;
             }
         }
-        // =====
-        // Případ: 5 * 5 nebo 5.0 + 3.2 atd.
-        // =====
-        else if ((arg1_const.type == TYPE_NUM ||
-            arg1_const.type == TYPE_FLOAT) &&
-            (arg2_const.type == TYPE_NUM ||
-                arg2_const.type == TYPE_FLOAT)) {
-
+        // Aritmetické operace s čísly (Int/Float)
+        else if ((arg1_const.type == TYPE_NUM || arg1_const.type == TYPE_FLOAT) &&
+                 (arg2_const.type == TYPE_NUM || arg2_const.type == TYPE_FLOAT)) {
             float result_value = calculate_num_constant(instr);
-
+            // Kontrola na NaN (např. při dělení nulou se folding neprovádí)
             if (!isnan(result_value)) {
                 set_num_constant_value(&result_const, result_value);
                 optimized = true;
-
             }
-
         }
 
-        // =====
-        // Pokud je optimalizace provedena, aktualizujeme instrukci
-        // =====
+        // Pokud se podařilo hodnotu vypočítat (složit), upravíme instrukci
         if (optimized) {
-            //* Označujeme, že byla provedena optimalizace
             optimization_performed = true;
-            // Uvolňujeme staré operandy
+            
+            // Uvolníme paměť starých operandů, už nejsou potřeba
             free_operand(instr->arg1);
             free_operand(instr->arg2);
 
-
-            // Vytváříme nový operand pro výsledek
+            // Vytvoříme nový operand obsahující vypočtený výsledek
             Operand *result_op = create_constant_operand(result_const);
 
-            // Aktualizujeme instrukci na přiřazení
+            // Změníme instrukci na prosté přiřazení (res = constant)
             instr->operation_code = OP_ASSIGN;
             instr->arg1 = result_op;
-            instr->arg2 = NULL;
-
+            instr->arg2 = NULL; // Druhý operand u přiřazení není
         }
 
-        // Přecházíme na další instrukci
         TACDLL_Next(tac_list);
-
-
     }
 }
 
-void unreachable_code(TACDLList *tac_list) {
+static void unreachable_code(TACDLList *tac_list) {
     TACDLL_First(tac_list);
 
     while (TACDLL_IsActive(tac_list)) {
         TacInstruction *instr;
         TACDLL_GetValue(tac_list, &instr);
 
-        // Pokud je instrukce - bezpodmínečný skok nebo návrat z funkce
-        if (instr->operation_code == OP_JUMP ||
-            instr->operation_code == OP_RETURN) {
-            // Po této instrukci všechny následující do návěští - nedostupný kód
+        // Odstranění kódu za skokem nebo návratem
+        if (instr->operation_code == OP_JUMP || instr->operation_code == OP_RETURN) {
+            
             TACDLL_Next(tac_list);
+
             while (TACDLL_IsActive(tac_list)) {
                 TacInstruction *next_instr;
                 TACDLL_GetValue(tac_list, &next_instr);
-                // Pokud je dosaženo návěští, ukončujeme mazání
+
+                // Konec neviditelného kódu na LABEL nebo FUNCTION_END
                 if (next_instr->operation_code == OP_LABEL ||
                     next_instr->operation_code == OP_FUNCTION_END) {
                     break;
                 }
-                // Odstraňujeme nedostupnou instrukci
+
                 TACDLL_Previous(tac_list);
                 TACDLL_DeleteAfter(tac_list);
-
-                //* Označujeme, že byla provedena optimalizace
-                optimization_performed = true;
-
                 TACDLL_Next(tac_list);
-            }
 
+                optimization_performed = true;
+            }
+        } else {
+            TACDLL_Next(tac_list);
         }
-        TACDLL_Next(tac_list);
     }
 }
-
-
 
 /* ======================================*/
 /* ===== Implementace veřejných funkcí =====*/
@@ -417,13 +771,18 @@ void unreachable_code(TACDLList *tac_list) {
 void optimize_tac(TACDLList *tac_list) {
     optimization_performed = true;
 
+    // Nekonečné opakování, dokud se provádějí optimalizace
     while (optimization_performed) {
+        // Nastavení příznaku na false před každou iterací
         optimization_performed = false;
 
-        // Volání optimalizace Constant Folding
+        // Volaní constant propagation
+        constant_propagation(tac_list);
+        // Volaní constant folding
         constant_folding(tac_list);
-        // Volání optimalizace Unreachable Code
+        // Volaní unreachable code elimination
         unreachable_code(tac_list);
-
+        // Volaní dead code elimination
+        dead_code_elimination(tac_list);
     }
-}   
+}

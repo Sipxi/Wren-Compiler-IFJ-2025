@@ -10,8 +10,8 @@
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)
+ *     - Mykhailo Tarnavskyi (272479)
  */
- //! Допишите ваши имена и номера
 #include "lexer.h"
 #include "error_codes.h"
 #include "utils.h"

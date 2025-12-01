@@ -1,6 +1,6 @@
 # Fdb version 4
-["pdflatex"] 1764588098.88404 "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" "main.pdf" "main" 1764588099.58429 2
-  "3ac.tex" 1764588097 2762 b6ad1547fec0e38daa4b95d60f78218e ""
+["pdflatex"] 1764608830.80093 "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" "main.pdf" "main" 1764608832.16127 0
+  "3ac.tex" 1764608829 4902 217b0d923efc13bd5f121ba439a1593c ""
   "C:/All Stuff/Stuff/LaTeXLibs/fonts/tfm/jknappen/ec/tcrm1200.tfm" 993062508 1444 95ffe0f19b974d50849790c8225c7ef7 ""
   "C:/All Stuff/Stuff/LaTeXLibs/fonts/tfm/jknappen/ec/tcrm1440.tfm" 993062510 1460 05250f74aea2bdcfe9d6766811b8b7b2 ""
   "C:/All Stuff/Stuff/LaTeXLibs/fonts/tfm/public/cm/cmmi12.tfm" 1136765053 1524 4414a8315f39513458b80dfc63bff03a ""
@@ -64,9 +64,9 @@
   "C:/Users/Sipxi/AppData/Local/MiKTeX/fonts/tfm/lh/lh-t2a/latt1200.tfm" 1764579003 1272 bf3bb5cc29880b269c8bcb412a1ac6e2 ""
   "C:/Users/Sipxi/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1764579211 13325849 a70937687cb8bb1afc7e44dc2ea5c564 ""
   "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" 1764579439 4549 58192c6708f8752370ef3abbad8cee35 ""
-  "gencode.tex" 1764579393 2542 6de065d8c63920149ebc54b025370a45 ""
+  "gencode.tex" 1764608829 2542 6de065d8c63920149ebc54b025370a45 ""
   "image//VUT-FIT-logo-cs.png" 1764577623 54488 cd1b4bab2d870d1577189a7b57e94909 ""
-  "main.aux" 1764588098 1273 e419877d7e8eeb2a96e7418a21d6c593 "pdflatex"
+  "main.aux" 1764608831 1396 c3add009d07b352b8c94cf1d6a1cb6e4 "pdflatex"
   "main.tex" 1764579439 4549 58192c6708f8752370ef3abbad8cee35 ""
   "parse.tex" 1764579393 43 8776013a82a5211acd28d2a9242664fe ""
   "rozdeleni.tex" 1764579393 5206 db489ded309ffdb960a8230a49e58980 ""

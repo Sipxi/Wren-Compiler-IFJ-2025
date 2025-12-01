@@ -29,3 +29,25 @@ Výstupem generátoru je dvousměrně vázaný seznam (\texttt{TACDLList}). Tato
 
 Operandy jsou reprezentovány strukturou \texttt{Operand}, která může nést různé typy dat definované výčtem \texttt{OperandType}. 
 Díky přímému propojení operandů typu \texttt{SYMBOL} se záznamy v tabulce symbolů (\texttt{TableEntry}) nemusí generátor cílového kódu provádět opakované vyhledávání názvů, což zvyšuje efektivitu překladu.
+
+
+
+
+\section{Optimalizace mezikódu (optimizer)}
+
+Modul \texttt{optimizer} má za úkol vylepšit vygenerovaný tříadresný kód (TAC) ještě předtím, než se převede do finálního IFJcode25. Cílem je zmenšit počet instrukcí a zrychlit běh programu, aniž bychom změnili jeho logiku. Implementace se nachází v souborech \texttt{optimizer.c} a \texttt{optimizer.h}.
+
+Optimalizace probíhají v cyklu nad seznamem instrukcí. Celý proces se opakuje tak dlouho, dokud v kódu dochází k nějakým změnám.
+
+\subsection*{Použité optimalizační techniky}    
+
+Náš optimalizátor využívá kombinaci čtyř základních metod:
+
+\begin{itemize}
+    \item \textbf{Constant Propagation (Šíření konstant):} Pokud překladač zjistí, že proměnná má v daném místě pevně danou hodnotu (např. \texttt{a = 5}), nahradí všechna její následná použití přímo touto hodnotou. K tomu využíváme pomocnou mapu hodnot.
+    \item \textbf{Constant Folding (Skládání konstant):} Pokud instrukce provádí operaci nad dvěma konstantami (např. \texttt{3 + 2} nebo spojení řetězců \texttt{"A" + "B"}), optimalizátor výsledek spočítá rovnou při překladu a nahradí instrukci pouhým přiřazením výsledku.
+    \item \textbf{Unreachable Code Elimination (Odstranění nedosažitelného kódu):} Odstraňujeme instrukce, které se nikdy neprovedou. To nastává typicky za instrukcemi nepodmíněného skoku (\texttt{JUMP}) nebo návratu z funkce (\texttt{RETURN}), pokud za nimi bezprostředně nenásleduje návěští.
+    \item \textbf{Dead Code Elimination (Odstranění mrtvého kódu):} Procházíme kód a počítáme, kolikrát je každá proměnná použita. Pokud zjistíme, že se do proměnné zapisuje, ale nikde se nečte, a výpočet nemá vedlejší efekty (není to např. volání funkce nebo výpis), instrukci odstraníme.
+\end{itemize}
+
+Pro efektivní fungování těchto metod využívá modul pomocné struktury, jako je \texttt{PropagatorMap} pro sledování hodnot proměnných a \texttt{VarUsage} pro počítání referencí při eliminaci mrtvého kódu.
