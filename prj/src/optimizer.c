@@ -768,6 +768,7 @@ static void unreachable_code(TACDLList *tac_list) {
 /* ===== Implementace veřejných funkcí =====*/
 /* ======================================*/
 
+
 void optimize_tac(TACDLList *tac_list) {
     optimization_performed = true;
 
