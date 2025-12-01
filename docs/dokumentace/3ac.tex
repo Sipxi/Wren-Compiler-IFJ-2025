@@ -1,1 +1,31 @@
-\section{Generátor vnitřního kódu (tříadresní kód)} 
+\section{Generátor vnitřního kódu (TAC)}
+
+Modul \texttt{tac}(Three Address Code) realizuje transformaci abstraktního syntaktického stromu (AST) do tříadresového kódu (TAC). Tento mezikód slouží jako přechodná reprezentace mezi syntaktickou/semantickou analýzou a generováním cílového kódu (IFJcode25). Tříadresný kód používáme proto, že nám zjednoduší překlad do cílového kódu a umožní lepší optimalizaci.
+
+Generátor je implementován ve dvou souborech:
+\begin{itemize}
+    \item \texttt{tac.h}: Definuje struktury instrukcí (\texttt{TacInstruction}), typy operandů (\texttt{Operand}), výčty operací (\texttt{TacOperationCode}) a rozhraní pro dvousměrně vázaný seznam (\texttt{TACDLList}).
+    \item \texttt{tac.c}: Implementuje rekurzivní průchod AST, generování instrukcí a správu paměti a návěští.
+\end{itemize}
+
+\subsection*{Proces generování TAC}
+
+Vstupním bodem je funkce \texttt{generate\_tac(...)}. Tato funkce přijímá kořen AST a rekurzivně prochází jeho uzly. Pro každý typ uzlu (např. přiřazení, podmínky, smyčky, volání funkcí) generuje odpovídající sadu TAC instrukcí.
+
+Během průchodu stromem modul provádí následující klíčové operace:
+\begin{enumerate}
+    \item \textbf{Linearizace výrazů:} Rozklad složených výrazů na elementární instrukce s dočasnými proměnnými(např. \texttt{\$t1}, \texttt{\$t2}).
+    \item \textbf{Řízení toku:} \texttt{if-else} a cyklus \texttt{while} jsou převedeny na lineární kód pomocí instrukcí skoků (\texttt{OP\_JUMP}, \texttt{OP\_JUMP\_IF\_FALSE}) a návěští (\texttt{OP\_LABEL}). Funkce \texttt{create\_unique\_label} generuje unikátní názvy návěští (např. \texttt{L\_ELSE\_0}, \texttt{L\_END\_IF\_1}).
+    \item \textbf{Funkce a volání:} Pro definice funkcí generuje speciální instrukce \texttt{OP\_FUNCTION\_BEGIN} a \texttt{OP\_FUNCTION\_END}.Parametry funkcí jsou zpracovány a předány jako argumenty instrukcí.
+\end{enumerate}
+
+\subsection*{Použité datové struktury}
+
+Výstupem generátoru je dvousměrně vázaný seznam (\texttt{TACDLList}). Tato struktura reprezentuje seznam pro tzv. čtveřici (quadruple):
+\begin{itemize}
+    \item \texttt{operation\_code}: Typ operace.
+    \item \texttt{result}, \texttt{arg1}, \texttt{arg2}: Operandy instrukce.
+\end{itemize}
+
+Operandy jsou reprezentovány strukturou \texttt{Operand}, která může nést různé typy dat definované výčtem \texttt{OperandType}. 
+Díky přímému propojení operandů typu \texttt{SYMBOL} se záznamy v tabulce symbolů (\texttt{TableEntry}) nemusí generátor cílového kódu provádět opakované vyhledávání názvů, což zvyšuje efektivitu překladu.

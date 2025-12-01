@@ -1,11 +1,10 @@
 /**
  * @file token.h
  * 
- * Заголовочный файл для структуры и функций токенов.
+ * @brief Definice struktury a funkcí pro práci s tokeny v lexikální analýze.
  * 
  * Author:
  *      - Serhij Čepil (253038)
- * ! Допишите ваши имена и номера
  */
 
 #ifndef TOKEN_H

@@ -1,15 +1,25 @@
+/**
+ * @file utils.h
+ * 
+ * @brief Definice pomocných funkcí používaných v různých částech projektu.
+ * 
+ * Author:
+ *     - Serhij Čepil (253038)
+ * 
+ */
+
 #ifndef UTILS_H
 #define UTILS_H
 
 
 /**
- * @brief Копирует строку, выделяя память под новую копию.
+ * @brief Kopíruje řetězec a alokuje paměť pro jeho novou kopii.
  * 
- * Эта функция реализует поведение, аналогичное strdup из C99.
- * Выделенная память должна быть освобождена вызовом free().
+ * Tato funkce se chová obdobně jako strdup z C99.
+ * Alokovanou paměť je třeba uvolnit voláním free().
  * 
- * @param s Исходная строка для копирования.
- * @return Указатель на новую копию строки или NULL при ошибке выделения памяти.
+ * @param s Původní řetězec ke kopírování.
+ * @return Ukazatel na novou kopii řetězce nebo NULL při chybě alokace paměti.
  */
 char *strdup_c99(const char *s);
 
