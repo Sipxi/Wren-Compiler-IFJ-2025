@@ -1,10 +1,15 @@
 /**
  * @file token.h
- * 
- * @brief Definice struktury a funkcí pro práci s tokeny v lexikální analýze.
- * 
- * Author:
- *      - Serhij Čepil (253038)
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavní hlavičkový soubor pro práci s tokeny v lexikální analýze.
+ *
+ * @author
+ *     - Serhij Čepil (253038)
+ *     - Dmytro Kravchenko (273125)
+ *     - Veronika Turbaievska (273123)
  */
 
 #ifndef TOKEN_H

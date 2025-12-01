@@ -1,21 +1,23 @@
 /**
  * @file tac.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
  *
- * @brief Implementace Tříadresného kódu (Three-Address Code - TAC) 
+ * @brief Hlavní zdrojový soubor pro generování a reprezentaci třiadresného kódu (TAC).
  *
- * Author:
+ * @author
  *     - Serhij Čepil (253038)
- *
  */
 
 #include "tac.h"
 #include "utils.h"
 #include "error_codes.h"
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+
  /* ======================================*/
  /* ===== Globální proměnné =====*/
  /* ======================================*/

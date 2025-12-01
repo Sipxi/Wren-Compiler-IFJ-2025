@@ -1,11 +1,12 @@
 /**
  * @file lexer.h
- * 
- * Hlavičkový soubor pro lexer, který zodpovídá za tokenizaci zdrojového kódu.
- * 
- * Tento soubor obsahuje definice struktury Lexer a prototypy funkcí
- * pro inicializaci, uvolnění a zpracování tokenů.
- * Autor:
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavní hlavičkový soubor pro práci s lexikální analýzou.
+ *
+ * @author
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)

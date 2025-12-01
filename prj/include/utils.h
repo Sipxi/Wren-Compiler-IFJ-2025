@@ -1,11 +1,13 @@
 /**
  * @file utils.h
- * 
- * @brief Definice pomocných funkcí používaných v různých částech projektu.
- * 
- * Author:
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavní hlavičkový soubor pro pomocné funkce používané v různých částech projektu.
+ *
+ * @author
  *     - Serhij Čepil (253038)
- * 
  */
 
 #ifndef UTILS_H
