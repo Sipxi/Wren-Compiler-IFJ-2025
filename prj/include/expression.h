@@ -1,3 +1,15 @@
+/**
+ * @file expression.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavičkový soubor pro expression.c
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
+
 #ifndef _EXPRESSION_H_
 #define _EXPRESSION_H_
 
@@ -7,31 +19,31 @@
 #include <stdbool.h>
 
 /**
- * @brief Парсит выражение с использованием алгоритма приоритетного разбора
+ * @brief Parsuje výraz pomocí precedenční analýzy a vytváří odpovídající AST uzel
  * 
- * @param lexer Указатель на лексер
- * @param file Указатель на файл
- * @param expr_node Узел AST для добавления результата
- * @return true Выражение успешно распарсено
- * @return false Ошибка парсинга выражения
+ * @param lexer Ukazatel na lexer
+ * @param file Ukazatel na soubor
+ * @param expr_node AST uzel pro přidání výsledku
+ * @return true Výraz byl úspěšně parsován
+ * @return false Chyba při parsování výrazu
  */
 bool parser_expression(Lexer *lexer, FILE *file, AstNode *expr_node);
 
 /**
- * @brief Преобразует строку в double
+ * @brief Převádí řetězec na double
  * 
- * @param str Входная строка
- * @param out_value Указатель на выходное значение
- * @return true Успешная конверсия
+ * @param str Vstupní řetězec
+ * @param out_value Ukazatel na výstupní hodnotu
+ * @return true Úspěšná konverze
  */
 bool char_to_double(const char *str, double *out_value);
 
 /**
- * @brief Создает листовой узел AST из токена
+ * @brief Vytváří listový uzel AST z tokenu
  * 
- * @param token Входной токен
- * @param node_type_term Тип узла AST
- * @return AstNode* Указатель на созданный узел AST
+ * @param token Vstupní token
+ * @param node_type_term Typ uzlu AST
+ * @return AstNode* Ukazatel na vytvořený uzel AST
  */
 AstNode *create_leaf_node (Token token, NodeType node_type_term);
 

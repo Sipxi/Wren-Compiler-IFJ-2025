@@ -1,17 +1,29 @@
+/**
+ * @file precedence.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Implementace pro precedence.h
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
 
 #include "precedence.h"
-#include <string.h> // для strcmp
 
-// --- 1. Прецедентная Таблица (16x16) ---
-// S - Строки (Стек)
-// I - Столбцы (Вход)
+#include <string.h> // pro strcmp
+
+// --- 1. Precedence tabulka (16x16) ---
+// S - Řádky (Zásobník)
+// I - Sloupce (Vstup)
 //
-// '<' - Shift (сдвиг)
-// '>' - Reduce (свёртка)
-// '=' - Equal (для скобок и $)
-// 'E' - Error (ошибка)
+// '<' - Shift (posun)
+// '>' - Reduce (snížení)
+// '=' - Equal (pro závorky a $)
+// 'E' - Error (chyba)
 //
-// Индексы:
+// Indeksy:
 // 0:+, 1:-, 2:*, 3:/, 4:<, 5:>, 6:<=, 7:>=, 8:is, 9:==, 10:!=, 11:(, 12:), 13:i, 14:k, 15:$
 
 const char precedence_table[PRECEDENCE_TABLE_SIZE][PRECEDENCE_TABLE_SIZE] = {
@@ -35,14 +47,15 @@ const char precedence_table[PRECEDENCE_TABLE_SIZE][PRECEDENCE_TABLE_SIZE] = {
 };
 
 
-// --- 2. Правила Грамматики ---
-// {Результат, Правило_1, Правило_2, Правило_3}
-// GS_UNDEF используется как "пустое" поле.
+
+// --- 2. Pravidla gramatiky ---
+// {Výsledek, Pravidlo_1, Pravidlo_2, Pravidlo_3}
+// GS_UNDEF se používá jako "prázdné" pole.
 
 const int grammar_rules[NUM_GRAMMAR_RULES][MAX_RULE_LENGTH] = {
-    // {Результат, Элемент 1, Элемент 2, Элемент 3}
+    // {Výsledek, Prvek 1, Prvek 2, Prvek 3}
 
-    // E -> E op E (3 символа)
+    // E -> E op E (3 prvky)
     {GS_E, GS_E, GS_PLUS,  GS_E}, // 0
     {GS_E, GS_E, GS_MINUS, GS_E}, // 1
     {GS_E, GS_E, GS_MUL,   GS_E}, // 2
@@ -54,22 +67,22 @@ const int grammar_rules[NUM_GRAMMAR_RULES][MAX_RULE_LENGTH] = {
     {GS_E, GS_E, GS_EQ,    GS_E}, // 8
     {GS_E, GS_E, GS_NEQ,   GS_E}, // 9
 
-    // E -> E is k (3 символа)
+    // E -> E is k (3 prvky)
     {GS_E, GS_E, GS_IS,    GS_TYPE}, // 10
 
-    // E -> ( E ) (3 символа)
+    // E -> ( E ) (3 prvky)
     {GS_E, GS_OPEN_PAREN, GS_E, GS_CLOSE_PAREN}, // 11
 
-    // E -> i (1 символ)
+    // E -> i (1 prvek)
     {GS_E, GS_TERM, GS_UNDEF, GS_UNDEF} // 12
 };
 
 
-// --- 3. Функции-хелперы ---
+// --- 3. Pomocné funkce ---
 
 TermIndex token_to_index(Token token) {
     switch (token.type) {
-        // Операторы
+        // Operátory
         case TOKEN_PLUS:          return T_PLUS;
         case TOKEN_MINUS:         return T_MINUS;
         case TOKEN_MULTIPLY:      return T_MUL;
@@ -83,7 +96,7 @@ TermIndex token_to_index(Token token) {
         case TOKEN_OPEN_PAREN:    return T_OPEN_PAREN;
         case TOKEN_CLOSE_PAREN:   return T_CLOSE_PAREN;
 
-        // Операнды (i)
+        // Operandy (i)
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
         case TOKEN_INT:
@@ -91,37 +104,34 @@ TermIndex token_to_index(Token token) {
         case TOKEN_EXP:
         case TOKEN_HEX:
         case TOKEN_STRING:
-        // (Добавь сюда любые другие типы токенов-операндов)
             return T_TERM; // 'i'
 
-        // Ключевые слова
+        // Klíčová slova
         case TOKEN_KEYWORD:
             if (token.data == NULL) return T_ERROR;
             
-            // Оператор 'is'
+            // Operátor 'is'
             if (strcmp(token.data, "is") == 0) return T_IS;
             
-            // Литерал 'null' (это операнд 'i')
+            // Literál 'null' (to je operand 'i')
             if (strcmp(token.data, "null") == 0) return T_TERM; // 'i'
             
-            // Ключевые слова типа (это 'k') [cite: 303]
+            // Klíčová slova typu (to je 'k') [cite: 303]
             if (strcmp(token.data, "Num") == 0) return T_TYPE; // 'k'
             if (strcmp(token.data, "String") == 0) return T_TYPE; // 'k'
             if (strcmp(token.data, "Null") == 0) return T_TYPE; // 'k'
             
-            // Другие ключевые слова (if, while...) не должны быть в выражении
+            // Jiná klíčová slova (if, while...) by neměla být ve výrazu
             return T_ERROR;
 
-        // Конец выражения ($)
+        // Konec výrazu ($)
         case TOKEN_EOL:
         case TOKEN_EOF:
         case TOKEN_OPEN_BRACE:
         case TOKEN_UNDEFINED:
-        // (Добавь сюда другие токены, завершающие выражение, 
-        // например, TOKEN_COMMA или TOKEN_CLOSE_BRACE)
             return T_DOLLAR;
 
-        // Ошибка
+        // Chyba
         default:
             return T_ERROR;
     }
@@ -129,7 +139,7 @@ TermIndex token_to_index(Token token) {
 
 GrammarSymbol token_to_grammar_symbol(Token token) {
     switch (token.type) {
-        // Операторы
+        // Operátory
         case TOKEN_PLUS:          return GS_PLUS;
         case TOKEN_MINUS:         return GS_MINUS;
         case TOKEN_MULTIPLY:      return GS_MUL;
@@ -143,34 +153,35 @@ GrammarSymbol token_to_grammar_symbol(Token token) {
         case TOKEN_OPEN_PAREN:    return GS_OPEN_PAREN;
         case TOKEN_CLOSE_PAREN:   return GS_CLOSE_PAREN;
 
-        // Операнды (i)
+        // Operandy (i)
         case TOKEN_IDENTIFIER:
         case TOKEN_GLOBAL_IDENTIFIER:
         case TOKEN_INT:
         case TOKEN_FLOAT:
-        // ... и т.д.
+        case TOKEN_EXP:
+        case TOKEN_HEX:
         case TOKEN_STRING:
             return GS_TERM; // 'i'
 
-        // Ключевые слова
+        // Klíčová slova
         case TOKEN_KEYWORD:
-            if (token.data == NULL) return GS_UNDEF; // Ошибка
+            if (token.data == NULL) return GS_UNDEF; // Chyba
             if (strcmp(token.data, "is") == 0) return GS_IS;
             if (strcmp(token.data, "null") == 0) return GS_TERM; // 'i'
             if (strcmp(token.data, "Num") == 0) return GS_TYPE; // 'k'
             if (strcmp(token.data, "String") == 0) return GS_TYPE; // 'k'
             if (strcmp(token.data, "Null") == 0) return GS_TYPE; // 'k'
-            return GS_UNDEF; // Ошибка
+            return GS_UNDEF; // Chyba
 
-        // Конец
+        // Konec výrazu ($)
         case TOKEN_EOL:
         case TOKEN_EOF:
         case TOKEN_OPEN_BRACE:
             return GS_DOLLAR;
 
-        // Ошибка
+        // Chyba
         default:
-            return GS_UNDEF; // Неопределенный/ошибочный символ
+            return GS_UNDEF; // Neurčený/chybný symbol
     }
 }
 
@@ -178,7 +189,7 @@ GrammarSymbol token_to_grammar_symbol(Token token) {
 char get_precedence_rule(TermIndex stack_top, TermIndex input) {
     if (stack_top == T_ERROR || input == T_ERROR || 
         stack_top >= PRECEDENCE_TABLE_SIZE || input >= PRECEDENCE_TABLE_SIZE) {
-        return 'E'; // Ошибка
+        return 'E'; // Chyba
     }
     return precedence_table[stack_top][input];
 }
