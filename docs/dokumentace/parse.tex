@@ -1,0 +1,205 @@
+\documentclass[12pt, a4paper]{article}
+
+% Подключение пакетов для кодировки и шрифтов
+\usepackage[utf8]{inputenc} % Кодировка исходного файла
+\usepackage[T2A]{fontenc}   % Кодировка шрифтов для кириллицы
+\usepackage[russian, czech, english]{babel} % Поддержка языков
+
+% Пакет для вставки изображений
+\usepackage{graphicx}
+\usepackage{rotating}
+\usepackage{longtable}
+% Пакет для настройки отступов
+\usepackage{geometry}
+\geometry{
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2cm,
+    right=2cm
+}
+
+\begin{document}
+
+
+
+\section{Syntaktická analýza}
+
+Syntaxický analyzátor (parser) je zodpovědný za kontrolu struktury programu a vytvoření jeho mezivýsledného reprezentace \textbf{ve formě abstraktního syntaktického stromu (AST)}. Implementace je založena na hybridním přístupu, který kombinuje dvě metody analýzy:
+
+\begin{itemize}
+    \item \textbf{Metoda rekurzivního sestupu (Recursive Descent):} Používá se pro zpracování hlavních konstrukcí jazyka (definice funkcí, cykly, podmíněné příkazy).
+    \item \textbf{Precedenční analýza (Precedence Analysis):} Používá se výhradně pro zpracování výrazů (matematických, logických a řetězcových).
+\end{itemize}
+
+\subsection{Struktura implementace}
+
+Zdrojový kód modulu je rozdělen do několika souborů podle logických úloh:
+
+\begin{description}
+    \item[\texttt{parser.c} (Hlavní modul):]
+    Implementuje metodu rekurzivního sestupu na základě LL gramatiky a poskytuje jedinou veřejnou funkci \texttt{parser\_run}, která spouští analýzu a vrací kořen AST programu.
+
+    \item[\texttt{expression.c} (Rozhraní pro výrazy):]
+    Slouží jako rozhraní, které propojuje hlavní parser s modulem precedenční analýzy a předává mu zpracování výrazů a tvorbu jejich AST.
+
+    \item[\texttt{precedence.c} (Tabulka priorit):]
+    Obsahuje implementaci tabulky priorit a definuje logiku přesunu/redukce pro korektní parsování matematických a logických výrazů.
+
+    \item[\texttt{stack\_precedence.c} (Zásobník analýzy):]
+    Implementuje specializovaný zásobník pro algoritmus shift-reduce, který uchovává operátory a uzly AST pro dynamickou konstrukci stromu výrazů.
+\end{description}
+
+\subsection{Návrh syntaktického analyzátoru}
+
+
+\begin{itemize}
+    \item \textbf{Volba použití Abstract Syntax Tree (AST):}
+    Abychom při generování kódu nemuseli složitě vracet zpět a doplňovat chybějící adresy, používáme AST. Tím se práce rozdělí do dvou kroků: nejprve vytvoříme strom a najdeme všechny funkce, a teprve potom generujeme kód. Tento postup dělá implementaci jednodušší a spolehlivější.
+
+    \item \textbf{Důvod pro hybridní přístup:}
+    Pro strukturální část jazyka (podmínky, cykly) jsme zvolili \textbf{rekurzivní sestup}, protože přirozeně kopíruje zanořenou strukturu kódu a je snadno laditelný.
+    Naproti tomu pro výrazy je rekurzivní sestup neefektivní kvůli nutnosti řešit priority operátorů (což vede k hlubokému zanoření volání). Proto jsme pro výrazy zvolili \textbf{precedenční analýzu} (bottom-up), která priority zpracovává tabulkově a efektivněji.
+
+\clearpage
+\end{itemize}
+
+\section{LL Gramatika}
+
+\begin{enumerate}
+    \item \verb|<Program> -> <prolog> <kostra> EOF|
+    \item \verb|<prolog> -> import "ifj25" for Ifj EOL|
+    \item \verb|<kostra> -> class Program { EOL <func_list> }|
+    \item \verb|<func_list> -> <function> <func_list>|
+    \item \verb|<func_list> -> epsilon|
+    \item \verb|<function> -> <func_name> <func_tail>|
+    \item \verb|<func_name> -> static id |
+    \item \verb|<block> -> { EOL <func_body> }|
+    \item \verb|<func_tail> -> ( <params> ) <block>|
+    \item \verb|<func_tail> -> = ( <params> ) <block>|
+    \item \verb|<func_tail> -> <block>|
+    \item \verb|<params> -> <id> <param_tail>|
+    \item \verb|<params> -> epsilon|
+    \item \verb|<param_tail> -> , id <param_tail>|
+    \item \verb|<param_tail> -> epsilon|
+    \item \verb|<func_body> -> <statement> <func_body>|
+    \item \verb|<func_body> -> epsilon|
+    \item \verb|<statement> -> return <expression> EOL|
+    \item \verb|<statement> -> if (<expression>) <block> else <block>|
+    \item \verb|<statement> -> var id EOL|
+    \item \verb|<statement> -> while (<expression>) <block>|
+    \item \verb|<statement> -> <block>|
+    \item \verb|<statement> -> global_id EOL|
+    \item \verb|<statement> -> id = <right_side>|
+    \item \verb|<statement> -> global_id = <right_side>|
+    \item \verb|<statement> -> epsilon|
+    \item \verb|<right_side> -> id (<list_terms>)|
+    \item \verb|<right_side> -> global_id (<list_terms>)|
+    \item \verb|<right_side> -> ifl . <builtin> (<list_terms>)|
+    \item \verb|<right_side> -> <expression>|
+    \item \verb|<list_terms> -> <term> <terms_tail>|
+    \item \verb|<list_terms> -> epsilon|
+    \item \verb|<terms_tail> -> , <term> <terms_tail>|
+    \item \verb|<terms_tail> -> epsilon|
+    \item \verb|<builtin> -> read_str|
+    \item \verb|<builtin> -> read_num|
+    \item \verb|<builtin> -> write|
+    \item \verb|<builtin> -> floor|
+    \item \verb|<builtin> -> str|
+    \item \verb|<builtin> -> length|
+    \item \verb|<builtin> -> substring|
+    \item \verb|<builtin> -> strcmp|
+    \item \verb|<builtin> -> ord|
+    \item \verb|<builtin> -> chr|
+    \item \verb|<term> -> id|
+    \item \verb|<term> -> literal_num|
+    \item \verb|<term> -> literal_string|
+    \item \verb|<term> -> null|
+
+    
+    
+    
+\end{enumerate}
+
+
+
+
+% Требует в преамбуле: \usepackage{rotating} и \usepackage{longtable}
+
+\begin{sidewaystable}[p]
+\centering
+\section{LL Rozborová tabulka}
+    \centering
+    \setlength{\tabcolsep}{1.5pt} % Минимальные отстуpy
+    \renewcommand{\arraystretch}{1.3} % Высота строк
+
+    \begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+        \hline
+        \textbf{Non-Term} & \textbf{imp} & \textbf{cls} & \textbf{statc} & \textbf{\}} & \textbf{\{} & \textbf{(} & \textbf{)} & \textbf{=} & \textbf{,} & \textbf{ret} & \textbf{if} & \textbf{else} & \textbf{var} & \textbf{while} & \textbf{id} & \textbf{gid} & \textbf{lit} & \textbf{null} & \textbf{ifl} & \textbf{blt} & \textbf{EOL} & \textbf{EOF} \\
+        \hline \hline
+        \verb|<Program>|    & 1 & & & & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<prolog>|     & 2 & & & & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<kostra>|     & & 3 & & & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<func_list>|  & & & 4 & 5 & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<function>|   & & & 6 & & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<func_name>|  & & & 7 & & & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<func_tail>|  & & & & & 11 & 9 & & 10 & & & & & & & & & & & & & & \\ \hline
+        \verb|<block>|      & & & & & 8 & & & & & & & & & & & & & & & & & \\ \hline
+        \verb|<params>|     & & & & & & & 13 & & & & & & & & 12 & & & & & & & \\ \hline
+        \verb|<param_tail>| & & & & & & & 15 & & 14 & & & & & & & & & & & & & \\ \hline
+        \verb|<func_body>|  & & & & 17 & 16 & & & & & 16 & 16 & & 16 & 16 & 16 & 16 & & & & & & \\ \hline
+        \verb|<statement>|  & & & & & 22 & & & & & 18 & 19 & & 20 & 21 & 24 & \textbf{23,25} & & & & & & \\ \hline
+        \verb|<right_side>| & & & & & & & & & & & & & & & \textbf{27,30} & 28 & 30 & 30 & 29 & & & \\ \hline
+        \verb|<list_terms>| & & & & & & & 32 & & & & & & & & 31 & & 31 & 31 & & & & \\ \hline
+        \verb|<terms_tail>| & & & & & & & 34 & & 33 & & & & & & & & & & & & & \\ \hline
+        \verb|<term>|       & & & & & & & & & & & & & & & 45 & & 46,47 & 48 & & & & \\ \hline
+        \verb|<builtin>|    & & & & & & & & & & & & & & & & & & & & 35-44 & & \\ \hline
+    \end{tabular}
+    
+    \vspace{0.5cm}
+    \textbf{Legenda:} \textbf{imp}: import, \textbf{cls}: class, \textbf{statc}: static, \textbf{ret}: return, \textbf{gid}: global\_id, \textbf{lit}: literal\_num/string, \textbf{blt}: názvy vestavěných funkcí (read\_str atd.).
+\end{sidewaystable}
+
+
+
+
+% Для работы требуется пакет \usepackage{rotating} в преамбуле документа
+
+\begin{sidewaystable}[p]
+    \centering
+\section{Precedenční tabulka (Precedence Table)}
+    \centering
+    \setlength{\tabcolsep}{3pt} % Уменьшаем отступы между колонками
+    \renewcommand{\arraystretch}{1.4} % Увеличиваем высоту строк для читаемости
+
+    \begin{tabular}{|c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|}
+        \hline
+        & \textbf{+} & \textbf{-} & \textbf{*} & \textbf{/} & \textbf{<} & \textbf{>} & \textbf{<=} & \textbf{>=} & \textbf{is} & \textbf{==} & \textbf{!=} & \textbf{(} & \textbf{)} & \textbf{i} & \textbf{k} & \textbf{\$} \\
+        \hline \hline
+        \textbf{+}   & $>$ & $>$ & $<$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{-}   & $>$ & $>$ & $<$ & $<$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{*}   & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{/}   & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{<}   & $<$ & $<$ & $<$ & $<$ & & & & & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{>}   & $<$ & $<$ & $<$ & $<$ & & & & & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{<=}  & $<$ & $<$ & $<$ & $<$ & & & & & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{>=}  & $<$ & $<$ & $<$ & $<$ & & & & & $>$ & $>$ & $>$ & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{is}  & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $>$ & $>$ & & $>$ & & $<$ & $>$ \\ \hline
+        \textbf{==}  & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{!=}  & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & & $<$ & $>$ & $<$ & & $>$ \\ \hline
+        \textbf{(}   & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $=$ & $<$ & & \\ \hline
+        \textbf{)}   & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & & $>$ & & & $>$ \\ \hline
+        \textbf{i}   & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & & $>$ & & & $>$ \\ \hline
+        \textbf{k}   & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & $>$ & & $>$ & & & $>$ \\ \hline
+        \textbf{\$}  & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & $<$ & & $<$ & & $=$ \\ \hline
+    \end{tabular}
+    
+    \vspace{0.5cm} 
+    
+    \textbf{Legenda:} \textbf{i}: identifikátor/literál (Num/String), \textbf{k}: klíčová slova typů/null (index 14), \textbf{\$}: konec vstupu/zásobníku. Prázdné buňky značí chybu (E).
+\end{sidewaystable}
+
+
+
+% Здесь начинается основной текст документа
+
+\end{document}
