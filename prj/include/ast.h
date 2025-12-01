@@ -1,4 +1,14 @@
-
+/**
+ * @file ast.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Definice struktury a funkcí pro abstraktní syntaktický strom (AST).
+ *
+ * @author
+ *     - Mykhailo Tarnavskyi (272479)
+ */
 
 #ifndef AST_H
 #define AST_H

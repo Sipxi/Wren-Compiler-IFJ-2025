@@ -1,10 +1,13 @@
 /**
  * @file semantics.c
- * 
- * 
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
  *
- * Autor:
- *     - Mykhailo Tarnavskyi (xtarnam00)
+ * @brief Implementace sémantické analýzy a typové kontroly.
+ *
+ * @author
+ *     - Mykhailo Tarnavskyi (272479)
  */
 
 #include "symtable.h"

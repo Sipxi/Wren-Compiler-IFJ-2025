@@ -1,3 +1,14 @@
+/**
+ * @file semantics.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Definice funkcí a struktur pro sémantickou analýzu a typovou kontrolu
+ *
+ * @author
+ *     - Mykhailo Tarnavskyi (272479)
+ */
 
 #ifndef SEMANTICS_H
 #define SEMANTICS_H

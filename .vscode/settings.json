@@ -22,6 +22,8 @@
         "string.h": "c",
         "error_codes.h": "c",
         "parser.h": "c",
-        "random": "c"
+        "random": "c",
+        "math.h": "c",
+        "ast.h": "c"
     }
 }
