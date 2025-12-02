@@ -1,6 +1,11 @@
 // Correct: Getter and setter usage
 import "ifj25" for Ifj
 class Program {
+    
+    static main() {
+        value = 42
+        __a = fun(value, value)
+    }
     static value {
         if (__stored) {
             return __stored
@@ -12,16 +17,9 @@ class Program {
     static value=(v) {
         __stored = v
     }
-    
-    static main() {
-        value = 42
-        __a = Ifj.write("Value is: ")
-        __a = Ifj.write(value)
-        __a = Ifj.write("\n")
-        
-        value = 100
-        __a = Ifj.write("New value is: ")
-        __a = Ifj.write(value)
-        __a = Ifj.write("\n")
+
+    static fun(a, b) {
+        a = Ifj.write(a)
+        b = Ifj.write(b)
     }
 }
