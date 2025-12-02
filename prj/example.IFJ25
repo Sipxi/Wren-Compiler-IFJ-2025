@@ -1,25 +1,8 @@
-// Correct: Getter and setter usage
 import "ifj25" for Ifj
 class Program {
-    
     static main() {
-        value = 42
-        __a = fun(value, value)
-    }
-    static value {
-        if (__stored) {
-            return __stored
-        } else {
-            return 0
-        }
-    }
-    
-    static value=(v) {
-        __stored = v
-    }
-
-    static fun(a, b) {
+        var a
+        a = """    d"""
         a = Ifj.write(a)
-        b = Ifj.write(b)
     }
 }
