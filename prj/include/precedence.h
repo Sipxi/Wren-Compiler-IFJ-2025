@@ -1,17 +1,26 @@
+/**
+ * @file precedence.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavičkový soubor pro precedence.c
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
 
 #ifndef PRECEDENCE_H
 #define PRECEDENCE_H
 
-// Подключаем твой токенайзер, чтобы иметь определение Token
-// (Если он называется по-другому, измени имя)
 #include "lexer.h" 
 
 /**
- * @brief Индексы для прецедентной таблицы (Терминалы)
- * Используются как для стека (S), так и для входа (I).
+ * @brief Indexy pro terminály v tabulce precedencí.
+ * Používají se jak pro zásobník (S), tak pro vstup (I).
  */
 typedef enum {
-    // Операторы по порядку из PDF
+    // Operátory
     T_PLUS,       // 0: +
     T_MINUS,      // 1: -
     T_MUL,        // 2: *
@@ -26,24 +35,24 @@ typedef enum {
     T_OPEN_PAREN, // 11: (
     T_CLOSE_PAREN,// 12: )
     
-    // Операнды и типы
+    // Operandy a typy
     T_TERM,       // 13: i (id, int, string, null, ...)
     T_TYPE,       // 14: k (Num, String, Null)
     
-    // Специальные символы
-    T_DOLLAR,     // 15: $ (конец выражения)
+    // Speciální symboly
+    T_DOLLAR,     // 15: $ (konec výrazu)
     
-    T_ERROR       // 16: Ошибочный токен
-} TermIndex; // Индекс терминала
+    T_ERROR       // 16: Chybový token
+} TermIndex; // Index terminálu
 
 /**
- * @brief Символы для грамматических правил (Нетерминалы + Терминалы)
+ * @brief Symboly pro gramatická pravidla (Neterminály + Terminály)
  * GS = Grammar Symbol
  */
 typedef enum {
-    GS_UNDEF = 0, // Неопределенный/пустой символ
+    GS_UNDEF = 0, // Nedefinovaný/prázdný symbol
 
-    // --- Терминалы (должны соответствовать TermIndex) ---
+    // --- Terminály (musí odpovídat TermIndex) ---
     GS_PLUS,        // 1: +
     GS_MINUS,       // 2: -
     GS_MUL,         // 3: *
@@ -57,13 +66,13 @@ typedef enum {
     GS_NEQ,         // 11: !=
     GS_OPEN_PAREN,  // 12: (
     GS_CLOSE_PAREN, // 13: )
-    GS_TERM,        // 14: i (операнд)
-    GS_TYPE,        // 15: k (тип)
+    GS_TERM,        // 14: i (operand)
+    GS_TYPE,        // 15: k (typ)
     GS_DOLLAR,      // 16: $
     
-    // --- Нетерминалы ---
+    // --- Neterminály ---
     GS_E,           // 17: E (Expression)
-    GS_HANDLE_START // 18: < (Специальный маркер начала рукоятки)
+    GS_HANDLE_START // 18: < (Speciální marker začátku rukojeti)
 
 } GrammarSymbol;
 
@@ -75,41 +84,41 @@ typedef enum {
     GR_RULE_PAREN_E = 11,     // E -> ( E )
 } GrammarRuleIndex;
 
-// --- Константы ---
-#define PRECEDENCE_TABLE_SIZE 16 // 16x16 (от T_PLUS до T_DOLLAR)
-#define NUM_GRAMMAR_RULES 13     // У нас 13 правил (0-12)
-#define MAX_RULE_LENGTH 4        // Макс. длина правила: 3 (E -> E op E) + 1 (результат)
+// --- Konstanta ---
+#define PRECEDENCE_TABLE_SIZE 16 // 16x16 (od T_PLUS do T_DOLLAR)
+#define NUM_GRAMMAR_RULES 13     // Máme 13 pravidel (0-12)
+#define MAX_RULE_LENGTH 4        // Max. délka pravidla: 3 (E -> E op E) + 1 (výsledek)
 
 /**
- * @brief Глобальная прецедентная таблица
+ * @brief Globální precedence tabulka
  */
 extern const char precedence_table[PRECEDENCE_TABLE_SIZE][PRECEDENCE_TABLE_SIZE];
 
 /**
- * @brief Глобальные правила грамматики
+ * @brief Globální pravidla gramatiky
  */
 extern const int grammar_rules[NUM_GRAMMAR_RULES][MAX_RULE_LENGTH];
 
 /**
- * @brief Конвертирует токен из сканера в индекс для таблицы.
- * @param token Токен от лексического анализатора.
- * @return TermIndex Индекс для precedence_table.
+ * @brief Konvertuje token ze scanneru na index pro tabulku.
+ * @param token Token ze scanneru.
+ * @return TermIndex Index pro precedence_table.
  */
 TermIndex token_to_index(Token token);
 
 /**
- * @brief Получает правило ('>', '<', '=', 'E') из таблицы.
- * @param stack_top Индекс символа на вершине стека.
- * @param input Индекс символа на входе.
- * @return char Правило.
+ * @brief Získá pravidlo ('>', '<', '=', 'E') z tabulky.
+ * @param stack_top Index symbolu na vrcholu zásobníku.
+ * @param input Index symbolu na vstupu.
+ * @return char Pravidlo.
  */
 char get_precedence_rule(TermIndex stack_top, TermIndex input);
 
 /**
- * @brief Конвертирует токен из сканера в символ грамматики.
- * Используется при *сдвиге* (shift).
- * @param token Токен от лексического анализатора.
- * @return GrammarSymbol Символ для стека парсера.
+ * @brief Konvertuje token ze scanneru na symbol gramatiky.
+ * Používá se při *posunu* (shift).
+ * @param token Token ze scanneru.
+ * @return GrammarSymbol Symbol pro zásobník parseru.
  */
 GrammarSymbol token_to_grammar_symbol(Token token);
 

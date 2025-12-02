@@ -1,26 +1,38 @@
-#include <stdlib.h> // для malloc, realloc, free
-#include <stdio.h>  // для fprintf, stderr (на случай ошибок)
-#include <assert.h> // для отладочных проверок
+/**
+ * @file stack_precedence.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Implementace pro stack_precedence.h
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
 
 #include "stack_precedence.h"
-#include "utils.h" // для strdup_c99
+#include "utils.h" // pro strdup_c99
 
-// Начальная емкость стека по умолчанию
+#include <stdlib.h> // pro malloc, realloc, free
+#include <stdio.h>  // pro fprintf, stderr (pro případ chyb)
+#include <assert.h> // pro ladicí kontroly
+
+// Vychozí kapacita zásobníku
 #define PSTACK_INITIAL_CAPACITY 8
 
 /**
- * @brief Вспомогательная функция для расширения стека.
+ * @brief Pomocná funkce pro rozšíření zásobníku.
  */
 static bool PSTACK_resize(PStack *s) {
-    // Если емкость 0, ставим начальную, иначе удваиваем
+    // Pokud je kapacita 0, nastavíme výchozí, jinak zdvojnásobíme
     int new_capacity = (s->capacity == 0) ? PSTACK_INITIAL_CAPACITY : s->capacity * 2;
     
     PStackItem *new_items = realloc(s->items, sizeof(PStackItem) * new_capacity);
     
     if (new_items == NULL) {
-        // Ошибка: не удалось выделить память
-        fprintf(stderr, "Ошибка: не удалось расширить стек парсера.\n");
-        return false; 
+        // Chyba: nepodařilo se alokovat paměť
+        fprintf(stderr, "Chyba: nepodařilo se rozšířit zásobník parseru.\n");
+        return false;
     }
     
     s->items = new_items;
@@ -33,19 +45,19 @@ void PSTACK_init(PStack *s) {
     s->items = malloc(sizeof(PStackItem) * PSTACK_INITIAL_CAPACITY);
     
     if (s->items == NULL) {
-        // Обработка ошибки, если malloc не сработал
+        // Chyba alokace
         s->capacity = 0;
         s->top = -1;
-        fprintf(stderr, "Ошибка: не удалось инициализировать стек парсера.\n");
+        fprintf(stderr, "Chyba: nepodařilo se inicializovat zásobník parseru.\n");
     } else {
         s->capacity = PSTACK_INITIAL_CAPACITY;
-        s->top = -1; // -1 означает, что стек пуст
+        s->top = -1; // -1 znamená, že zásobník je prázdný
     }
 }
 
 void PSTACK_free(PStack *s) {
     if (s->items != NULL) {
-        // Освобождаем данные всех оставшихся токенов в стеке
+        // Uvolňujeme data všech zbývajících tokenů ve zásobníku
         for (int i = 0; i <= s->top; i++) {
             if (s->items[i].token.data != NULL) {
                 free(s->items[i].token.data);
@@ -63,23 +75,23 @@ bool PSTACK_is_empty(PStack *s) {
 }
 
 bool PSTACK_push(PStack *s, PStackItem item) {
-    // Проверяем, есть ли место
+    // Zkontrolujeme, zda je místo na zásobníku
     if (s->top + 1 >= s->capacity) {
-        // Если места нет, пытаемся расширить стек
+        // Pokud není místo, pokusíme se zásobník rozšířit
         if (!PSTACK_resize(s)) {
-            return false; // Ошибка расширения
+            return false; // Chyba rozšíření
         }
     }
     
-    // Место есть, копируем токен с его данными
+    // Místo je, kopírujeme token s jeho daty
     s->top++;
     s->items[s->top] = item;
     
-    // Копируем данные токена, если они есть
+    // Kopírujeme data tokenu, pokud jsou přítomna
     if (item.token.data != NULL) {
         s->items[s->top].token.data = strdup_c99(item.token.data);
         if (s->items[s->top].token.data == NULL) {
-            // Ошибка выделения памяти, откатываем
+            // Chyba alokace paměti, vracíme zpět
             s->top--;
             return false;
         }
@@ -89,114 +101,51 @@ bool PSTACK_push(PStack *s, PStackItem item) {
 }
 
 PStackItem PSTACK_pop(PStack *s) {
-    // В реальном коде стоит проверять на пустоту перед вызовом pop
-    // assert(!PSTACK_is_empty(s));
+    if (PSTACK_is_empty(s)) {
+        // Chyba: pokus o pop z prázdného zásobníku
+        fprintf(stderr, "Chyba: pokus o odebrání prvku z prázdného zásobníku parseru.\n");
+        exit(99); // Nebo jiný vhodný kód chyby
+    }
     PStackItem item = s->items[s->top--];
     
-    // Освобождаем скопированные данные токена
+    // Uvolňujeme zkopírovaná data tokenu
     if (item.token.data != NULL) {
         free(item.token.data);
-        item.token.data = NULL; // Обнуляем указатель для безопасности
+        item.token.data = NULL; // Nullujeme ukazatel pro bezpečnost
     }
     
     return item;
 }
 
 PStackItem PSTACK_top(PStack *s) {
-    // assert(!PSTACK_is_empty(s));
+    if (PSTACK_is_empty(s)) {
+        // Chyba: pokus o peek z prázdného zásobníku
+        fprintf(stderr, "Chyba: pokus o přístup k prvku z prázdného zásobníku parseru.\n");
+        exit(99); // Nebo jiný vhodný kód chyby
+    }
     return s->items[s->top];
 }
 
-void PSTACK_empty(PStack *s) {
-    // Освобождаем данные всех токенов в стеке
-    for (int i = 0; i <= s->top; i++) {
-        if (s->items[i].token.data != NULL) {
-            free(s->items[i].token.data);
-        }
-    }
-    // Просто сбрасываем верхушку
-    s->top = -1; 
-}
 
 
-// --- Специализированные функции ---
+// --- Specializované funkce ---
 
 PStackItem *PSTACK_get_top_terminal(PStack *s) {
     if (PSTACK_is_empty(s)) {
         return NULL;
     }
     
-    // Идем сверху вниз
+    // Procházíme se od vrcholu dolů
     for (int i = s->top; i >= 0; i--) {
-        //
-        // **ВАЖНОЕ ПРЕДПОЛОЖЕНИЕ:**
-        // Я предполагаю, что в твоем "precedence.h" все *терминалы*
-        // (GS_PLUS, GS_MINUS, GS_TERM, GS_DOLLAR и т.д.) 
-        // имеют значения в enum, которые МЕНЬШЕ, чем у *нетерминалов* (GS_E)
-        // и *специальных символов* (GS_HANDLE_START).
-        //
-        // Например, если GS_DOLLAR - последний терминал:
-        // if (s->items[i].symbol <= GS_DOLLAR) {
-        //
-        // Если у тебя только один нетерминал (GS_E) и маркер (GS_HANDLE_START),
-        // можно сделать и так:
-        
+        // Získáme symbol
         GrammarSymbol sym = s->items[i].symbol;
         if (sym != GS_E && sym != GS_HANDLE_START) {
-            // Нашли первый символ, который не 'E' и не '<' 
-            // - это и есть наш терминал.
+            // Našli jsme první symbol, který není neterminálem ani značkou rukojeti
+            // - to je náš terminál.
             return &(s->items[i]);
         }
     }
     
-    // Стек пуст или содержит только нетерминалы (что маловероятно)
+    // Zásobník je prázdný nebo obsahuje pouze neterminály
     return NULL;
-}
-
-
-
-bool PSTACK_insert_handle_start(PStack *s) {
-    int terminal_index = -1;
-    
-    // 1. Находим индекс самого верхнего терминала
-    for (int i = s->top; i >= 0; i--) {
-        GrammarSymbol sym = s->items[i].symbol;
-        if (sym != GS_E && sym != GS_HANDLE_START) {
-            terminal_index = i;
-            break;
-        }
-    }
-    
-    if (terminal_index == -1) {
-        // Этого не должно случиться, если парсер работает
-        // (на стеке всегда должен быть хотя бы '$')
-        fprintf(stderr, "Ошибка: не найден терминал для вставки рукоятки.\n");
-        return false;
-    }
-    
-    // 2. Проверяем, есть ли место для нового элемента '<'
-    if (s->top + 1 >= s->capacity) {
-        if (!PSTACK_resize(s)) {
-            return false; // Ошибка расширения
-        }
-    }
-    
-    // 3. Сдвигаем все, что *выше* терминала, на одну позицию вверх
-    // (это могут быть только нетерминалы 'E')
-    for (int i = s->top; i > terminal_index; i--) {
-        s->items[i + 1] = s->items[i];
-    }
-    
-    // 4. Создаем и вставляем маркер начала рукоятки '<'
-    PStackItem handle_item;
-    handle_item.symbol = GS_HANDLE_START;
-    handle_item.ast_node = NULL; 
-    // .token можно не инициализировать, он не будет использоваться
-    
-    s->items[terminal_index + 1] = handle_item;
-    
-    // 5. Обновляем верхушку стека
-    s->top++;
-    
-    return true;
 }

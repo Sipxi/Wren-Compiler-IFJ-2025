@@ -1,115 +1,107 @@
+/**
+ * @file stack_precedence.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavičkový soubor pro stack_precedence.c
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
+
 #ifndef PARSER_STACK_H
 #define PARSER_STACK_H
 
+#include "token.h"        
+#include "precedence.h"   
+#include "ast.h"    
+
 #include <stdbool.h>
-#include "token.h"        // Здесь должен быть определен твой тип Token
-#include "precedence.h"   // Здесь должен быть определен твой enum GrammarSymbol
-#include "ast.h"    // Здесь должен быть определен твой тип AstNode (если нужен)
 
 /**
- * @brief Элемент, хранимый на стеке прецедентного анализатора.
+ * @brief Element uložený na zásobníku precedenčního analyzátoru.
  *
- * Содержит не только грамматический символ (для логики парсера),
- * но и оригинальный токен. Это нужно, чтобы при свёртке E -> i
- * мы знали, *какой* идентификатор или литерал это был.
+ * Obsahuje nejen gramatický symbol (pro logiku parseru),
+ * ale i originální token. To je potřeba, aby při redukci E -> i
+ * jsme věděli, *jaký* identifikátor nebo literál to byl.
  */
 typedef struct {
-    GrammarSymbol symbol; // Символ грамматики (GS_E, GS_TERM, GS_PLUS, и т.д.)
-    Token token;          // Оригинальный токен от лексера
-    AstNode *ast_node;   // Указатель на узел AST, связанный с этим элементом
-    
-    // Сюда можно будет добавить поле для семантической информации,
-    // например, тип данных (когда E -> i, можно сюда записать тип 'i')
-    // DataType data_type; 
+    GrammarSymbol symbol; // Gramatický symbol (GS_E, GS_TERM, GS_PLUS, atd.)
+    Token token;          // Originální token od lexeru
+    AstNode *ast_node;   // Ukazatel na uzel AST spojený s tímto prvkem
     
 } PStackItem;
 
 
 /**
- * @brief Структура стека.
- * Реализована как динамический (расширяемый) массив.
+ * @brief Struktura zásobníku.
+ * Implementována jako dynamické (rozšiřitelné) pole.
  */
 typedef struct {
-    PStackItem *items; // Указатель на массив элементов
-    int top;                // Индекс верхушки (-1 = пустой)
-    int capacity;           // Текущая выделенная емкость
+    PStackItem *items; // Ukazatel na pole prvků
+    int top;                // Index vrcholu (-1 = prázdný)
+    int capacity;           // Aktuální alokovaná kapacita
 } PStack;
 
-// --- Интерфейс стека ---
+// --- Rozhraní zásobníku ---
 
 /**
- * @brief Создает и инициализирует новый пустой стек.
- * @return Указатель на новую структуру стека или NULL при ошибке аллокации.
- * @param s Указатель на стек, который нужно инициализировать.
+ * @brief Vytvoří a inicializuje nový prázdný zásobník.
+ * @return Ukazatel na novou strukturu zásobníku nebo NULL při chybě alokace.
+ * @param s Ukazatel na zásobník, který se má inicializovat.
  */
 void PSTACK_init(PStack *s);
 
 /**
- * @brief Освобождает всю память, выделенную для стека.
- * @param s Указатель на стек, который нужно уничтожить.
+ * @brief Uvolní veškerou paměť alokovanou pro zásobník.
+ * @param s Ukazatel na zásobník, který se má zničit.
  */
 void PSTACK_free(PStack *s);
 
 /**
- * @brief Проверяет, пуст ли стек.
- * @param s Указатель на стек.
- * @return true, если стек пуст, иначе false.
+ * @brief Zkontroluje, zda je zásobník prázdný.
+ * @param s Ukazatel na zásobník.
+ * @return true, pokud je zásobník prázdný, jinak false.
  */
 bool PSTACK_is_empty(PStack *s);
 
 /**
- * @brief Заталкивает (push) элемент на верхушку стека.
- * При необходимости автоматически расширяет емкость стека.
- * @param s Указатель на стек.
- * @param item Элемент, который нужно положить на стек.
- * @return true в случае успеха, false при ошибке аллокации.
+ * @brief Vkládá (push) prvek na vrchol zásobníku.
+ * Při potřeby automaticky rozšiřuje kapacitu zásobníku.
+ * @param s Ukazatel na zásobník.
+ * @param item Prvek, který se má vložit na zásobník.
+ * @return true v případě úspěchu, false při chybě alokace.
  */
 bool PSTACK_push(PStack *s, PStackItem item);
 
 /**
- * @brief Снимает (pop) элемент с верхушки стека.
- * Небезопасно вызывать на пустом стеке! Всегда проверяй PSTACK_is_empty().
- * @param s Указатель на стек.
- * @return Снятый с верхушки элемент.
+ * @brief Odebírá (pop) prvek z vrcholu zásobníku.
+ * @param s Ukazatel na zásobník.
+ * @return Odebraný prvek z vrcholu.
  */
 PStackItem PSTACK_pop(PStack *s);
 /**
- * @brief "Подсматривает" (peek) элемент на верхушке стека, не снимая его.
- * Небезопасно вызывать на пустом стеке!
- * @param s Указатель на стек.
- * @return Элемент на верхушке.
+ * @brief "Podívá se dopředu" (peek) prvek na vrcholu zásobníku, aniž by ho odebral.
+ * @param s Ukazatel na zásobník.
+ * @return Prvek na vrcholu.
  */
 PStackItem PSTACK_top(PStack *s);
 
-/**
- * @brief Очищает стек, делая его пустым (но не освобождает память).
- * @param s Указатель на стек.
- */
-void PSTACK_empty(PStack *s);
 
-
-// --- Специализированные функции для парсера ---
+// --- Specializované funkce pro parser ---
 
 /**
- * @brief Находит самый верхний *терминал* на стеке.
+ * @brief Najde nejvyšší *terminál* na zásobníku.
  *
- * Это ключевая функция для парсера. Она "просматривает" вниз
- * все нетерминалы (GS_E), пока не найдет первый терминал (GS_PLUS, GS_TERM, GS_DOLLAR и т.д.)
+ * To je klíčová funkce pro parser. "Prohlíží" se dolů
+ * všechny neterminály (GS_E), dokud nenajde první terminál (GS_PLUS, GS_TERM, GS_DOLLAR atd.)
  *
- * @param s Указатель на стек.
- * @return Указатель на самый верхний *терминальный* элемент на стеке.
- * Возвращает NULL, если стек пуст или что-то пошло не так.
+ * @param s Ukazatel na zásobník.
+ * @return Ukazatel na nejvyšší *terminální* prvek na zásobníku.
+ * Vrací NULL, pokud je zásobník prázdný nebo se něco pokazilo.
  */
 PStackItem* PSTACK_get_top_terminal(PStack *s);
-
-/**
- * @brief Вставляет специальный маркер "начала рукоятки" (handle) <
- * между самым верхним терминалом и остальными символами.
- *
- * @param s Указатель на стек.
- * @return true в случае успеха, false при ошибке.
- */
-bool PSTACK_insert_handle_start(PStack *s);
 
 
 #endif // PARSER_STACK_H
