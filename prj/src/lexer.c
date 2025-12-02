@@ -1,15 +1,17 @@
 /**
  * @file lexer.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
  *
- * @brief Implementace lexikálního analyzátoru.
+ * @brief Hlavní zdrojový soubor pro práci s lexikální analýzou.
  *
- * Autor:
+ * @author
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)
+ *     - Mykhailo Tarnavskyi (272479)
  */
-
- //! Допишите ваши имена и номера
 #include "lexer.h"
 #include "error_codes.h"
 #include "utils.h"
@@ -82,8 +84,7 @@ typedef enum {
 
     // Komentáře
     STATE_COMMENT,              // Komentář na jeden řádek
-    STATE_START_BLOCK_COMMENT,  // Začátek blokového komentáře  * Přechodový stav
-    STATE_BODY_BLOCK_COMMENT,   // Tělo blokového komentáře     * Přechodový stav
+    STATE_BLOCK_COMMENT,        // Tělo blokového komentáře     * Přechodový stav
     STATE_END_BLOCK_COMMENT,    // Konec blokového komentáře 
 
     // Speciální stavy
@@ -893,10 +894,12 @@ void scan_token(Lexer *lexer, FILE *file) {
                 }
                 // Je-li další znak *, je to začátek blokového komentáře
                 else if (peek_char(file) == '*') {
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
+                    count_block_comment = 1;
+                    change_state(file, lexer, &state, STATE_BLOCK_COMMENT,
                         current_char);
-                    break;
                     lexer_consume_char(lexer, file);
+                    lexer_consume_char(lexer, file);
+                    break;
                 }
                 // Je to prostě operátor dělení
                 set_single_token(lexer, TOKEN_DIVISION, current_char);
@@ -1338,24 +1341,14 @@ void scan_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_EOF, current_char);
                 }
                 break;
-            case STATE_START_BLOCK_COMMENT:
-                // protože začátek komentáře jsou vždy 2 znaky,
-                // musíme jeden přeskočit
-                current_char = lexer_consume_char(lexer, file);
-                // zvyšujeme čítač vnořených bloků
-                count_block_comment++;  
-                change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
-                    current_char);
-                break;
 
-            case STATE_BODY_BLOCK_COMMENT:
+            case STATE_BLOCK_COMMENT:
                 if (current_char ==
                     '\n')  // sledujeme nové řádky uvnitř komentáře
                     lexer->line++;
                 // Kontrolujeme, zda je další znak začátkem komentáře
                 else if (is_comment_start(current_char, file) == 1) {
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
-                        current_char);
+                    count_block_comment++;
                     lexer_consume_char(lexer, file);
                 }
                 else if (is_end_block_comment(current_char, file)) {
@@ -1386,7 +1379,7 @@ void scan_token(Lexer *lexer, FILE *file) {
                         current_char);
                 // pokud nejsou všechny bloky uzavřeny, zůstáváme v těle komentáře
                 else
-                    change_state(file, lexer, &state, STATE_BODY_BLOCK_COMMENT,
+                    change_state(file, lexer, &state, STATE_BLOCK_COMMENT,
                         current_char);
                 break;
 
@@ -1408,8 +1401,10 @@ void scan_token(Lexer *lexer, FILE *file) {
                     change_state(file, lexer, &state, STATE_EOF, current_char);
                 }
                 else if (current_char == '/' && peek_char(file) == '*') {
-                    change_state(file, lexer, &state, STATE_START_BLOCK_COMMENT,
+                    change_state(file, lexer, &state, STATE_BLOCK_COMMENT,
                         current_char);
+                    count_block_comment = 1;
+                    lexer_consume_char(lexer, file);
                     lexer_consume_char(lexer, file);
                 }
                 // pokud další znak není bílý znak,

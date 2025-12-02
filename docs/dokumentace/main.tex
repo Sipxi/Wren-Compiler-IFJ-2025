@@ -4,12 +4,15 @@
 \usepackage[utf8]{inputenc} % Кодировка исходного файла
 \usepackage[T2A]{fontenc}   % Кодировка шрифтов для кириллицы
 \usepackage[russian, czech, english]{babel} % Поддержка языков
-
 % Пакет для вставки изображений
+\usepackage{multicol}
 \usepackage{graphicx}
-
+% Пакет для создания таблиц
+\usepackage{rotating}
+\usepackage{longtable}
 % Пакет для настройки отступов
 \usepackage{geometry}
+\usepackage{float}
 \geometry{
     top=2.5cm,
     bottom=2.5cm,
@@ -17,44 +20,57 @@
     right=2cm
 }
 
+
 \begin{document}
 
 \begin{titlepage}
     % --- Логотип слева сверху ---
     % Убедись, что файл logo.png находится в папке с .tex файлом
     % width=4cm задает ширину логотипа
-    \begin{flushleft}
         % Если нет реального логотипа, можно использовать \rule{4cm}{2cm} как заглушку
-        \includegraphics[width=7.5cm]{images/VUT-FIT-logo-cs.png} 
-    \end{flushleft}
-
-    \vspace{0cm} % Отступ после логотипа
-
-    % --- Центральная часть ---
     \begin{center}
-
+    
+        \Huge \textbf{Vysoké učení technické v Brně} \\ % Например: Vysoké učení technické v Brně
+        \Huge Fakulta informačních technologií \\            % Например: Fakulta informačních technologií
+        \vspace{2cm}
+        \includegraphics[width=15cm]{image/VUT-FIT-logo-cs.png}\\
+        \vspace{1cm}
         % --- Название проекта ---
         \Huge \textbf{Projektová dokumentace} \\
         \vspace{0.5cm}
         \LARGE Implementace překladače imperativního jazyka IFJ25 \\
         \vspace{0.5cm}
         \large \textbf{Tým x253038, varianta TRP-izp}
+        
     \end{center}
 
-    % --- Информация о команде (слева)
-    \begin{minipage}{0.6\textwidth}
-        \begin{flushleft}
-            \large
-            \textbf{Členové týmu:} \\
-            Serhij Čepil (x253038) 25 \% ← vedoucí\\
-            Dmytro Kravchenko (xkravcd00) 25 \%  \\
-            Veronika Turbaievska (xturbav00) 25 \%  \\
-            Mykhailo Tarnavskyi (xtarnam00) 25 \%  \\
-        \end{flushleft}
-    \end{minipage}
+    \vspace{2cm} % Отступ после логотипа
+
+    % --- Центральная часть: Университет и Факультет ---
+    \begin{center}
+    \end{center}
+
+    \vfill % Заполняет вертикальное пространство, прижимая блок ниже к низу страницы
+
+    \begin{center}
+        \begin{tabular}{@{}p{7cm} p{4cm} l} % Три колонки: 6см, 4см и по содержимому
+            SERHIJ ČEPIL            & 253038        & 25 \% \\
+            DMYTRO KRAVCHENKO       & XKRAVCD00     & 25 \% \\
+            VERONIKA TURBAIEVSKA    & XTURBAV00     & 25 \% \\
+            MYKHAILO TARNAVSKYI     & XTARNAM00     & 25 \% \\
+        \end{tabular}
+    \end{center}
 
 \end{titlepage}
-
 % Здесь начинается основной текст документа
-
+    \input{rozdeleni}
+	\input{scaner}
+	\input{parse}
+	\input{semantics} 
+    \input{symtable}
+	\input{3ac} 
+    \input{optimize}
+	\input{gencode} 
+    \input{tabulky_parser}
+    \input{tables}
 \end{document}

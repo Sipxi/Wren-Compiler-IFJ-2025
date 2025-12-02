@@ -1,0 +1,40 @@
+\section{Parser (syntaktický analyzátor)}
+
+Syntaxický analyzátor (parser) je zodpovědný za kontrolu struktury programu a vytvoření jeho mezivýsledného reprezentace \textbf{ve formě abstraktního syntaktického stromu (AST)}. Implementace je založena na hybridním přístupu, který kombinuje dvě metody analýzy:
+
+\begin{itemize}
+    \item \textbf{Metoda rekurzivního sestupu (Recursive Descent):} Používá se pro zpracování hlavních konstrukcí jazyka (definice funkcí, cykly, podmíněné příkazy).
+    \item \textbf{Precedenční analýza (Precedence Analysis):} Používá se výhradně pro zpracování výrazů (matematických, logických a řetězcových).
+\end{itemize}
+
+\subsection{Struktura implementace}
+
+Zdrojový kód modulu je rozdělen do několika souborů podle logických úloh:
+
+\begin{description}
+    \item[\texttt{parser.c} (Hlavní modul):]
+    Implementuje metodu rekurzivního sestupu na základě LL gramatiky a poskytuje jedinou veřejnou funkci \texttt{parser\_run}, která spouští analýzu a vrací kořen AST programu.
+
+    \item[\texttt{expression.c} (Rozhraní pro výrazy):]
+    Slouží jako rozhraní, které propojuje hlavní parser s modulem precedenční analýzy a předává mu zpracování výrazů a tvorbu jejich AST.
+
+    \item[\texttt{precedence.c} (Tabulka priorit):]
+    Obsahuje implementaci tabulky priorit a definuje logiku přesunu/redukce pro korektní parsování matematických a logických výrazů.
+
+    \item[\texttt{stack\_precedence.c} (Zásobník analýzy):]
+    Implementuje specializovaný zásobník pro algoritmus shift-reduce, který uchovává operátory a uzly AST pro dynamickou konstrukci stromu výrazů.
+\end{description}
+
+\subsection{Návrh syntaktického analyzátoru}
+
+
+\begin{itemize}
+    \item \textbf{Volba použití Abstract Syntax Tree (AST):}
+    Abychom při generování kódu nemuseli složitě vracet zpět a doplňovat chybějící adresy, používáme AST. Tím se práce rozdělí do dvou kroků: nejprve vytvoříme strom a najdeme všechny funkce, a teprve potom generujeme kód. Tento postup dělá implementaci jednodušší a spolehlivější.
+
+    \item \textbf{Důvod pro hybridní přístup:}
+    Pro strukturální část jazyka (podmínky, cykly) jsme zvolili \textbf{rekurzivní sestup}, protože přirozeně kopíruje zanořenou strukturu kódu a je snadno laditelný.
+    Naproti tomu pro výrazy je rekurzivní sestup neefektivní kvůli nutnosti řešit priority operátorů (což vede k hlubokému zanoření volání). Proto jsme pro výrazy zvolili \textbf{precedenční analýzu} (bottom-up), která priority zpracovává tabulkově a efektivněji.
+
+\end{itemize}
+

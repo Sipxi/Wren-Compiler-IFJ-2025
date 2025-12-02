@@ -1,11 +1,13 @@
 /**
  * @file optimizer.h
- * 
- * Файл заголовка для оптимизатора трехадресного кода (TAC).
- * 
- * Author:
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavní hlavičkový soubor pro optimalizaci třiadresného kódu (TAC).
+ *
+ * @author
  *     - Serhij Čepil (253038)
- * 
  */
 
 
@@ -16,16 +18,16 @@
 
 
 /* ======================================*/
-/* ===== Прототипы публичных функций =====*/
+/* ===== Definice veřejných funkcí =====*/
 /* ======================================*/
 
 /**
- * @brief Оптимизирует список трехадресного кода (TAC).
+ * @brief Optimalizuje seznam tříadresného kódu (TAC).
  * 
- * Эта функция применяет различные оптимизации к списку TAC инструкций,
- * чтобы улучшить производительность и уменьшить размер кода.
+ * Tato funkce aplikuje různé optimalizace na seznam instrukcí TAC,
+ * aby zlepšila výkon a snížila velikost kódu.
  * 
- * @param tac_list Список TAC инструкций для оптимизации.
+ * @param tac_list Seznam instrukcí TAC k optimalizaci.
  */
 void optimize_tac(TACDLList *tac_list);
 

@@ -1,46 +1,18 @@
 /**
  * @file symtable.h
- * 
- * Заголовочный файл для таблицы символов
- * Author: 
- *          - Serhij Čepil (253038)
- */
-
-
-/**
- * Использование таблицы:
- * 1. Инициализация таблицы символов с помощью symtable_init.
- * 2. Вставка символов с помощью symtable_insert.
- * 3. Поиск символов с помощью symtable_lookup.
- * 4. Удаление символов с помощью symtable_delete.
- * 5. Освобождение ресурсов таблицы с помощью symtable_free.
- * ! Обязательно ознакомьтесь с комментариями к каждой функции для правильного использования.
- * 
- * Пример использования:
- * Инициализация таблицы символов
- * Symtable table;
- * if (!symtable_init(&table)) {
- *     Обработка ошибки инициализации
- * }
- * 
- * Инициализация данных символа
- * SymbolData data = {KIND_VAR, TYPE_INT, true, NULL};
- * 
- * Вставка символа
- * if (!symtable_insert(&table, "myVar", &data)) {
- *    Обработка ошибки вставки
- * }
- * 
- * Поиск символа
- * TableEntry* entry = symtable_lookup(&table, "myVar");
- * 
- * Удаление символа
- * 
- * symtable_delete(&table, "myVar");    
- * 
- * Для разработки:
- * Вы можете использовать функцию symtable_print(&table);
- * чтобы вывести текущее состояние таблицы символов для отладки.
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavičkový soubor pro tabulku symbolů.
+ *
+ * Tento soubor obsahuje definice struktur a funkcí pro práci s tabulkou symbolů,
+ * která se používá pro ukládání informací o proměnných, funkcích a dalších symbolech
+ * v průběhu kompilace.
+ *
+ * @author
+ *     - Serhij Čepil (253038)
+ *     
  */
 
 #ifndef SYMTABLE_H
@@ -50,149 +22,145 @@
 #include <stdbool.h>
 
 /* ======================================*/
-/* ===== Енумы =====*/
+/* ===== Enums =====*/
 /* ======================================*/
 
-
-// Типы данных
+// Typy dat
 typedef enum{
-    TYPE_NUM,
-    TYPE_STR,
-    TYPE_NIL,
-    TYPE_BOOL, // Добавлено для поддержки сравнений
-    TYPE_UNKNOWN, // Для неинициализированных переменных и ошибок
-    TYPE_FLOAT, // Добавлено для поддержки float
-    
+TYPE_NUM,
+TYPE_STR,
+TYPE_NIL,
+TYPE_BOOL, // Přidáno pro podporu porovnání
+TYPE_UNKNOWN, // Pro neinicializované proměnné a chyby
+TYPE_FLOAT, // Přidáno pro podporu float
 
-    //TODO Добавить другие типы данных по мере необходимости
+
 } DataType;
 
-// Вид символа
+// Druh symbolu
 typedef enum{
-    KIND_VAR,
-    KIND_FUNC,
-    KIND_BLOCK
+KIND_VAR,
+KIND_FUNC,
+KIND_BLOCK
 
-    //TODO Добавить другие виды символов по мере необходимости
 } SymbolKind;
 
-// Статус слота в таблице символов
+// Stav slotu v tabulce symbolů
 typedef enum{
-    // Начальное значение для пустого слота
-    // Начинаем с 0 для calloc
-    SLOT_EMPTY = 0,
-    SLOT_OCCUPIED,
-    SLOT_DELETED,
+// Počáteční hodnota pro prázdný slot
+// Začínáme s 0 pro calloc
+SLOT_EMPTY = 0,
+SLOT_OCCUPIED,
+SLOT_DELETED,
 } SlotStatus;
 
 /* ======================================*/
-/* ===== Структуры =====*/
+/* ===== Struktury =====*/
 /* ======================================*/
 
 
-// Предварительное объявление структуры Symtable
-// для использования в других частях кода
+// Předběžná deklarace struktury Symtable
+// pro použití v ostatních částech kódu
 struct Symtable;
 
-// Данные символа
+// Data symbolu
 typedef struct{
-    SymbolKind kind;    // Вид символа (переменная, функция и т.д)
-    DataType data_type; // Тип данных символа
-    bool is_defined; // Флаг, указывающий, определен ли символ (для функций)
-    char* unique_name; // Уникальное имя для именования
-   
-    //! Обязательно добавить другие поля по мере необходимости!
+SymbolKind kind;    // Druh symbolu (proměnná, funkce atd.)
+DataType data_type; // Datový typ symbolu
+bool is_defined; // Příznak označující, zda je symbol definován (pro funkce)
+char* unique_name; // Unikátní jméno pro pojmenování
+
 } SymbolData;
 
 
-// Запись в таблице символов
+// Záznam v tabulce symbolů
 typedef struct{
-    char *key;              // Ключ символа (имя)
-    SymbolData *data;      // Указатель на данные символа
-    SlotStatus status;     // Статус слота (занят, пуст, удален)
-    struct Symtable *local_table; // Указатель на локальную таблицу символов (для функций)
+char *key;              // Klíč symbolu (jméno)
+SymbolData *data;      // Ukazatel na data symbolu
+SlotStatus status;     // Stav slotu (obsazený, prázdný, smazaný)
+struct Symtable *local_table; // Ukazatel na lokální tabulku symbolů (pro funkce)
 } TableEntry;
 
-// Таблица символов
+// Tabulka symbolů
 typedef struct Symtable{
-    TableEntry* entries;   // Массив записей таблицы символов
-    size_t count;           // Текущее количество записей в таблице
-    size_t capacity;       // Вместимость таблицы, т.е. максимальное количество записей
+TableEntry* entries;   // Pole záznamů tabulky symbolů
+size_t count;           // Současný počet záznamů v tabulce
+size_t capacity;       // Kapacita tabulky, tj. maximální počet záznamů
 
-    int nesting_level;     // Уровень вложенности (0 для GF, 1 для LF, 2+ для вложенных блоков)
-    // struct Symtable* parent_scope; // Указатель на родительскую таблицу (для поиска)
+int nesting_level;     // Úroveň vnořenosti (0 pro GF, 1 pro LF, 2+ pro vnořené bloky)
+// struct Symtable* parent_scope; // Ukazatel na rodičovskou tabulku (pro vyhledávání)
 } Symtable;
 
 // ======================================*/
-// ===== Публичные функции для работы с таблицей символов =====*/
+// ===== Veřejné funkce pro práci s tabulkou symbolů =====*/
 // ======================================*/
 
 /**
- * Инициализирует таблицу символов.
+ * Inicializuje tabulku symbolů.
  * 
- * @param table Указатель на таблицу символов для инициализации.
+ * @param table Ukazatel na tabulku symbolů pro inicializaci.
  * 
- * @return true если инициализация успешна, false в случае ошибки выделения памяти.
+ * @return true pokud je inicializace úspěšná, false v případě chyby alokace paměti.
  */
 bool symtable_init(Symtable *table);
 
 /**
- * Вычисляет хеш-значение для заданного ключа.
+ * Vypočítává hash hodnotu pro daný klíč.
  * 
- * Эта функция имплементует алгоритм хеширования DJB2.
+ * Tato funkce implementuje hashovací algoritmus DJB2.
  * 
  * @see https://theartincode.stanis.me/008-djb2/
- * @param key Ключ, для которого нужно вычислить хеш.
- * @param capacity Вместимость таблицы символов (используется для ограничения диапазона хеш-значения).
- * @return Вычисленное хеш-значение.
+ * @param key Klíč, pro který je potřeba vypočítat hash.
+ * @param capacity Kapacita tabulky symbolů (používá se pro omezení rozsahu hash hodnoty).
+ * @return Vypočítaná hash hodnota.
  */
 size_t get_hash(const char *key, size_t capacity);
 
 /**
- * Ищет запись в таблице символов по заданному ключу.
+ * Hledá záznam v tabulce symbolů podle daného klíče.
  * 
- * @param table Указатель на таблицу символов для поиска.
- * @param key Ключ символа для поиска.
- * @return Указатель на найденную запись TableEntry или NULL, если запись не найдена.
+ * @param table Ukazatel na tabulku symbolů pro vyhledávání.
+ * @param key Klíč symbolu pro vyhledávání.
+ * @return Ukazatel na nalezený záznam TableEntry nebo NULL, pokud záznam nebyl nalezen.
  */
 TableEntry* symtable_lookup(Symtable *table, const char *key);
 
 /**
- * Вставляет новую запись в таблицу символов.
+ * Vkládá nový záznam do tabulky symbolů.
  * 
- * Если таблица будет заполнена до определенного порога,
- * она будет автоматически расширена для обеспечения эффективности.
+ * Pokud bude tabulka zaplněna do určitého prahu,
+ * bude automaticky rozšířena pro zajištění efektivity.
  * 
- * @param table Указатель на таблицу символов для вставки.
- * @param key Ключ символа для вставки.
- * @param data Указатель на данные символа для вставки. 
- * Таблицы символов берет на себя ответственность за освобождение этой памяти
- * в случае перезаписи.
+ * @param table Ukazatel na tabulku symbolů pro vložení.
+ * @param key Klíč symbolu pro vložení.
+ * @param data Ukazatel na data symbolu pro vložení. 
+ * Tabulka symbolů přebírá odpovědnost za uvolnění této paměti
+ * v případě přepsání.
  * 
- * @return true если вставка успешна, false в случае ошибки (например, ошибка выделения памяти).
+ * @return true pokud je vložení úspěšné, false v případě chyby (například chyba alokace paměti).
  */
 bool symtable_insert(Symtable *table, const char *key, SymbolData *data);
 
 
 /**
- * Удаляет запись из таблицы символов по заданному ключу.
+ * Odstraňuje záznam z tabulky symbolů podle daného klíče.
  * 
- * @param table Указатель на таблицу символов для удаления.
- * @param key Ключ символа для удаления.
+ * @param table Ukazatel na tabulku symbolů pro odstranění.
+ * @param key Klíč symbolu pro odstranění.
  */
 void symtable_delete(Symtable *table, const char *key);
 
 
 /**
- * Освобождает ресурсы, занятые таблицей символов.
+ * Uvolňuje zdroje zabírané tabulkou symbolů.
  * 
- * @param table Указатель на таблицу символов для освобождения.
+ * @param table Ukazatel na tabulku symbolů pro uvolnění.
  */
 void symtable_free(Symtable *table);
 
 
 /* ======================================*/
-/* ===== Для разработки  =====*/
+/* ===== Pro vývoj  =====*/
 /* ======================================*/
 
 void symtable_print(Symtable *table);
