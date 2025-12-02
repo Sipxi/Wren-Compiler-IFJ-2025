@@ -1,8 +1,0 @@
-Input:
-__global_var != null
-===============================
-Output:
-Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __global_var, Line: 1
-Token Type: TOKEN_NOT_EQUAL, Data: !=, Line: 1
-Token Type: TOKEN_KEYWORD, Data: null, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

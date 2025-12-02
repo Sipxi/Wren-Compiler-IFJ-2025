@@ -1,6 +1,0 @@
-Input:
-__main
-===============================
-Output:
-Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __main, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

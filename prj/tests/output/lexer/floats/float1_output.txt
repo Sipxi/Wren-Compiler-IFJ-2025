@@ -1,6 +1,0 @@
-Input:
-3.14
-===============================
-Output:
-Token Type: TOKEN_FLOAT, Data: 3.14, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

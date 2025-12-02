@@ -1,7 +1,0 @@
-Input:
-"Ahoj\n\"Sve'te \\\x22"
-===============================
-Output:
-Token Type: TOKEN_STRING, Data: Ahoj
-"Sve'te \", Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.1)  2 DEC 2025 16:30
+This is pdfTeX, Version 3.141592653-2.6-1.40.27 (MiKTeX 25.4) (preloaded format=pdflatex 2025.12.1)  2 DEC 2025 19:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -535,12 +535,12 @@ Overfull \hbox (17.30086pt too wide) in paragraph at lines 9--10
 ) (parse.tex
 LaTeX Font Info:    Font shape `T2A/cmtt/bx/n' in size <12> not available
 (Font)              Font shape `T2A/cmtt/m/n' tried instead on input line 15.
- [3]) (semantics.tex) (symtable.tex) (3ac.tex [4]
-Overfull \hbox (4.74495pt too wide) in paragraph at lines 18--19
+ [3]) (semantics.tex [4]) (symtable.tex [5]) (3ac.tex
+Overfull \hbox (4.74495pt too wide) in paragraph at lines 13--14
 \T2A/cmr/m/n/12 skok^^Fu (\T2A/cmtt/m/n/12 OP_JUMP\T2A/cmr/m/n/12 , \T2A/cmtt/m/n/12 OP_JUMP_IF_FALSE\T2A/cmr/m/n/12 ) a n^^Aav^^Ge^^Gst^^A^^Y (\T2A/cmtt/m/n/12 OP_LABEL\T2A/cmr/m/n/12 ). Funkce \T2A/cmtt/m/n/12 create_unique_label
  []
 
-) (optimize.tex [5]
+) (optimize.tex [6]
 Overfull \hbox (10.68912pt too wide) in paragraph at lines 15--16
 []\T2A/cmr/bx/n/12 Unreachable Code Elim-i-na-tion (Odstran^^Gen^^A^^Y ne-dosa^^Gziteln^^Aeho k^^Aodu): \T2A/cmr/m/n/12 Odstra^^Gnujeme
  []
@@ -550,40 +550,40 @@ Overfull \hbox (17.3362pt too wide) in paragraph at lines 19--1
 []\T2A/cmr/m/n/12 Pro efek-tivn^^A^^Y fun-gov^^Aan^^A^^Y t^^Gechto metod vyu^^Gz^^A^^Yv^^Aa modul po-mocn^^Ae struk-tury, jako je \T2A/cmtt/m/n/12 PropagatorMap
  []
 
-[6]
+
 Overfull \hbox (6.59955pt too wide) in paragraph at lines 11--12
 \T2A/cmtt/m/n/12 gen_defvar\T2A/cmr/m/n/12 , \T2A/cmtt/m/n/12 gen_move\T2A/cmr/m/n/12 . M^^Fu^^Gze tak^^Ae volat funkce, kter^^Ae generuj^^A^^Y ho-tovou s^^Aerii in-strukc^^A^^Y (\T2A/cmtt/m/n/12 gen_type\T2A/cmr/m/n/12 ,
  []
 
-) (tabulky_parser.tex
+[7]) (tabulky_parser.tex
 Overfull \hbox (13.55473pt too wide) in paragraph at lines 19--1
 []\T2A/cmr/m/n/12 Druhou v^^Getv^^A^^Y je tab-ulka sym-bol^^Fu. Pom^^Aah^^Aa na za^^Gc^^Aatku gen-erov^^Aan^^A^^Y gen-erovat glob^^Aaln^^A^^Y prom^^Genn^^Ae,
  []
 
-[7] [8]) (tables.tex
-<image/Lexer.png, id=46, 1478.6442pt x 1106.2128pt>
+[8] [9]) (tables.tex
+<image/Lexer.png, id=50, 1478.6442pt x 1106.2128pt>
 File: image/Lexer.png Graphic file (type png)
 <use image/Lexer.png>
 Package pdftex.def Info: image/Lexer.png  used on input line 10.
 (pdftex.def)             Requested size: 702.76942pt x 525.76038pt.
-) [9] [10] [11] [12 <./image/Lexer.png>] (main.aux)
+) [10] [11] [12] [13 <./image/Lexer.png>] (main.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2025-11-06>
  ***********
  ) 
 Here is how much of TeX's memory you used:
- 4721 strings out of 467871
- 77714 string characters out of 5426038
+ 4723 strings out of 467871
+ 77737 string characters out of 5426038
  563165 words of memory out of 5000000
- 33510 multiletter control sequences out of 15000+600000
- 638749 words of font info for 61 fonts, out of 8000000 for 9000
+ 33511 multiletter control sequences out of 15000+600000
+ 639619 words of font info for 62 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  57i,11n,65p,836b,409s stack positions out of 10000i,1000n,20000p,200000b,200000s
- <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\latt1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1728.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm2074.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm2488.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx2488.pk><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
-Output written on main.pdf (13 pages, 1063022 bytes).
+ <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\lati1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\latt1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1728.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm1200.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx1440.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm2074.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\larm2488.pk> <C:\Users\Sipxi\AppData\Local\MiKTeX\fonts/pk/ljfour/lh/lh-t2a/dpi600\labx2488.pk><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/All Stuff/Stuff/LaTeXLibs/fonts/type1/public/amsfonts/cm/cmsy10.pfb>
+Output written on main.pdf (14 pages, 1074419 bytes).
 PDF statistics:
- 532 PDF objects out of 1000 (max. 8388607)
+ 560 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  11 words of extra memory for PDF output out of 10000 (max. 10000000)
 

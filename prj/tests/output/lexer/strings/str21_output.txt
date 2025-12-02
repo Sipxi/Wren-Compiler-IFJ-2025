@@ -1,6 +1,0 @@
-Input:
-"Special!@#$%^&*()Characters"
-===============================
-Output:
-Token Type: TOKEN_STRING, Data: Special!@#$%^&*()Characters, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,9 +1,0 @@
-Input:
-var x = 42
-===============================
-Output:
-Token Type: TOKEN_KEYWORD, Data: var, Line: 1
-Token Type: TOKEN_IDENTIFIER, Data: x, Line: 1
-Token Type: TOKEN_ASSIGN, Data: =, Line: 1
-Token Type: TOKEN_INT, Data: 42, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

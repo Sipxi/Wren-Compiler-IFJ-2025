@@ -1,6 +1,0 @@
-Input:
->
-===============================
-Output:
-Token Type: TOKEN_GREATER, Data: >, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

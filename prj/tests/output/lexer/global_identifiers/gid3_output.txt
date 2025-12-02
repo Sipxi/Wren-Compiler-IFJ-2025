@@ -1,6 +1,0 @@
-Input:
-__test_123
-===============================
-Output:
-Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __test_123, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

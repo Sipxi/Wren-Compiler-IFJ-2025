@@ -1,6 +1,0 @@
-Input:
-0
-===============================
-Output:
-Token Type: TOKEN_INT, Data: 0, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

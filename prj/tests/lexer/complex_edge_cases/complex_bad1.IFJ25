@@ -1,2 +1,0 @@
-class Test{var x:Num=42;static func init()->String{return"""Hello
-World"""}}

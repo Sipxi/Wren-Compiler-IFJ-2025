@@ -1,6 +1,0 @@
-Input:
-while
-===============================
-Output:
-Token Type: TOKEN_KEYWORD, Data: while, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,12 +1,7 @@
 \section{Generátor vnitřního kódu (TAC)}
 
-Modul \texttt{tac}(Three Address Code) realizuje transformaci abstraktního syntaktického stromu (AST) do tříadresového kódu (TAC). Tento mezikód slouží jako přechodná reprezentace mezi syntaktickou/semantickou analýzou a generováním cílového kódu (IFJcode25). Tříadresný kód používáme proto, že nám zjednoduší překlad do cílového kódu a umožní lepší optimalizaci.
+Modul \texttt{tac}(Three Address Code) realizuje transformaci abstraktního syntaktického stromu (AST) do tříadresového kódu (TAC). Tento mezikód slouží jako přechodná reprezentace mezi syntaktickou/semantickou analýzou a generováním cílového kódu (IFJcode25). Tříadresný kód používáme proto, že nám zjednoduší překlad do cílového kódu a umožní lepší optimalizaci. Generátor je implementován ve souborů \texttt{tac.c}.
 
-Generátor je implementován ve dvou souborech:
-\begin{itemize}
-    \item \texttt{tac.h}: Definuje struktury instrukcí (\texttt{TacInstruction}), typy operandů (\texttt{Operand}), výčty operací (\texttt{TacOperationCode}) a rozhraní pro dvousměrně vázaný seznam (\texttt{TACDLList}).
-    \item \texttt{tac.c}: Implementuje rekurzivní průchod AST, generování instrukcí a správu paměti a návěští.
-\end{itemize}
 
 \subsection*{Proces generování TAC}
 

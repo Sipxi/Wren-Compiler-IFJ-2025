@@ -1,7 +1,0 @@
-Input:
-123abc
-===============================
-Output:
-Token Type: TOKEN_INT, Data: 123, Line: 1
-Token Type: TOKEN_IDENTIFIER, Data: abc, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

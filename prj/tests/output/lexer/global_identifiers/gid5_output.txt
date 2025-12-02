@@ -1,6 +1,0 @@
-Input:
-__ABC
-===============================
-Output:
-Token Type: TOKEN_GLOBAL_IDENTIFIER, Data: __ABC, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1
