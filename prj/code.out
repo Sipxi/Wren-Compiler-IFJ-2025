@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .IFJcode25
 DEFVAR GF@$tmp
 DEFVAR GF@$tmp_2
@@ -191,3 +192,64 @@ MOVE LF@b$0 GF@$ret_ifj_fun
 #FUNC_END           | ____            | fun$2           | ____
 POPFRAME
 RETURN
+=======
+.IFJcode25
+DEFVAR GF@$tmp
+DEFVAR GF@$tmp_2
+DEFVAR GF@$tmp_type_1
+DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_op_1
+DEFVAR GF@$tmp_op_2
+DEFVAR GF@$ret_ifj_fun
+DEFVAR GF@$getter_1
+DEFVAR GF@$getter_2
+CREATEFRAME
+CALL $$main
+EXIT int@0
+
+LABEL $$EXIT25
+EXIT int@25
+
+LABEL $$EXIT26
+EXIT int@26
+
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | main$0          | ____
+
+LABEL $$main
+PUSHFRAME
+DEFVAR LF@a$0
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_BEGIN         | ____            | main$0          | ____
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | a               | ____            | ____
+MOVE LF@a$0 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | "\032\032\032\032d" | ____
+MOVE LF@a$0 string@\032\032\032\032d
+
+# ======================= NEW INSTRUCTION =======================
+#CALL               | ____            | Ifj.write$1     | ____
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp_op_1 LF@a$0
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+JUMPIFNEQ $WRITE_0 GF@$tmp_type_1 string@float
+ISINT GF@$tmp GF@$tmp_op_1
+JUMPIFEQ $WRITE_0 GF@$tmp bool@false
+FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
+
+LABEL $WRITE_0
+WRITE GF@$tmp_op_1
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | a               | Ifj.write$1     | ____
+MOVE LF@a$0 GF@$ret_ifj_fun
+
+# ======================= NEW INSTRUCTION =======================
+#FUNC_END           | ____            | main$0          | ____
+POPFRAME
+RETURN
+>>>>>>> dima

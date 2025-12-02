@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // Correct: Getter and setter usage
 import "ifj25" for Ifj
 class Program {
@@ -23,3 +24,13 @@ class Program {
         b = Ifj.write(b)
     }
 }
+=======
+import "ifj25" for Ifj
+class Program {
+    static main() {
+        var a
+        a = """    d"""
+        a = Ifj.write(a)
+    }
+}
+>>>>>>> dima
