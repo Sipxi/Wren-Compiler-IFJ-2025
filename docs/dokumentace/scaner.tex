@@ -1,0 +1,17 @@
+\section{Scanner (lexikální analyzátor)}
+
+Modul \texttt{lexer} je zodpovědný za převod vstupního zdrojového kódu na posloupnost tokenů, se kterými dále pracuje parser.
+
+Hlavní funkcí souboru \texttt{lexer.c} je \texttt{scan\_token}, která v závislosti na vstupním znaku a aktuálním stavu přepíná nebo zůstává v aktuálních stavech, dokud nedosáhne nepřípustného znaku ve stavu, pak lexer vrátí buď token, nebo chybu.
+
+\subsection*{Problémy během vývoje}
+
+Pro sestavení tokenu klíčového slova jsme použili jednoduchý přístup. Klíčové slovo je podmnožinou identifikátorů, proto jsme na konec definice identifikátoru přidali kontrolu shody s klíčovými slovy
+
+Nejvíce přepracovány byly analýza komentářů a řetězců. Diagram přechodu komentářů byl přepracován několikrát. V zásadě to souviselo s minimalizací počtu stavů a tokenů s hodnotou EOL, jakož i s odstraněním nedeterminismu z diagramu. Aby ve všech situacích následoval maximálně 1 EOL při každém vyhledávání tokenu, vynuluje se příznak nalezeného nového řádku. Tento příznak se používá, pokud po EOL začíná blokový komentář, pak na konci blokového komentáře se stav vrátí do EOL.
+
+Pro uložení konstanty typu řetězec bylo nutné vytvořit funkci \texttt{ write\_str\_trimmed}, která ukládá řetězec bez uvozovek. Algoritmus  víceřádkového řetězce zahrnuje do přečtených znaků bílé znaky a zvyšuje počet znaků, které by neměly být zahrnuty na konci. V posledním týdnu jsme si všimli nedodržování výjimek pro víceřádkové řetězce a díky pohodlné struktuře souboru jsme to rychle opravili.
+
+\subsection*{Komunikace s parserem}
+
+Parser komunikuje s funkcí \texttt{get\_next\_token}. Na začátku vývoje tato funkce pracovala pouze s \texttt{scan\_token}. Během vývoje jsme zjistili, že parser někdy musí sledovat následující token a zároveň zpracovávat předchozí, proto nyní \texttt{get\_next\_token} pracuje s bufferem a volá \texttt{scan\_token}, pokud je buffer prázdný.
