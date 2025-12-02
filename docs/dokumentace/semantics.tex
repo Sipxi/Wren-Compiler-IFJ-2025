@@ -1,0 +1,43 @@
+\section{Sémantický analyzátor}
+
+Sémantický analyzátor (modul \texttt{semantics.c}) provádí validaci logické správnosti programu nad vygenerovaným AST. Jeho úkolem je odhalit chyby, jako jsou nedefinované identifikátory, redefinice nebo typové neshody.
+
+Analýza probíhá ve dvou fázích:
+\begin{enumerate}
+    \item \textbf{Sběr deklarací:} Lineární průchod kořenovými uzly pro registraci hlaviček funkcí do globální tabulky symbolů.
+    \item \textbf{Analýza těl funkcí:} Hloubková kontrola příkazů a výrazů.
+\end{enumerate}
+
+Tento modul prochází strom \textbf{rekurzivně}, přičemž využívá různé strategie průchodu v závislosti na typu uzlu:
+
+\begin{itemize}
+    \item \textbf{Zpracování příkazů:} Funkce \texttt{analyze\_statement} využívá průchod \textbf{pre-order}. Nejprve se zpracuje aktuální uzel (např. vytvoření nového rozsahu platnosti pro blok), a teprve poté se rekurzivně analyzují vnořené podstromy.
+    
+    \item \textbf{Vyhodnocení výrazů:} Funkce \texttt{analyze\_expression} využívá průchod \textbf{post-order}. Nejprve se rekurzivně vyhodnotí typy operandů (listy stromu) a teprve na jejich základě se validuje operátor v nadřazeném uzlu.
+\end{itemize}
+
+Analyzátor kontroluje zejména:
+\begin{itemize}
+    \item Definici všech použitých proměnných a funkcí.
+    \item Unikátnost názvů v rámci jednoho rozsahu platnosti.
+    \item Správný počet a typy argumentů při volání funkcí.
+    \item Typovou kompatibilitu v aritmetických a relačních výrazech.
+\end{itemize}
+
+\subsection*{Použité datové struktury}
+
+Sémantický analyzátor využívá dvě hlavní datové struktury:
+
+\begin{enumerate}
+    \item \textbf{Abstraktní syntaktický strom (AST)} \\
+    Pro vnitřní reprezentaci programu byla zvolena struktura n-árního stromu implementovaná pomocí schématu \textit{levý potomek, pravý sourozenec}. Každý uzel stromu (\texttt{AstNode}) obsahuje ukazatel na prvního potomka (\texttt{child}) a ukazatel na následujícího sourozence (\texttt{sibling}). Tato reprezentace byla zvolena proto, že umožňuje efektivně ukládat sekvence libovolné délky (např. seznamy parametrů funkcí nebo sekvence příkazů v bloku).
+    
+    Strom je budován syntaktickým analyzátorem s využitím pomocných konstruktorů a funkce \texttt{ast\_node\_add\_child}. Tato funkce zajišťuje připojování nových uzlů na konec seznamu sourozenců, čímž je zachováno sekvenční pořadí příkazů tak, jak ve zdrojovém kódu.
+
+    \item \textbf{Zásobník rozsahů (ScopeStack)} \\
+    Pro řízení viditelnosti identifikátorů a podporu vnořených bloků využívá sémantický analyzátor vlastní datovou strukturu \texttt{ScopeStack}. Jedná se o zásobník ukazatelů na jednotlivé instance tabulek symbolů (\texttt{Symtable*}), který dynamicky odráží aktuální kontext při průchodu stromem AST. 
+    
+    Při rekurzivním sestupu do uzlu typu \texttt{NODE\_BLOCK} (např. tělo podmínky \texttt{if}, cyklu \texttt{while} nebo funkce) je alokována nová lokální tabulka symbolů. Tato tabulka je následně vložena na vrchol zásobníku. Všechny nově definované proměnné v rámci tohoto bloku jsou ukládány do této vrcholové tabulky. Při opuštění bloku je tabulka ze zásobníku odebrána, čímž zaniká platnost lokálních proměnných. 
+    
+    Klíčovým mechanismem je algoritmus vyhledávání identifikátorů (\texttt{H\_Stack\_Find\_Var}). Pro nalezení definice proměnné se prohledává zásobník lineárně směrem od vrcholu (nejvnitřnější aktuální rozsah) ke dnu (vnější rozsahy).
+\end{enumerate}
