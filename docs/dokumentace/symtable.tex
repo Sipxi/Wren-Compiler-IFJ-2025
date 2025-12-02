@@ -1,0 +1,17 @@
+\section{Tabulka symbolů (symtable)}
+
+Tabulka symbolů slouží k ukládání a vyhledávání informací o identifikátorech (proměnných a funkcích) během překladu. Implementace se nachází v souborech \texttt{symtable.c} a \texttt{symtable.h}.
+
+\subsection*{Implementace a řešení kolizí}
+
+\textbf{Tabulka s rozptýlenými položkami}  je realizována jako dynamicky alokované pole struktur \texttt{TableEntry}. Pro mapování klíčů (názvů identifikátorů) na indexy v poli využíváme hašovací funkci \textbf{DJB2}, která je známá svou jednoduchostí a dobrou distribucí pro textové řetězce.
+
+Jelikož se jedná o variantu s otevřenou adresací (open addressing), neukládáme kolizní prvky do spojových seznamů. Místo toho využíváme stavy jednotlivých slotů  \texttt{SlotStatus}:
+\begin{itemize}
+    \item \texttt{SLOT\_EMPTY}: Slot je prázdný, hledání zde končí.
+    \item \texttt{SLOT\_OCCUPIED}: Slot obsahuje platná data.
+    \item \texttt{SLOT\_DELETED}: Slot obsahoval data, která byla smazána. Při vyhledávání tento stav přeskakujeme, ale při vkládání jej můžeme přepsat novým prvkem.
+\end{itemize}
+
+Abychom zachovali efektivitu vyhledávání $\mathcal{O}(1)$, tabulka sleduje svůj faktor naplnění. Pokud počet prvků přesáhne určitou mez kapacity, dojde k realokaci tabulky na větší velikost a k přehašování všech položek.
+
