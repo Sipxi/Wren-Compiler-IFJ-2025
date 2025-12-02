@@ -1,4 +1,4 @@
-/**
+ /**
  * @file lexer.h
  * @team Tým 253038
  * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
