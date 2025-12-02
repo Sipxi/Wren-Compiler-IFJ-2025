@@ -1,6 +1,0 @@
-Input:
-1e1
-===============================
-Output:
-Token Type: TOKEN_EXP, Data: 1e1, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,5 +1,0 @@
-Input:
-/* Nested /* block */ comment */
-===============================
-Output:
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

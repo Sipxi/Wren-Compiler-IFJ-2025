@@ -1,7 +1,0 @@
-Input:
-0xFZ
-===============================
-Output:
-Token Type: TOKEN_HEX, Data: 0xF, Line: 1
-Token Type: TOKEN_IDENTIFIER, Data: Z, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

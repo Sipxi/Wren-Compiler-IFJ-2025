@@ -1,6 +1,0 @@
-Input:
-0x9876543210
-===============================
-Output:
-Token Type: TOKEN_HEX, Data: 0x9876543210, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

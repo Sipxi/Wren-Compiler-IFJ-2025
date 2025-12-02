@@ -1,6 +1,0 @@
-Input:
-0x1A
-===============================
-Output:
-Token Type: TOKEN_HEX, Data: 0x1A, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

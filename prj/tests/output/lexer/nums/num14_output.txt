@@ -1,7 +1,0 @@
-Input:
-.x00
-===============================
-Output:
-Token Type: TOKEN_DOT, Data: ., Line: 1
-Token Type: TOKEN_IDENTIFIER, Data: x00, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

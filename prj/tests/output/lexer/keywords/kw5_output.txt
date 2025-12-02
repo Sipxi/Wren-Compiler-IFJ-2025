@@ -1,6 +1,0 @@
-Input:
-return
-===============================
-Output:
-Token Type: TOKEN_KEYWORD, Data: return, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

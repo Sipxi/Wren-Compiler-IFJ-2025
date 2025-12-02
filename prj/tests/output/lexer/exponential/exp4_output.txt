@@ -1,6 +1,0 @@
-Input:
-123E+45
-===============================
-Output:
-Token Type: TOKEN_EXP, Data: 123E+45, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

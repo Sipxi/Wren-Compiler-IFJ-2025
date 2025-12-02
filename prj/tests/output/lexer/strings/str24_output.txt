@@ -1,6 +1,0 @@
-Input:
-"string\\with\\backslashes"
-===============================
-Output:
-Token Type: TOKEN_STRING, Data: string\with\backslashes, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

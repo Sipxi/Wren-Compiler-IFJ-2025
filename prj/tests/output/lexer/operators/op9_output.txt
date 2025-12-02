@@ -1,6 +1,0 @@
-Input:
-<=
-===============================
-Output:
-Token Type: TOKEN_EQUAL_LESS, Data: <=, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

@@ -1,6 +1,0 @@
-Input:
-"""Text with "quotes" inside"""
-===============================
-Output:
-Token Type: TOKEN_STRING, Data: Text with "quotes" inside, Line: 1
-Token Type: TOKEN_EOF, Data: ÿ, Line: 1

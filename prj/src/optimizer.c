@@ -457,6 +457,24 @@ static void dead_code_elimination(TACDLList *tac_list) {
         TacInstruction *instr;
         TACDLL_GetValue(tac_list, &instr);
 
+        if (instr->operation_code == OP_RETURN && instr->result) {
+            // Pokud RETURN vrací hodnotu, zkontrolujeme RESULT
+            Operand *ret_op = instr->result;
+            if (ret_op->type == OPERAND_TYPE_TEMP) {
+                 int id = ret_op->data.temp_id;
+                 if (id >= 0 && id < MAX_TEMP_ID) {
+                     // Zvyšujeme počet použití pro vrácený TEMP
+                     usage_inc(&usage_list, NULL, id, true);
+                 }
+            } else if (ret_op->type == OPERAND_TYPE_SYMBOL) {
+                 // Zvyšujeme počet použití pro vrácený Symbol
+                 char *key = ret_op->data.symbol_entry->key;
+                 if (!is_global_var(key)) {
+                     usage_inc(&usage_list, key, 0, false);
+                 }
+            }
+        }
+
         // Kontrola ARG1
         if (instr->arg1) {
             if (instr->arg1->type == OPERAND_TYPE_TEMP) {
@@ -511,6 +529,7 @@ static void dead_code_elimination(TACDLList *tac_list) {
                     if (count == 0 && !has_side_effects(instr->operation_code)) {
                         should_remove = true;
                     }
+                    
                 }
             }
             // Zápis do lokálního symbolu
