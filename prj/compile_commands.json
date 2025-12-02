@@ -1,0 +1,7 @@
+[
+    {
+        "directory": "/home/bulcer/Studies/3_semestr/IFJ_project/IFJ-2025/prj",
+        "command": "gcc -Wall -Wextra -std=c99 -pedantic -g -Wno-unused-function -Iinclude -c src/test.c -o obj/test.o",
+        "file": "/home/bulcer/Studies/3_semestr/IFJ_project/IFJ-2025/prj/src/test.c"
+    }
+]

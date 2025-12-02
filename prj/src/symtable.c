@@ -49,7 +49,7 @@ static bool check_load_factor(Symtable* table) {
  * Kopíruje řetězec, alokuje pro něj paměť.
  *
  * Uděláno kvůli tomu, že C99 nezaručuje přítomnost strdup v string.h
- *? Je to potřeba?
+ *
  *
  * @param s Zdrojový řetězec pro kopírování.
  * @return Ukazatel na nový řetězec-kopii, nebo NULL v případě chyby

@@ -19,7 +19,7 @@
 #include <math.h>
 
 
-// Implementace zásobníku rozsahů
+ // Implementace zásobníku rozsahů
 
 #define HIERARCHY_STACK_SIZE 100
 
@@ -95,7 +95,7 @@ static TableEntry *H_Stack_Find_Var(ScopeStack *stack, const char *name) {
     for (int i = stack->topIndex; i >= 0; i--) {
         TableEntry *entry = symtable_lookup(stack->array[i], name);
         if (entry != NULL) {
-            return entry; 
+            return entry;
         }
     }
     return symtable_lookup(&global_table, name);
@@ -108,7 +108,7 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
 static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *result_type);
 static bool is_whole_number(double value);
 
-Symtable global_table; 
+Symtable global_table;
 
 /**
  * Spouští hlavní proces sémantické analýzy nad abstraktním syntaktickým stromem.
@@ -120,7 +120,7 @@ Symtable global_table;
 bool analyze_semantics(AstNode *root) {
 
     if (!symtable_init(&global_table)) {
-        
+
         fprintf(stderr, "Internal Compiler Error: Failed to init global_table.\n");
         exit(99);
     }
@@ -248,9 +248,9 @@ static bool register_builtin_function(const char *name, int arity, DataType retu
 
     SymbolData data;
     data.kind = KIND_FUNC;
-    data.data_type = return_type; 
-    data.is_defined = true;      
-    data.unique_name = NULL;     
+    data.data_type = return_type;
+    data.is_defined = true;
+    data.unique_name = NULL;
 
     if (!symtable_insert(&global_table, mangled_name, &data)) {
         fprintf(stderr, "Internal Error: Failed to insert builtin '%s'\n", mangled_name);
@@ -332,9 +332,9 @@ static bool process_function_declaration(AstNode *func_node) {
 
     SymbolData data;
     data.kind = KIND_FUNC;
-    data.data_type = TYPE_UNKNOWN; 
-    data.is_defined = false;   
-    data.unique_name = NULL; 
+    data.data_type = TYPE_UNKNOWN;
+    data.is_defined = false;
+    data.unique_name = NULL;
 
     // Vkládá se záznam do globální tabulky symbolů
     if (!symtable_insert(&global_table, mangled_name, &data)) {
@@ -371,7 +371,7 @@ static bool process_function_declaration(AstNode *func_node) {
 }
 
 /**
- * Provádí se sémantická analýza těla jedné funkce 
+ * Provádí se sémantická analýza těla jedné funkce
  * Připravuje se lokální kontext (zásobník rozsahů), zpracovávají se parametry
  * a následně se kontrolují jednotlivé příkazy v těle funkce.
  * @param func_node Uzel AST reprezentující definici funkce.
@@ -380,7 +380,7 @@ static bool process_function_declaration(AstNode *func_node) {
 static bool analyze_function_body(AstNode *func_node)
 {
 
-   // Získává se odkaz na záznam funkce v globální tabulce symbolů
+    // Získává se odkaz na záznam funkce v globální tabulce symbolů
     TableEntry *func_entry = func_node->table_entry;
     if (func_entry == NULL) {
         fprintf(stderr, "Internal Error: func_node->table_entry is NULL for '%s'.\n", func_node->data.identifier);
@@ -403,37 +403,38 @@ static bool analyze_function_body(AstNode *func_node)
         exit(99);
     }
 
-    int local_block_cnt = 0; 
-    int current_scope_id = 0; 
+    int local_block_cnt = 0;
+    int current_scope_id = 0;
 
     // Určují se uzly pro seznam parametrů a tělo funkce
     AstNode *param_iter = NULL;
     AstNode *body_node = NULL;
 
     if (func_node->type == NODE_FUNCTION_DEF || func_node->type == NODE_SETTER_DEF) {
-        AstNode* param_list = func_node->child;
-        
+        AstNode *param_list = func_node->child;
+
         if (param_list != NULL && param_list->type == NODE_PARAM_LIST) {
-            param_iter = param_list->child;   
-            body_node = param_list->sibling;  
-        } else {
+            param_iter = param_list->child;
+            body_node = param_list->sibling;
+        }
+        else {
             fprintf(stderr, "Internal Error: Function/Setter '%s' missing param list.\n", func_node->data.identifier);
             H_Stack_Pop(&stack);
             exit(99);
         }
-    } 
-    else { 
+    }
+    else {
         // Getter nemá parametry
         param_iter = NULL;
         body_node = func_node->child;
     }
 
     // Zpracovávají se parametry funkce
-    for (AstNode* param = param_iter; param != NULL; param = param->sibling) {
-        
+    for (AstNode *param = param_iter; param != NULL; param = param->sibling) {
+
         if (param->type != NODE_PARAM) continue;
 
-        const char* param_name = param->data.identifier;
+        const char *param_name = param->data.identifier;
         // Kontroluje se duplicita názvů parametrů
         if (symtable_lookup(func_local_table, param_name) != NULL) {
             fprintf(stderr, "Semantic Error (Line %d): Duplicate parameter name '%s'.\n",
@@ -447,7 +448,7 @@ static bool analyze_function_body(AstNode *func_node)
         data.data_type = TYPE_UNKNOWN;;
         data.is_defined = true;
 
-        data.unique_name = create_unique_name(param_name, 0); 
+        data.unique_name = create_unique_name(param_name, 0);
 
         if (!symtable_insert(func_local_table, param_name, &data)) {
             H_Stack_Pop(&stack);
@@ -510,7 +511,7 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
     }
 
     switch (node->type) {
-        
+
         // PŘÍPAD 1: Vnořený blok kódu: { ... }
     case NODE_BLOCK: {
 
@@ -597,7 +598,7 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
         }
 
         TableEntry *entry = symtable_lookup(current_table, name);
-        entry->local_table = NULL; 
+        entry->local_table = NULL;
         node->table_entry = entry;
 
         return true;
@@ -734,7 +735,7 @@ static bool analyze_statement(AstNode *node, ScopeStack *stack, int *block_cnt, 
 
         return true;
     }
-        
+
         // PŘÍPAD 8: Samostatný identifikátor nebo výraz
     case NODE_ID: {
         DataType expr_type;
@@ -816,11 +817,11 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
                 entry = symtable_lookup(&global_table, name);
 
                 if (entry == NULL) {
-                    SymbolData data = { 
-                        .kind = KIND_VAR, 
+                    SymbolData data = {
+                        .kind = KIND_VAR,
                         .data_type = TYPE_NIL,
                         .is_defined = true,
-                        .unique_name = create_unique_name(name, 0) 
+                        .unique_name = create_unique_name(name, 0)
                     };
 
                     if (!symtable_insert(&global_table, name, &data)) exit(99);
@@ -1004,10 +1005,10 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
         return true;
     }
 
-    // PŘÍPAD: Volání funkce
+        // PŘÍPAD: Volání funkce
     case NODE_CALL_STATEMENT: {
         AstNode *id_node = node->child;
-        const char *name = id_node->data.identifier; 
+        const char *name = id_node->data.identifier;
         AstNode *arg_list = id_node->sibling;
 
         // Počítá se počet argumentů ve volání.
@@ -1039,11 +1040,12 @@ static bool analyze_expression(AstNode *node, ScopeStack *stack, DataType *resul
             if (found_with_other_arity) {
                 // Chyba arity
                 fprintf(stderr, "Semantic Error (Line %d): Function '%s' called with wrong number of arguments (expected another, got %d).\n", node->line_number, name, arity);
-                exit(5); 
-            } else {
+                exit(5);
+            }
+            else {
                 // Nedefinovaná funkce
                 fprintf(stderr, "Semantic Error (Line %d): Undefined function '%s'.\n", node->line_number, name);
-                exit(3); 
+                exit(3);
             }
         }
 

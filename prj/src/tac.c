@@ -494,7 +494,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
     case NODE_PARAM_LIST: {
 
         // Ukládáme současnou hodnotu globálního počítadla dočasných
-        // ! později předělat
         // int temp = global_temp_counter;
         // global_temp_counter = 0;
 
@@ -502,7 +501,6 @@ static Operand *tac_gen_recursive(AstNode *node, TACDLList *tac_list,
         // Jednoduše zpracováváme všechny děti
         tac_gen_children_list(node, tac_list, symtable);
         // Obnovujeme globální počítadlo dočasných
-        // ! později předělat
         // global_temp_counter = temp;
 
         // Nevrací hodnoty
