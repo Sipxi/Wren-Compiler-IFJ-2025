@@ -2,7 +2,7 @@
 DEFVAR GF@$tmp
 DEFVAR GF@$tmp_2
 DEFVAR GF@$tmp_type_1
-DEFVAR GF@$tmp_type_2
+DEFVAR GF@$tmp_type_2   
 DEFVAR GF@$tmp_op_1
 DEFVAR GF@$tmp_op_2
 DEFVAR GF@$ret_ifj_fun
