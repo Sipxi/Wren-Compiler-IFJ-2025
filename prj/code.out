@@ -49,6 +49,8 @@ LABEL $getAnswer$1
 PUSHFRAME
 DEFVAR LF@$t$0
 DEFVAR LF@$t$1
+DEFVAR LF@$t$2
+DEFVAR LF@$t$3
 DEFVAR LF@$t$4
 DEFVAR LF@$t$5
 DEFVAR LF@ansStr$1
@@ -115,54 +117,148 @@ FLOAT2INT LF@$t$1 LF@$t$1
 LABEL $END_CONVERT_15
 
 # ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t2             | ____            | ____
+MOVE LF@$t$2 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#MUL                | $t2             | 32              | 84.1
+TYPE GF@$tmp_type_1 int@32
+TYPE GF@$tmp_type_2 float@0x1.506666p+6
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $MUL_STR_19 GF@$tmp_type_1 string@string
+MOVE GF@$tmp_op_1 int@32
+MOVE GF@$tmp_op_2 float@0x1.506666p+6
+JUMPIFEQ $START_OPERATION_21 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_20 GF@$tmp_type_1 string@float
+INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
+JUMP $START_OPERATION_21
+
+LABEL $ARG2_TO_FLOAT_20
+INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $START_OPERATION_21
+MUL LF@$t$2 GF@$tmp_op_1 GF@$tmp_op_2
+JUMP $MUL_STR_LOOP_END_17
+
+LABEL $MUL_STR_19
+MOVE GF@$tmp_op_2 float@0x1.506666p+6
+ISINT GF@$tmp GF@$tmp_op_2
+JUMPIFEQ $$EXIT26 GF@$tmp bool@false
+JUMPIFEQ $END_CONVERT_18 GF@$tmp_type_2 string@int
+FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $END_CONVERT_18
+LT GF@$tmp_2 GF@$tmp_op_2 int@0
+JUMPIFEQ $$EXIT26 GF@$tmp_2 bool@true
+MOVE LF@$t$2 string@
+
+LABEL $MUL_STR_LOOP_16
+JUMPIFEQ $MUL_STR_LOOP_END_17 GF@$tmp_op_2 int@0
+CONCAT LF@$t$2 LF@$t$2 int@32
+SUB GF@$tmp_op_2 GF@$tmp_op_2 int@1
+JUMP $MUL_STR_LOOP_16
+
+LABEL $MUL_STR_LOOP_END_17
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t3             | ____            | ____
+MOVE LF@$t$3 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#DIV                | $t3             | $t2             | 2.4
+TYPE GF@$tmp_type_1 LF@$t$2
+TYPE GF@$tmp_type_2 float@0x1.333334p+1
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
+MOVE GF@$tmp_op_1 LF@$t$2
+MOVE GF@$tmp_op_2 float@0x1.333334p+1
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $START_OPERATION_25 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_26 GF@$tmp_type_1 string@float
+INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
+JUMP $START_OPERATION_25
+
+LABEL $ARG2_TO_FLOAT_26
+INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $START_OPERATION_25
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+JUMPIFEQ $DIV_22 GF@$tmp_type_1 string@float
+JUMPIFEQ $IDIV_23 GF@$tmp_type_1 string@int
+JUMP $$EXIT26
+
+LABEL $DIV_22
+DIV LF@$t$3 GF@$tmp_op_1 GF@$tmp_op_2
+JUMP $END_DIV_24
+
+LABEL $IDIV_23
+IDIV LF@$t$3 GF@$tmp_op_1 GF@$tmp_op_2
+TYPE GF@$tmp_type_1 LF@$t$3
+JUMPIFEQ $END_CONVERT_27 GF@$tmp_type_1 string@int
+ISINT GF@$tmp LF@$t$3
+JUMPIFEQ $END_CONVERT_27 GF@$tmp bool@false
+FLOAT2INT LF@$t$3 LF@$t$3
+
+LABEL $END_CONVERT_27
+
+LABEL $END_DIV_24
+
+# ======================= NEW INSTRUCTION =======================
 #DECLARE            | $t4             | ____            | ____
 MOVE LF@$t$4 nil@nil
 
 # ======================= NEW INSTRUCTION =======================
-#GT                 | $t4             | $t1             | 1121.33
+#GT                 | $t4             | $t1             | $t3
 TYPE GF@$tmp_type_1 LF@$t$1
-TYPE GF@$tmp_type_2 float@0x1.185554p+10
+TYPE GF@$tmp_type_2 LF@$t$3
 MOVE GF@$tmp_op_1 LF@$t$1
-MOVE GF@$tmp_op_2 float@0x1.185554p+10
-JUMPIFEQ $START_OPERATION_16 GF@$tmp_type_1 GF@$tmp_type_2
+MOVE GF@$tmp_op_2 LF@$t$3
+JUMPIFEQ $START_OPERATION_28 GF@$tmp_type_1 GF@$tmp_type_2
 MOVE LF@$t$4 bool@false
-JUMP $END_COMPARASION_18
+JUMP $END_COMPARASION_30
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
-JUMPIFEQ $ARG2_TO_FLOAT_17 GF@$tmp_type_1 string@int
+JUMPIFEQ $ARG2_TO_FLOAT_29 GF@$tmp_type_1 string@int
 INT2FLOAT GF@$tmp_op_1 LF@$t$1
-JUMP $START_OPERATION_16
+JUMP $START_OPERATION_28
 
-LABEL $ARG2_TO_FLOAT_17
-INT2FLOAT GF@$tmp_op_2 float@0x1.185554p+10
+LABEL $ARG2_TO_FLOAT_29
+INT2FLOAT GF@$tmp_op_2 LF@$t$3
 
-LABEL $START_OPERATION_16
+LABEL $START_OPERATION_28
 GT LF@$t$4 GF@$tmp_op_1 GF@$tmp_op_2
 
-LABEL $END_COMPARASION_18
+LABEL $END_COMPARASION_30
 
 # ======================= NEW INSTRUCTION =======================
 #JUMP_IF_FALSE      | ____            | $t4             | L_ELSE_2
 JUMPIFEQ $L_ELSE_2 LF@$t$4 nil@nil
 TYPE GF@$tmp_type_1 LF@$t$4
-JUMPIFNEQ $SKIP_BOOL_CHECK_19 GF@$tmp_type_1 string@bool
+JUMPIFNEQ $SKIP_BOOL_CHECK_31 GF@$tmp_type_1 string@bool
 JUMPIFEQ $L_ELSE_2 LF@$t$4 bool@false
 
-LABEL $SKIP_BOOL_CHECK_19
+LABEL $SKIP_BOOL_CHECK_31
 
 # ======================= NEW INSTRUCTION =======================
 #CALL               | ____            | Ifj.write$1     | ____
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Celkem\032velke\032cislo!\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_20 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_32 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_20 GF@$tmp bool@false
+JUMPIFEQ $WRITE_32 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_20
+LABEL $WRITE_32
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -196,40 +292,40 @@ JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@nil
-JUMPIFEQ $MUL_STR_24 GF@$tmp_type_1 string@string
+JUMPIFEQ $MUL_STR_36 GF@$tmp_type_1 string@string
 MOVE GF@$tmp_op_1 LF@arg$0
 MOVE GF@$tmp_op_2 int@42
-JUMPIFEQ $START_OPERATION_26 GF@$tmp_type_1 GF@$tmp_type_2
-JUMPIFEQ $ARG2_TO_FLOAT_25 GF@$tmp_type_1 string@float
+JUMPIFEQ $START_OPERATION_38 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_37 GF@$tmp_type_1 string@float
 INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
-JUMP $START_OPERATION_26
+JUMP $START_OPERATION_38
 
-LABEL $ARG2_TO_FLOAT_25
+LABEL $ARG2_TO_FLOAT_37
 INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
 
-LABEL $START_OPERATION_26
+LABEL $START_OPERATION_38
 MUL LF@$t$5 GF@$tmp_op_1 GF@$tmp_op_2
-JUMP $MUL_STR_LOOP_END_22
+JUMP $MUL_STR_LOOP_END_34
 
-LABEL $MUL_STR_24
+LABEL $MUL_STR_36
 MOVE GF@$tmp_op_2 int@42
 ISINT GF@$tmp GF@$tmp_op_2
 JUMPIFEQ $$EXIT26 GF@$tmp bool@false
-JUMPIFEQ $END_CONVERT_23 GF@$tmp_type_2 string@int
+JUMPIFEQ $END_CONVERT_35 GF@$tmp_type_2 string@int
 FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2
 
-LABEL $END_CONVERT_23
+LABEL $END_CONVERT_35
 LT GF@$tmp_2 GF@$tmp_op_2 int@0
 JUMPIFEQ $$EXIT26 GF@$tmp_2 bool@true
 MOVE LF@$t$5 string@
 
-LABEL $MUL_STR_LOOP_21
-JUMPIFEQ $MUL_STR_LOOP_END_22 GF@$tmp_op_2 int@0
+LABEL $MUL_STR_LOOP_33
+JUMPIFEQ $MUL_STR_LOOP_END_34 GF@$tmp_op_2 int@0
 CONCAT LF@$t$5 LF@$t$5 LF@arg$0
 SUB GF@$tmp_op_2 GF@$tmp_op_2 int@1
-JUMP $MUL_STR_LOOP_21
+JUMP $MUL_STR_LOOP_33
 
-LABEL $MUL_STR_LOOP_END_22
+LABEL $MUL_STR_LOOP_END_34
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | arg             | $t5             | ____
@@ -244,38 +340,38 @@ MOVE LF@ansStr$1 nil@nil
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$ret_ifj_fun LF@arg$0
 TYPE GF@$tmp_type_1 GF@$ret_ifj_fun
-JUMPIFEQ $INT2STR_29 GF@$tmp_type_1 string@int
-JUMPIFEQ $FLOAT2STR_27 GF@$tmp_type_1 string@float
-JUMPIFEQ $NIL2STR_30 GF@$tmp_type_1 string@nil
-JUMPIFEQ $BOOL2STR_31 GF@$tmp_type_1 string@bool
-JUMP $STR_END_33
+JUMPIFEQ $INT2STR_41 GF@$tmp_type_1 string@int
+JUMPIFEQ $FLOAT2STR_39 GF@$tmp_type_1 string@float
+JUMPIFEQ $NIL2STR_42 GF@$tmp_type_1 string@nil
+JUMPIFEQ $BOOL2STR_43 GF@$tmp_type_1 string@bool
+JUMP $STR_END_45
 
-LABEL $FLOAT2STR_27
+LABEL $FLOAT2STR_39
 ISINT GF@$tmp GF@$ret_ifj_fun
-JUMPIFEQ $CONVERT_28 GF@$tmp bool@true
+JUMPIFEQ $CONVERT_40 GF@$tmp bool@true
 FLOAT2STR GF@$ret_ifj_fun GF@$ret_ifj_fun
-JUMP $STR_END_33
+JUMP $STR_END_45
 
-LABEL $CONVERT_28
+LABEL $CONVERT_40
 FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun
 
-LABEL $INT2STR_29
+LABEL $INT2STR_41
 INT2STR GF@$ret_ifj_fun GF@$ret_ifj_fun
-JUMP $STR_END_33
+JUMP $STR_END_45
 
-LABEL $NIL2STR_30
+LABEL $NIL2STR_42
 MOVE GF@$ret_ifj_fun string@null
-JUMP $STR_END_33
+JUMP $STR_END_45
 
-LABEL $BOOL2STR_31
-JUMPIFEQ $TRUE2STR_32 GF@$ret_ifj_fun bool@true
+LABEL $BOOL2STR_43
+JUMPIFEQ $TRUE2STR_44 GF@$ret_ifj_fun bool@true
 MOVE GF@$ret_ifj_fun string@false
-JUMP $STR_END_33
+JUMP $STR_END_45
 
-LABEL $TRUE2STR_32
+LABEL $TRUE2STR_44
 MOVE GF@$ret_ifj_fun string@true
 
-LABEL $STR_END_33
+LABEL $STR_END_45
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | ansStr          | Ifj.str$1       | ____
@@ -308,6 +404,10 @@ POPFRAME
 RETURN
 
 # ======================= NEW INSTRUCTION =======================
+#OP_JUMP            | ____            | ____            | L_ENDIF_1
+JUMP $L_ENDIF_1
+
+# ======================= NEW INSTRUCTION =======================
 #LABEL              | ____            | L_ELSE_0        | ____
 
 LABEL $L_ELSE_0
@@ -317,12 +417,12 @@ LABEL $L_ELSE_0
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Neplatny\032argument\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_34 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_46 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_34 GF@$tmp bool@false
+JUMPIFEQ $WRITE_46 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_34
+LABEL $WRITE_46
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -364,8 +464,37 @@ MOVE GF@__a$0 int@2
 MOVE LF@$t$7 nil@nil
 
 # ======================= NEW INSTRUCTION =======================
-#ASSIGN             | $t7             | 12              | ____
-MOVE LF@$t$7 int@12
+#ADD                | $t7             | __a             | 10
+TYPE GF@$tmp_type_1 GF@__a$0
+TYPE GF@$tmp_type_2 int@10
+MOVE GF@$tmp_op_1 GF@__a$0
+MOVE GF@$tmp_op_2 int@10
+JUMPIFEQ $PLUS_STR_47 GF@$tmp_type_1 string@string
+JUMPIFEQ $PLUS_NUM_48 GF@$tmp_type_1 string@float
+JUMPIFEQ $PLUS_NUM_48 GF@$tmp_type_1 string@int
+JUMP $$EXIT26
+
+LABEL $PLUS_STR_47
+JUMPIFNEQ $$EXIT26 GF@$tmp_type_2 string@string
+CONCAT LF@$t$7 GF@$tmp_op_1 GF@$tmp_op_2
+JUMP $PLUS_END_49
+
+LABEL $PLUS_NUM_48
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $START_OPERATION_50 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_51 GF@$tmp_type_1 string@float
+INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
+JUMP $START_OPERATION_50
+
+LABEL $ARG2_TO_FLOAT_51
+INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $START_OPERATION_50
+ADD LF@$t$7 GF@$tmp_op_1 GF@$tmp_op_2
+
+LABEL $PLUS_END_49
 
 # ======================= NEW INSTRUCTION =======================
 #RETURN             | $t7             | ____            | ____
@@ -395,12 +524,12 @@ PUSHFRAME
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Jsem\032jednorozci\032setter,\032ziskal\032jsem\032
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_35 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_52 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_35 GF@$tmp bool@false
+JUMPIFEQ $WRITE_52 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_35
+LABEL $WRITE_52
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -412,12 +541,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@val$0
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_36 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_53 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_36 GF@$tmp bool@false
+JUMPIFEQ $WRITE_53 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_36
+LABEL $WRITE_53
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -429,12 +558,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_37 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_54 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_37 GF@$tmp bool@false
+JUMPIFEQ $WRITE_54 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_37
+LABEL $WRITE_54
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -464,12 +593,12 @@ PUSHFRAME
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Jsem\032ve\032funkci\032unicorn,\032ne\032v\032getteru\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_38 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_55 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_38 GF@$tmp bool@false
+JUMPIFEQ $WRITE_55 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_38
+LABEL $WRITE_55
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -492,6 +621,7 @@ DEFVAR LF@$t$9
 DEFVAR LF@valueFromUser$0
 DEFVAR LF@$t$10
 DEFVAR LF@$t$11
+DEFVAR LF@$t$12
 DEFVAR LF@$t$13
 DEFVAR LF@$t$14
 DEFVAR LF@valStr$5
@@ -515,12 +645,12 @@ CALL $unicorn$getter
 MOVE LF@$t$8 TF@ret
 MOVE GF@$tmp_op_1 LF@$t$8
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_39 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_56 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_39 GF@$tmp bool@false
+JUMPIFEQ $WRITE_56 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_39
+LABEL $WRITE_56
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -532,12 +662,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_40 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_57 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_40 GF@$tmp bool@false
+JUMPIFEQ $WRITE_57 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_40
+LABEL $WRITE_57
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -579,12 +709,12 @@ MOVE LF@myValue$0 LF@$t$9
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@myValue$0
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_41 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_58 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_41 GF@$tmp bool@false
+JUMPIFEQ $WRITE_58 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_41
+LABEL $WRITE_58
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -596,12 +726,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_42 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_59 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_42 GF@$tmp bool@false
+JUMPIFEQ $WRITE_59 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_42
+LABEL $WRITE_59
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -624,12 +754,12 @@ MOVE LF@myValue$0 TF@ret
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@myValue$0
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_43 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_60 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_43 GF@$tmp bool@false
+JUMPIFEQ $WRITE_60 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_43
+LABEL $WRITE_60
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -641,12 +771,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_44 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_61 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_44 GF@$tmp bool@false
+JUMPIFEQ $WRITE_61 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_44
+LABEL $WRITE_61
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -658,12 +788,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Napis\032cislo:\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_45 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_62 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_45 GF@$tmp bool@false
+JUMPIFEQ $WRITE_62 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_45
+LABEL $WRITE_62
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -678,12 +808,12 @@ MOVE LF@valueFromUser$0 nil@nil
 #CALL               | ____            | Ifj.read_num$0  | ____
 MOVE GF@$ret_ifj_fun nil@nil
 READ GF@$ret_ifj_fun float
-JUMPIFEQ $READ_NUM_END_46 GF@$ret_ifj_fun nil@nil
+JUMPIFEQ $READ_NUM_END_63 GF@$ret_ifj_fun nil@nil
 ISINT GF@$tmp GF@$ret_ifj_fun
-JUMPIFEQ $READ_NUM_END_46 GF@$tmp bool@false
+JUMPIFEQ $READ_NUM_END_63 GF@$tmp bool@false
 FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun
 
-LABEL $READ_NUM_END_46
+LABEL $READ_NUM_END_63
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | valueFromUser   | Ifj.read_num$0  | ____
@@ -712,45 +842,45 @@ TYPE GF@$tmp_type_1 LF@myValue$0
 TYPE GF@$tmp_type_2 nil@nil
 MOVE GF@$tmp_op_1 LF@myValue$0
 MOVE GF@$tmp_op_2 nil@nil
-JUMPIFEQ $START_OPERATION_47 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $START_OPERATION_64 GF@$tmp_type_1 GF@$tmp_type_2
 MOVE LF@$t$10 bool@false
-JUMP $END_COMPARASION_49
+JUMP $END_COMPARASION_66
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
-JUMPIFEQ $ARG2_TO_FLOAT_48 GF@$tmp_type_1 string@int
+JUMPIFEQ $ARG2_TO_FLOAT_65 GF@$tmp_type_1 string@int
 INT2FLOAT GF@$tmp_op_1 LF@myValue$0
-JUMP $START_OPERATION_47
+JUMP $START_OPERATION_64
 
-LABEL $ARG2_TO_FLOAT_48
+LABEL $ARG2_TO_FLOAT_65
 INT2FLOAT GF@$tmp_op_2 nil@nil
 
-LABEL $START_OPERATION_47
+LABEL $START_OPERATION_64
 EQ LF@$t$10 GF@$tmp_op_1 GF@$tmp_op_2
 
-LABEL $END_COMPARASION_49
+LABEL $END_COMPARASION_66
 
 # ======================= NEW INSTRUCTION =======================
 #JUMP_IF_FALSE      | ____            | $t10            | L_ELSE_4
 JUMPIFEQ $L_ELSE_4 LF@$t$10 nil@nil
 TYPE GF@$tmp_type_1 LF@$t$10
-JUMPIFNEQ $SKIP_BOOL_CHECK_50 GF@$tmp_type_1 string@bool
+JUMPIFNEQ $SKIP_BOOL_CHECK_67 GF@$tmp_type_1 string@bool
 JUMPIFEQ $L_ELSE_4 LF@$t$10 bool@false
 
-LABEL $SKIP_BOOL_CHECK_50
+LABEL $SKIP_BOOL_CHECK_67
 
 # ======================= NEW INSTRUCTION =======================
 #CALL               | ____            | Ifj.write$1     | ____
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@ODPOVED\032NENI!\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_51 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_68 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_51 GF@$tmp bool@false
+JUMPIFEQ $WRITE_68 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_51
+LABEL $WRITE_68
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -762,6 +892,10 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE LF@ret nil@nil
 POPFRAME
 RETURN
+
+# ======================= NEW INSTRUCTION =======================
+#OP_JUMP            | ____            | ____            | L_ENDIF_5
+JUMP $L_ENDIF_5
 
 # ======================= NEW INSTRUCTION =======================
 #LABEL              | ____            | L_ELSE_4        | ____
@@ -781,10 +915,10 @@ EQ LF@$t$11 GF@$tmp_type_1 string@nil
 #JUMP_IF_FALSE      | ____            | $t11            | L_ELSE_6
 JUMPIFEQ $L_ELSE_6 LF@$t$11 nil@nil
 TYPE GF@$tmp_type_1 LF@$t$11
-JUMPIFNEQ $SKIP_BOOL_CHECK_52 GF@$tmp_type_1 string@bool
+JUMPIFNEQ $SKIP_BOOL_CHECK_69 GF@$tmp_type_1 string@bool
 JUMPIFEQ $L_ELSE_6 LF@$t$11 bool@false
 
-LABEL $SKIP_BOOL_CHECK_52
+LABEL $SKIP_BOOL_CHECK_69
 
 # ======================= NEW INSTRUCTION =======================
 #OP_JUMP            | ____            | ____            | L_ENDIF_7
@@ -810,12 +944,12 @@ LABEL $L_ENDIF_5
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@myValue$0
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_53 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_70 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_53 GF@$tmp bool@false
+JUMPIFEQ $WRITE_70 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_53
+LABEL $WRITE_70
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -827,12 +961,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_54 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_71 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_54 GF@$tmp bool@false
+JUMPIFEQ $WRITE_71 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_54
+LABEL $WRITE_71
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -845,54 +979,88 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 LABEL $L_WHILE_CONDITION_8
 
 # ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t12            | ____            | ____
+MOVE LF@$t$12 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#SUB                | $t12            | 0               | 2
+TYPE GF@$tmp_type_1 int@0
+TYPE GF@$tmp_type_2 int@2
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
+MOVE GF@$tmp_op_1 int@0
+MOVE GF@$tmp_op_2 int@2
+JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $START_OPERATION_72 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_73 GF@$tmp_type_1 string@float
+INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
+JUMP $START_OPERATION_72
+
+LABEL $ARG2_TO_FLOAT_73
+INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $START_OPERATION_72
+SUB LF@$t$12 GF@$tmp_op_1 GF@$tmp_op_2
+TYPE GF@$tmp_type_1 LF@$t$12
+JUMPIFEQ $END_CONVERT_74 GF@$tmp_type_1 string@int
+ISINT GF@$tmp LF@$t$12
+JUMPIFEQ $END_CONVERT_74 GF@$tmp bool@false
+FLOAT2INT LF@$t$12 LF@$t$12
+
+LABEL $END_CONVERT_74
+
+# ======================= NEW INSTRUCTION =======================
 #DECLARE            | $t13            | ____            | ____
 MOVE LF@$t$13 nil@nil
 
 # ======================= NEW INSTRUCTION =======================
-#GT                 | $t13            | valueFromUser   | -2
+#GT                 | $t13            | valueFromUser   | $t12
 TYPE GF@$tmp_type_1 LF@valueFromUser$0
-TYPE GF@$tmp_type_2 int@-2
+TYPE GF@$tmp_type_2 LF@$t$12
 MOVE GF@$tmp_op_1 LF@valueFromUser$0
-MOVE GF@$tmp_op_2 int@-2
-JUMPIFEQ $START_OPERATION_55 GF@$tmp_type_1 GF@$tmp_type_2
+MOVE GF@$tmp_op_2 LF@$t$12
+JUMPIFEQ $START_OPERATION_75 GF@$tmp_type_1 GF@$tmp_type_2
 MOVE LF@$t$13 bool@false
-JUMP $END_COMPARASION_57
+JUMP $END_COMPARASION_77
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
-JUMPIFEQ $ARG2_TO_FLOAT_56 GF@$tmp_type_1 string@int
+JUMPIFEQ $ARG2_TO_FLOAT_76 GF@$tmp_type_1 string@int
 INT2FLOAT GF@$tmp_op_1 LF@valueFromUser$0
-JUMP $START_OPERATION_55
+JUMP $START_OPERATION_75
 
-LABEL $ARG2_TO_FLOAT_56
-INT2FLOAT GF@$tmp_op_2 int@-2
+LABEL $ARG2_TO_FLOAT_76
+INT2FLOAT GF@$tmp_op_2 LF@$t$12
 
-LABEL $START_OPERATION_55
+LABEL $START_OPERATION_75
 GT LF@$t$13 GF@$tmp_op_1 GF@$tmp_op_2
 
-LABEL $END_COMPARASION_57
+LABEL $END_COMPARASION_77
 
 # ======================= NEW INSTRUCTION =======================
 #JUMP_IF_FALSE      | ____            | $t13            | L_ENDWHILE_9
 JUMPIFEQ $L_ENDWHILE_9 LF@$t$13 nil@nil
 TYPE GF@$tmp_type_1 LF@$t$13
-JUMPIFNEQ $SKIP_BOOL_CHECK_58 GF@$tmp_type_1 string@bool
+JUMPIFNEQ $SKIP_BOOL_CHECK_78 GF@$tmp_type_1 string@bool
 JUMPIFEQ $L_ENDWHILE_9 LF@$t$13 bool@false
 
-LABEL $SKIP_BOOL_CHECK_58
+LABEL $SKIP_BOOL_CHECK_78
 
 # ======================= NEW INSTRUCTION =======================
 #CALL               | ____            | Ifj.write$1     | ____
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@Jedeme\032dolu!\032
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_59 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_79 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_59 GF@$tmp bool@false
+JUMPIFEQ $WRITE_79 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_59
+LABEL $WRITE_79
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -904,12 +1072,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@valueFromUser$0
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_60 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_80 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_60 GF@$tmp bool@false
+JUMPIFEQ $WRITE_80 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_60
+LABEL $WRITE_80
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -921,12 +1089,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\032->\032
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_61 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_81 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_61 GF@$tmp bool@false
+JUMPIFEQ $WRITE_81 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_61
+LABEL $WRITE_81
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -949,23 +1117,23 @@ MOVE GF@$tmp_op_1 LF@valueFromUser$0
 MOVE GF@$tmp_op_2 int@1
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
-JUMPIFEQ $START_OPERATION_62 GF@$tmp_type_1 GF@$tmp_type_2
-JUMPIFEQ $ARG2_TO_FLOAT_63 GF@$tmp_type_1 string@float
+JUMPIFEQ $START_OPERATION_82 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_83 GF@$tmp_type_1 string@float
 INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
-JUMP $START_OPERATION_62
+JUMP $START_OPERATION_82
 
-LABEL $ARG2_TO_FLOAT_63
+LABEL $ARG2_TO_FLOAT_83
 INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
 
-LABEL $START_OPERATION_62
+LABEL $START_OPERATION_82
 SUB LF@$t$14 GF@$tmp_op_1 GF@$tmp_op_2
 TYPE GF@$tmp_type_1 LF@$t$14
-JUMPIFEQ $END_CONVERT_64 GF@$tmp_type_1 string@int
+JUMPIFEQ $END_CONVERT_84 GF@$tmp_type_1 string@int
 ISINT GF@$tmp LF@$t$14
-JUMPIFEQ $END_CONVERT_64 GF@$tmp bool@false
+JUMPIFEQ $END_CONVERT_84 GF@$tmp bool@false
 FLOAT2INT LF@$t$14 LF@$t$14
 
-LABEL $END_CONVERT_64
+LABEL $END_CONVERT_84
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | valueFromUser   | $t14            | ____
@@ -980,38 +1148,38 @@ MOVE LF@valStr$5 nil@nil
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$ret_ifj_fun LF@valueFromUser$0
 TYPE GF@$tmp_type_1 GF@$ret_ifj_fun
-JUMPIFEQ $INT2STR_67 GF@$tmp_type_1 string@int
-JUMPIFEQ $FLOAT2STR_65 GF@$tmp_type_1 string@float
-JUMPIFEQ $NIL2STR_68 GF@$tmp_type_1 string@nil
-JUMPIFEQ $BOOL2STR_69 GF@$tmp_type_1 string@bool
-JUMP $STR_END_71
+JUMPIFEQ $INT2STR_87 GF@$tmp_type_1 string@int
+JUMPIFEQ $FLOAT2STR_85 GF@$tmp_type_1 string@float
+JUMPIFEQ $NIL2STR_88 GF@$tmp_type_1 string@nil
+JUMPIFEQ $BOOL2STR_89 GF@$tmp_type_1 string@bool
+JUMP $STR_END_91
 
-LABEL $FLOAT2STR_65
+LABEL $FLOAT2STR_85
 ISINT GF@$tmp GF@$ret_ifj_fun
-JUMPIFEQ $CONVERT_66 GF@$tmp bool@true
+JUMPIFEQ $CONVERT_86 GF@$tmp bool@true
 FLOAT2STR GF@$ret_ifj_fun GF@$ret_ifj_fun
-JUMP $STR_END_71
+JUMP $STR_END_91
 
-LABEL $CONVERT_66
+LABEL $CONVERT_86
 FLOAT2INT GF@$ret_ifj_fun GF@$ret_ifj_fun
 
-LABEL $INT2STR_67
+LABEL $INT2STR_87
 INT2STR GF@$ret_ifj_fun GF@$ret_ifj_fun
-JUMP $STR_END_71
+JUMP $STR_END_91
 
-LABEL $NIL2STR_68
+LABEL $NIL2STR_88
 MOVE GF@$ret_ifj_fun string@null
-JUMP $STR_END_71
+JUMP $STR_END_91
 
-LABEL $BOOL2STR_69
-JUMPIFEQ $TRUE2STR_70 GF@$ret_ifj_fun bool@true
+LABEL $BOOL2STR_89
+JUMPIFEQ $TRUE2STR_90 GF@$ret_ifj_fun bool@true
 MOVE GF@$ret_ifj_fun string@false
-JUMP $STR_END_71
+JUMP $STR_END_91
 
-LABEL $TRUE2STR_70
+LABEL $TRUE2STR_90
 MOVE GF@$ret_ifj_fun string@true
 
-LABEL $STR_END_71
+LABEL $STR_END_91
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | valStr          | Ifj.str$1       | ____
@@ -1022,12 +1190,12 @@ MOVE LF@valStr$5 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@valStr$5
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_72 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_92 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_72 GF@$tmp bool@false
+JUMPIFEQ $WRITE_92 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_72
+LABEL $WRITE_92
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1039,12 +1207,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_73 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_93 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_73 GF@$tmp bool@false
+JUMPIFEQ $WRITE_93 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_73
+LABEL $WRITE_93
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1081,12 +1249,12 @@ MOVE LF@x$7 string@cervena\032panda\032+\032
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@(
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_74 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_94 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_74 GF@$tmp bool@false
+JUMPIFEQ $WRITE_94 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_74
+LABEL $WRITE_94
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1103,33 +1271,33 @@ TYPE GF@$tmp_type_1 int@1
 TYPE GF@$tmp_type_2 int@1
 MOVE GF@$tmp_op_1 int@1
 MOVE GF@$tmp_op_2 int@1
-JUMPIFEQ $START_OPERATION_75 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $START_OPERATION_95 GF@$tmp_type_1 GF@$tmp_type_2
 MOVE LF@$t$15 bool@false
-JUMP $END_COMPARASION_77
+JUMP $END_COMPARASION_97
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
 JUMPIFEQ $$EXIT26 GF@$tmp_type_1 string@bool
 JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
-JUMPIFEQ $ARG2_TO_FLOAT_76 GF@$tmp_type_1 string@int
+JUMPIFEQ $ARG2_TO_FLOAT_96 GF@$tmp_type_1 string@int
 INT2FLOAT GF@$tmp_op_1 int@1
-JUMP $START_OPERATION_75
+JUMP $START_OPERATION_95
 
-LABEL $ARG2_TO_FLOAT_76
+LABEL $ARG2_TO_FLOAT_96
 INT2FLOAT GF@$tmp_op_2 int@1
 
-LABEL $START_OPERATION_75
+LABEL $START_OPERATION_95
 EQ LF@$t$15 GF@$tmp_op_1 GF@$tmp_op_2
 
-LABEL $END_COMPARASION_77
+LABEL $END_COMPARASION_97
 
 # ======================= NEW INSTRUCTION =======================
 #JUMP_IF_FALSE      | ____            | $t15            | L_ELSE_10
 JUMPIFEQ $L_ELSE_10 LF@$t$15 nil@nil
 TYPE GF@$tmp_type_1 LF@$t$15
-JUMPIFNEQ $SKIP_BOOL_CHECK_78 GF@$tmp_type_1 string@bool
+JUMPIFNEQ $SKIP_BOOL_CHECK_98 GF@$tmp_type_1 string@bool
 JUMPIFEQ $L_ELSE_10 LF@$t$15 bool@false
 
-LABEL $SKIP_BOOL_CHECK_78
+LABEL $SKIP_BOOL_CHECK_98
 
 # ======================= NEW INSTRUCTION =======================
 #DECLARE            | y               | ____            | ____
@@ -1150,21 +1318,21 @@ JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
 MOVE GF@$tmp_op_2 int@3
 ISINT GF@$tmp GF@$tmp_op_2
 JUMPIFEQ $$EXIT26 GF@$tmp bool@false
-JUMPIFEQ $END_CONVERT_81 GF@$tmp_type_2 string@int
+JUMPIFEQ $END_CONVERT_101 GF@$tmp_type_2 string@int
 FLOAT2INT GF@$tmp_op_2 GF@$tmp_op_2
 
-LABEL $END_CONVERT_81
+LABEL $END_CONVERT_101
 LT GF@$tmp_2 GF@$tmp_op_2 int@0
 JUMPIFEQ $$EXIT26 GF@$tmp_2 bool@true
 MOVE LF@$t$16 string@
 
-LABEL $MUL_STR_LOOP_79
-JUMPIFEQ $MUL_STR_LOOP_END_80 GF@$tmp_op_2 int@0
+LABEL $MUL_STR_LOOP_99
+JUMPIFEQ $MUL_STR_LOOP_END_100 GF@$tmp_op_2 int@0
 CONCAT LF@$t$16 LF@$t$16 LF@x$7
 SUB GF@$tmp_op_2 GF@$tmp_op_2 int@1
-JUMP $MUL_STR_LOOP_79
+JUMP $MUL_STR_LOOP_99
 
-LABEL $MUL_STR_LOOP_END_80
+LABEL $MUL_STR_LOOP_END_100
 
 # ======================= NEW INSTRUCTION =======================
 #ASSIGN             | y               | $t16            | ____
@@ -1183,12 +1351,12 @@ MOVE LF@x$8 LF@y$8
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@x$8
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_82 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_102 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_82 GF@$tmp bool@false
+JUMPIFEQ $WRITE_102 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_82
+LABEL $WRITE_102
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1214,12 +1382,12 @@ LABEL $L_ENDIF_11
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@konec)\032
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_83 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_103 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_83 GF@$tmp bool@false
+JUMPIFEQ $WRITE_103 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_83
+LABEL $WRITE_103
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1231,12 +1399,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@x$7
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_84 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_104 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_84 GF@$tmp bool@false
+JUMPIFEQ $WRITE_104 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_84
+LABEL $WRITE_104
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1248,12 +1416,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 LF@x$6
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_85 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_105 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_85 GF@$tmp bool@false
+JUMPIFEQ $WRITE_105 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_85
+LABEL $WRITE_105
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================
@@ -1265,12 +1433,12 @@ MOVE GF@__d$0 GF@$ret_ifj_fun
 MOVE GF@$ret_ifj_fun nil@nil
 MOVE GF@$tmp_op_1 string@\010
 TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_86 GF@$tmp_type_1 string@float
+JUMPIFNEQ $WRITE_106 GF@$tmp_type_1 string@float
 ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_86 GF@$tmp bool@false
+JUMPIFEQ $WRITE_106 GF@$tmp bool@false
 FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
 
-LABEL $WRITE_86
+LABEL $WRITE_106
 WRITE GF@$tmp_op_1
 
 # ======================= NEW INSTRUCTION =======================

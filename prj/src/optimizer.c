@@ -318,7 +318,6 @@ static void prop_map_remove(PropagatorMap *map, char *key) {
     }
 }
 
-
 /* ====================================== */
 /* ===== Implementace pomocných funkcí pro Constant Folding ===== */
 /* =========================================*/
@@ -416,7 +415,6 @@ static bool are_args_constant(TacInstruction *instr) {
     return (instr->arg1->type == OPERAND_TYPE_CONSTANT &&
         instr->arg2->type == OPERAND_TYPE_CONSTANT);
 }
-
 
 /* ======================================*/
 /* ===== Implementace pomocných funkcí pro DCE =====*/
