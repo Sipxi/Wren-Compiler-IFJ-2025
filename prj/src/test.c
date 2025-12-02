@@ -7,7 +7,40 @@
 #include "codegen.h"
 #include "optimizer.h"
 
+int test_lexer(){
+    // Use stdin for input (supports redirection like: ./test < input.IFJ25)
+    FILE *file = fopen("example.IFJ25", "r");
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file.\n");
+        return 1;
+    }
+
+    Lexer *lexer = lexer_init();
+    if (lexer == NULL) {
+        fprintf(stderr, "Error initializing lexer.\n");
+        fclose(file);
+        return 1;
+    }
+    while (lexer->current_token->type != TOKEN_EOF) {
+        get_token(lexer, file);
+
+        printf("Token Type: %s, Data: ",
+               token_type_to_string(lexer->current_token->type));
+        
+        printf("\"%s\"", lexer->current_token->data);
+
+        printf(", Line: %d\n", lexer->current_token->line);
+    }
+    // Don't close stdin
+    lexer_free(lexer);
+    if (fclose(file) != 0) { // обработка ошибки закрытия файла
+        fprintf(stderr, "Error closing file.\n");
+    }
+    return 0;
+}
+
 int main() {
+    // test_lexer();
     FILE *file = fopen("example.IFJ25", "r");
     if (file == NULL) {
         perror("Error opening file");

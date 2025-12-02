@@ -1,0 +1,19 @@
+\section{Generátor cílového kódu (gencode)}
+
+Modul \texttt{codegen} realizuje sestavení cílového kódu ve formátu IFJcode25 z instrukcí tříadresového kódu. Na rozdíl od implementace, kde je cílový kód generován přímo z AST, jsme se rozhodli generovat také vnitřní kód. Mezikód pomohl oddělit generátor od syntaktické a sémantické analýzy, takže bylo pohodlnější soustředit se na generování kontrol běžných chyb (chyb typů) a testování. 
+
+Generátor je implementován ve dvou souborech: 1. \texttt{codegen.h} obsahuje deklaraci veřejných funkcí (\texttt{generate\_code}, \texttt{string\_to\_ifjcode}), 2. \texttt{codegen.c} obsahuje implementace veřejných a lokálních funkcí.
+
+\subsection*{Generování kódu}
+
+Funkce \texttt{generate\_code(...)} je vstupem do generátoru cílového kódu. Prochází seznamem instrukcí a v závislosti na operaci volá potřebnou funkci, přičemž každá operace z TAC má svou vlastní funkci. Každá funkce generuje potřebné kontroly typů a převody int na float nebo float na int, pokud float v desetinné části obsahuje nulu. Tento přístup pomáhá při testování a zvyšuje čitelnost kódu.
+
+Každá funkce operace používá menší funkce pro generování jednotlivých instrukcí, například  \texttt{gen\_defvar}, \texttt{gen\_move}. Může také volat funkce, které generují hotovou sérii instrukcí (\texttt{gen\_type}, \texttt{gen\_same\_operand\_check} atd.) nebo funkce pro generování části instrukce (\texttt{gen\_operand}).
+
+Generátor také vytváří své jedinečné návěští pomocí externí funkce \texttt{create\_unique\_label}, která pokračuje v číslování po generátoru vnitřního kódu.
+
+\subsection*{Použité datové struktury}
+
+Modul používá dvě hlavní datové větve. První větev tvoří instrukce. Jsou implementovány pomocí TacInstruction, který obsahuje datové typy TacOperationCode a Operand. Tyto dvě struktury jsou pro generování klíčové, protože obsahují názvy návěští, identifikátory, konstanty, operace atd. Každá instrukce obsahuje odkaz na seznam TACDLList.
+
+Druhou větví je tabulka symbolů. Pomáhá na začátku generování generovat globální proměnné, protože jsou uloženy na nejvyšší úrovni tabulky, a určovat rámec proměnné. Pokud proměnná není v nejvyšší úrovni, musí být uložena v lokálním rámci, jinak v globálním. Tabulka symbolů také obsahuje jedinečná jména pro každou proměnnou a funkci.
