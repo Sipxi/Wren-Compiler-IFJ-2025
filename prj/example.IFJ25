@@ -3,23 +3,22 @@ import "ifj25" for Ifj
 class Program {
     
     static main() {
-        value = 42
-        __a = fun(value, value)
+        //var a
+        //var b
+        //var c
+        __res = str + str
+        __tr = Ifj.write(__res)
     }
-    static value {
-        if (__stored) {
-            return __stored
-        } else {
-            return 0
-        }
+    static str {
+        return "123"
     }
-    
-    static value=(v) {
-        __stored = v
+    static int {
+        return 123
     }
-
-    static fun(a, b) {
-        a = Ifj.write(a)
-        b = Ifj.write(b)
+    static float {
+        return 1.23
+    }
+    static nil {
+        return null
     }
 }

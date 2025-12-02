@@ -1792,6 +1792,68 @@ static void gen_multiply(TacInstruction *instr) {
     free(label_start_operation);
 }
 
+static void gen_plus(TacInstruction *instr) {
+    char *label_plus_str = create_unique_label("PLUS_STR");
+    char *label_plus_num = create_unique_label("PLUS_NUM");
+    char *label_end = create_unique_label("PLUS_END");
+    char *label_start_operation = create_unique_label("START_OPERATION");
+    char *label_arg_2_float = create_unique_label("ARG2_TO_FLOAT");
+    gen_type(instr);
+    fprintf(stdout, "MOVE GF@$tmp_op_1 ");
+    gen_operand(instr->arg1, 1);
+    fprintf(stdout, "\n");
+    fprintf(stdout, "MOVE GF@$tmp_op_2 ");
+    gen_operand(instr->arg2, 1);
+    fprintf(stdout, "\n");
+    // Pokud jsou oba stringy, provede se konkatenace
+    gen_jumpifeq_str(label_plus_str, "GF", "$tmp_type_1", "string", "string");
+    gen_jumpifeq_str(label_plus_num, "GF", "$tmp_type_1", "string", "float");
+    gen_jumpifeq_str(label_plus_num, "GF", "$tmp_type_1", "string", "int");
+    gen_jump("$EXIT26");
+
+    // Konkatenace stringů
+    gen_label(label_plus_str);
+    gen_jumpifneq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
+    fprintf(stdout, "CONCAT ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
+    gen_jump(label_end);
+    
+    // Sčítání čísel
+    gen_label(label_plus_num);
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "bool");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "nil");
+    gen_jumpifeq_str("$EXIT26", "GF", "$tmp_type_2", "string", "string");
+    // Pokud jsou oba int nebo float, pokračuj
+
+    // Pokud jsou oba int nebo float, pokračuj
+    gen_jumpifeq_str(label_start_operation, "GF", "$tmp_type_1", "GF", "$tmp_type_2");
+
+    // Convertace int na float, pokud je jeden z operandů float
+    gen_jumpifeq_str(label_arg_2_float, "GF", "$tmp_type_1", "string", "float");
+
+    // Konverze prvního operandu
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1\n");
+    gen_jump(label_start_operation);
+
+    // Konverze druhého operandu
+    gen_label(label_arg_2_float);
+    fprintf(stdout, "INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2\n");
+
+    gen_label(label_start_operation);
+    fprintf(stdout, "ADD ");
+    gen_operand(instr->result, 0);
+    fprintf(stdout, " GF@$tmp_op_1 GF@$tmp_op_2\n");
+
+    gen_label(label_end);
+    
+    free(label_start_operation);
+    free(label_arg_2_float);
+    free(label_plus_str);
+    free(label_plus_num);
+    free(label_end);
+}
+
 /* ================================================================= */
 /* ===== Implementace veřejných funkcí generátoru cílového kódu ==== */
 /* ================================================================= */
@@ -1823,6 +1885,8 @@ int generate_code(TACDLList *instructions, Symtable *table) {
             gen_label_from_instr(instructions);
             break;
         case OP_ADD:
+            gen_plus(instr);
+            break;
         case OP_SUBTRACT:
         case OP_CONCAT:
             gen_arithmetic(instr);

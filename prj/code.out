@@ -2,16 +2,16 @@
 DEFVAR GF@$tmp
 DEFVAR GF@$tmp_2
 DEFVAR GF@$tmp_type_1
-DEFVAR GF@$tmp_type_2   
+DEFVAR GF@$tmp_type_2
 DEFVAR GF@$tmp_op_1
 DEFVAR GF@$tmp_op_2
 DEFVAR GF@$ret_ifj_fun
 DEFVAR GF@$getter_1
 DEFVAR GF@$getter_2
-DEFVAR GF@__stored$0
-MOVE GF@__stored$0 nil@nil
-DEFVAR GF@__a$0
-MOVE GF@__a$0 nil@nil
+DEFVAR GF@__res$0
+MOVE GF@__res$0 nil@nil
+DEFVAR GF@__tr$0
+MOVE GF@__tr$0 nil@nil
 CREATEFRAME
 CALL $$main
 EXIT int@0
@@ -29,43 +29,98 @@ LABEL $$main
 PUSHFRAME
 DEFVAR LF@$t$0
 DEFVAR LF@$t$1
+DEFVAR LF@$t$2
 
 # ======================= NEW INSTRUCTION =======================
 #FUNC_BEGIN         | ____            | main$0          | ____
 
 # ======================= NEW INSTRUCTION =======================
-#ASSIGN             | value$setter    | 42              | ____
-CREATEFRAME
-DEFVAR TF@v$0
-MOVE TF@v$0 int@42
-CALL $value$setter
+#DECLARE            | $t0             | ____            | ____
+MOVE LF@$t$0 nil@nil
 
 # ======================= NEW INSTRUCTION =======================
-#CALL               | ____            | fun$2           | ____
+#CALL               | ____            | str$getter      | ____
 CREATEFRAME
 DEFVAR TF@ret
 MOVE TF@ret nil@nil
-DEFVAR TF@a$0
-PUSHFRAME
-CREATEFRAME
-DEFVAR TF@ret
-MOVE TF@ret nil@nil
-CALL $value$getter
-MOVE LF@a$0 TF@ret
-POPFRAME
-DEFVAR TF@b$0
-PUSHFRAME
-CREATEFRAME
-DEFVAR TF@ret
-MOVE TF@ret nil@nil
-CALL $value$getter
-MOVE LF@b$0 TF@ret
-POPFRAME
-CALL $fun$2
+CALL $str$getter
 
 # ======================= NEW INSTRUCTION =======================
-#ASSIGN             | __a             | fun$2           | ____
-MOVE GF@__a$0 TF@ret
+#ASSIGN             | $t0             | str$getter      | ____
+MOVE LF@$t$0 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t1             | ____            | ____
+MOVE LF@$t$1 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#CALL               | ____            | str$getter      | ____
+CREATEFRAME
+DEFVAR TF@ret
+MOVE TF@ret nil@nil
+CALL $str$getter
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | $t1             | str$getter      | ____
+MOVE LF@$t$1 TF@ret
+
+# ======================= NEW INSTRUCTION =======================
+#DECLARE            | $t2             | ____            | ____
+MOVE LF@$t$2 nil@nil
+
+# ======================= NEW INSTRUCTION =======================
+#ADD                | $t2             | $t0             | $t1
+TYPE GF@$tmp_type_1 LF@$t$0
+TYPE GF@$tmp_type_2 LF@$t$1
+MOVE GF@$tmp_op_1 LF@$t$0
+MOVE GF@$tmp_op_2 LF@$t$1
+JUMPIFEQ $PLUS_STR_0 GF@$tmp_type_1 string@string
+JUMPIFEQ $PLUS_NUM_1 GF@$tmp_type_1 string@float
+JUMPIFEQ $PLUS_NUM_1 GF@$tmp_type_1 string@int
+JUMP $$EXIT26
+
+LABEL $PLUS_STR_0
+JUMPIFNEQ $$EXIT26 GF@$tmp_type_2 string@string
+CONCAT LF@$t$2 GF@$tmp_op_1 GF@$tmp_op_2
+JUMP $PLUS_END_2
+
+LABEL $PLUS_NUM_1
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@bool
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@nil
+JUMPIFEQ $$EXIT26 GF@$tmp_type_2 string@string
+JUMPIFEQ $START_OPERATION_3 GF@$tmp_type_1 GF@$tmp_type_2
+JUMPIFEQ $ARG2_TO_FLOAT_4 GF@$tmp_type_1 string@float
+INT2FLOAT GF@$tmp_op_1 GF@$tmp_op_1
+JUMP $START_OPERATION_3
+
+LABEL $ARG2_TO_FLOAT_4
+INT2FLOAT GF@$tmp_op_2 GF@$tmp_op_2
+
+LABEL $START_OPERATION_3
+ADD LF@$t$2 GF@$tmp_op_1 GF@$tmp_op_2
+
+LABEL $PLUS_END_2
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | __res           | $t2             | ____
+MOVE GF@__res$0 LF@$t$2
+
+# ======================= NEW INSTRUCTION =======================
+#CALL               | ____            | Ifj.write$1     | ____
+MOVE GF@$ret_ifj_fun nil@nil
+MOVE GF@$tmp_op_1 GF@__res$0
+TYPE GF@$tmp_type_1 GF@$tmp_op_1
+JUMPIFNEQ $WRITE_5 GF@$tmp_type_1 string@float
+ISINT GF@$tmp GF@$tmp_op_1
+JUMPIFEQ $WRITE_5 GF@$tmp bool@false
+FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
+
+LABEL $WRITE_5
+WRITE GF@$tmp_op_1
+
+# ======================= NEW INSTRUCTION =======================
+#ASSIGN             | __tr            | Ifj.write$1     | ____
+MOVE GF@__tr$0 GF@$ret_ifj_fun
 
 # ======================= NEW INSTRUCTION =======================
 #FUNC_END           | ____            | main$0          | ____
@@ -73,121 +128,81 @@ POPFRAME
 RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#LABEL              | ____            | value$getter    | ____
+#LABEL              | ____            | str$getter      | ____
 
-LABEL $value$getter
+LABEL $str$getter
 PUSHFRAME
 
 # ======================= NEW INSTRUCTION =======================
-#FUNC_BEGIN         | ____            | value$getter    | ____
+#FUNC_BEGIN         | ____            | str$getter      | ____
 
 # ======================= NEW INSTRUCTION =======================
-#JUMP_IF_FALSE      | ____            | __stored        | L_ELSE_0
-JUMPIFEQ $L_ELSE_0 GF@__stored$0 nil@nil
-TYPE GF@$tmp_type_1 GF@__stored$0
-JUMPIFNEQ $SKIP_BOOL_CHECK_2 GF@$tmp_type_1 string@bool
-JUMPIFEQ $L_ELSE_0 GF@__stored$0 bool@false
-
-LABEL $SKIP_BOOL_CHECK_2
-
-# ======================= NEW INSTRUCTION =======================
-#RETURN             | __stored        | ____            | ____
-MOVE LF@ret GF@__stored$0
+#RETURN             | "123"           | ____            | ____
+MOVE LF@ret string@123
 POPFRAME
 RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#LABEL              | ____            | L_ELSE_0        | ____
-
-LABEL $L_ELSE_0
-
-# ======================= NEW INSTRUCTION =======================
-#RETURN             | 0               | ____            | ____
-MOVE LF@ret int@0
+#FUNC_END           | ____            | str$getter      | ____
 POPFRAME
 RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#LABEL              | ____            | L_ENDIF_1       | ____
+#LABEL              | ____            | int$getter      | ____
 
-LABEL $L_ENDIF_1
-
-# ======================= NEW INSTRUCTION =======================
-#FUNC_END           | ____            | value$getter    | ____
-POPFRAME
-RETURN
-
-# ======================= NEW INSTRUCTION =======================
-#LABEL              | ____            | value$setter    | ____
-
-LABEL $value$setter
+LABEL $int$getter
 PUSHFRAME
 
 # ======================= NEW INSTRUCTION =======================
-#FUNC_BEGIN         | ____            | value$setter    | ____
+#FUNC_BEGIN         | ____            | int$getter      | ____
 
 # ======================= NEW INSTRUCTION =======================
-#PARAM              | v               | ____            | ____
-
-# ======================= NEW INSTRUCTION =======================
-#ASSIGN             | __stored        | v               | ____
-MOVE GF@__stored$0 LF@v$0
-
-# ======================= NEW INSTRUCTION =======================
-#FUNC_END           | ____            | value$setter    | ____
+#RETURN             | 123             | ____            | ____
+MOVE LF@ret int@123
 POPFRAME
 RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#LABEL              | ____            | fun$2           | ____
+#FUNC_END           | ____            | int$getter      | ____
+POPFRAME
+RETURN
 
-LABEL $fun$2
+# ======================= NEW INSTRUCTION =======================
+#LABEL              | ____            | float$getter    | ____
+
+LABEL $float$getter
 PUSHFRAME
 
 # ======================= NEW INSTRUCTION =======================
-#FUNC_BEGIN         | ____            | fun$2           | ____
+#FUNC_BEGIN         | ____            | float$getter    | ____
 
 # ======================= NEW INSTRUCTION =======================
-#PARAM              | a               | ____            | ____
+#RETURN             | 1.23            | ____            | ____
+MOVE LF@ret float@0x1.3ae148p+0
+POPFRAME
+RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#PARAM              | b               | ____            | ____
+#FUNC_END           | ____            | float$getter    | ____
+POPFRAME
+RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#CALL               | ____            | Ifj.write$1     | ____
-MOVE GF@$ret_ifj_fun nil@nil
-MOVE GF@$tmp_op_1 LF@a$0
-TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_3 GF@$tmp_type_1 string@float
-ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_3 GF@$tmp bool@false
-FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
+#LABEL              | ____            | nil$getter      | ____
 
-LABEL $WRITE_3
-WRITE GF@$tmp_op_1
+LABEL $nil$getter
+PUSHFRAME
 
 # ======================= NEW INSTRUCTION =======================
-#ASSIGN             | a               | Ifj.write$1     | ____
-MOVE LF@a$0 GF@$ret_ifj_fun
+#FUNC_BEGIN         | ____            | nil$getter      | ____
 
 # ======================= NEW INSTRUCTION =======================
-#CALL               | ____            | Ifj.write$1     | ____
-MOVE GF@$ret_ifj_fun nil@nil
-MOVE GF@$tmp_op_1 LF@b$0
-TYPE GF@$tmp_type_1 GF@$tmp_op_1
-JUMPIFNEQ $WRITE_4 GF@$tmp_type_1 string@float
-ISINT GF@$tmp GF@$tmp_op_1
-JUMPIFEQ $WRITE_4 GF@$tmp bool@false
-FLOAT2INT GF@$tmp_op_1 GF@$tmp_op_1
-
-LABEL $WRITE_4
-WRITE GF@$tmp_op_1
+#RETURN             | nil             | ____            | ____
+MOVE LF@ret nil@nil
+POPFRAME
+RETURN
 
 # ======================= NEW INSTRUCTION =======================
-#ASSIGN             | b               | Ifj.write$1     | ____
-MOVE LF@b$0 GF@$ret_ifj_fun
-
-# ======================= NEW INSTRUCTION =======================
-#FUNC_END           | ____            | fun$2           | ____
+#FUNC_END           | ____            | nil$getter      | ____
 POPFRAME
 RETURN
