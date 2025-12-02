@@ -1,11 +1,16 @@
 /**
  * @file token.c
- * 
- * Realizace struktury a funkcí tokenů.
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *  
+ * @brief Realizace struktury a funkcí tokenů.
  *
- * Autor:
+ * @author  
  *     - Serhij Čepil (253038)
- * ! Допишите ваши имена и номера
+ *     - Dmytro Kravchenko (273125)
+ *     - Veronika Turbaievska (273123)
+ *     - Mykhailo Tarnavskyi (272479)
  */
 #include "token.h"
 #include "error_codes.h"

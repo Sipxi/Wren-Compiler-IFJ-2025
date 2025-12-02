@@ -1,15 +1,17 @@
 /**
  * @file lexer.c
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
  *
- * @brief Implementace lexikálního analyzátoru.
+ * @brief Hlavní zdrojový soubor pro práci s lexikální analýzou.
  *
- * Autor:
+ * @author
  *     - Serhij Čepil (253038)
  *     - Dmytro Kravchenko (273125)
  *     - Veronika Turbaievska (273123)
+ *     - Mykhailo Tarnavskyi (272479)
  */
-
- //! Допишите ваши имена и номера
 #include "lexer.h"
 #include "error_codes.h"
 #include "utils.h"

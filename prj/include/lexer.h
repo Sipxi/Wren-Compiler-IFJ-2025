@@ -4,7 +4,7 @@
  * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
  * @year 2025
  *
- * @brief Hlavičkový soubor pro lexer, který zodpovídá za tokenizaci zdrojového kódu.
+ * @brief Hlavní hlavičkový soubor pro práci s lexikální analýzou.
  *
  * @author
  *     - Serhij Čepil (253038)
@@ -12,6 +12,7 @@
  *     - Veronika Turbaievska (273123)
  *     - Mykhailo Tarnavskyi (272479)
  */
+
 
 #ifndef LEXER_H
 #define LEXER_H
