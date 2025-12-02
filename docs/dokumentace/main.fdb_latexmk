@@ -1,5 +1,5 @@
 # Fdb version 4
-["pdflatex"] 1764689298.74675 "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" "main.pdf" "main" 1764689301.24154 0
+["pdflatex"] 1764689415.76786 "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" "main.pdf" "main" 1764689418.29835 0
   "3ac.tex" 1764687222 2762 b6ad1547fec0e38daa4b95d60f78218e ""
   "C:/All Stuff/Stuff/LaTeXLibs/fonts/tfm/jknappen/ec/tcrm1200.tfm" 993062508 1444 95ffe0f19b974d50849790c8225c7ef7 ""
   "C:/All Stuff/Stuff/LaTeXLibs/fonts/tfm/jknappen/ec/tcrm1440.tfm" 993062510 1460 05250f74aea2bdcfe9d6766811b8b7b2 ""
@@ -77,18 +77,18 @@
   "C:/Users/Sipxi/AppData/Local/MiKTeX/fonts/tfm/lh/lh-t2a/larm2488.tfm" 1764579005 3264 8aa2086ebecf1132c0ba370957182f17 ""
   "C:/Users/Sipxi/AppData/Local/MiKTeX/fonts/tfm/lh/lh-t2a/latt1200.tfm" 1764579003 1272 bf3bb5cc29880b269c8bcb412a1ac6e2 ""
   "C:/Users/Sipxi/AppData/Local/MiKTeX/miktex/data/le/pdftex/pdflatex.fmt" 1764579211 13325849 a70937687cb8bb1afc7e44dc2ea5c564 ""
-  "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" 1764689246 2866 18d0c00250df1c8f681e86e5761044d1 ""
+  "c:/CodingProjects/C/ifj-project/IFJ-2025/docs/dokumentace/main.tex" 1764689412 2866 18d0c00250df1c8f681e86e5761044d1 ""
   "gencode.tex" 1764687193 2542 6de065d8c63920149ebc54b025370a45 ""
   "image/Lexer.png" 1764687255 1410486 05dd8044bc94adc257da91aa3c9cc282 ""
   "image/VUT-FIT-logo-cs.png" 1764628616 54488 cd1b4bab2d870d1577189a7b57e94909 ""
-  "main.aux" 1764689301 2261 0db2bce66e2d5ba676124c98210a697e "pdflatex"
-  "main.tex" 1764689246 2866 18d0c00250df1c8f681e86e5761044d1 ""
+  "main.aux" 1764689418 2261 0db2bce66e2d5ba676124c98210a697e "pdflatex"
+  "main.tex" 1764689412 2866 18d0c00250df1c8f681e86e5761044d1 ""
   "optimize.tex" 1764687222 2114 0e4d56f8f6ccf536fb45c2b6ccbd9fd8 ""
   "parse.tex" 1764687193 2696 3a75c08df9ff34035cfab3aef819fa3a ""
   "rozdeleni.tex" 1764687222 5205 acef676c09807927f7fc15f83a4d1dfb ""
   "scaner.tex" 1764687096 2098 1b264d538ce1083701620e9313d5d70d ""
   "semantics.tex" 1764687193 36 80f868bc23f013f8e337199b0a9eb1d5 ""
-  "symtable.tex" 1764689295 1429 b6c4d076bb3d222857493fe8f56e66a0 ""
+  "symtable.tex" 1764689325 1429 b6c4d076bb3d222857493fe8f56e66a0 ""
   "tables.tex" 1764687988 307 d52f4f60e989f8441b59f1d5e1b97f19 ""
   "tabulky_parser.tex" 1764687193 7779 aab482b0682da279f5a6786dedcc6602 ""
   (generated)
