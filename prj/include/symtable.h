@@ -27,31 +27,31 @@
 
 // Typy dat
 typedef enum{
-    TYPE_NUM,
-    TYPE_STR,
-    TYPE_NIL,
-    TYPE_BOOL, // Přidáno pro podporu porovnání
-    TYPE_UNKNOWN, // Pro neinicializované proměnné a chyby
-    TYPE_FLOAT, // Přidáno pro podporu float
-    
+TYPE_NUM,
+TYPE_STR,
+TYPE_NIL,
+TYPE_BOOL, // Přidáno pro podporu porovnání
+TYPE_UNKNOWN, // Pro neinicializované proměnné a chyby
+TYPE_FLOAT, // Přidáno pro podporu float
+
 
 } DataType;
 
 // Druh symbolu
 typedef enum{
-    KIND_VAR,
-    KIND_FUNC,
-    KIND_BLOCK
+KIND_VAR,
+KIND_FUNC,
+KIND_BLOCK
 
 } SymbolKind;
 
 // Stav slotu v tabulce symbolů
 typedef enum{
-    // Počáteční hodnota pro prázdný slot
-    // Začínáme s 0 pro calloc
-    SLOT_EMPTY = 0,
-    SLOT_OCCUPIED,
-    SLOT_DELETED,
+// Počáteční hodnota pro prázdný slot
+// Začínáme s 0 pro calloc
+SLOT_EMPTY = 0,
+SLOT_OCCUPIED,
+SLOT_DELETED,
 } SlotStatus;
 
 /* ======================================*/
@@ -65,30 +65,30 @@ struct Symtable;
 
 // Data symbolu
 typedef struct{
-    SymbolKind kind;    // Druh symbolu (proměnná, funkce atd.)
-    DataType data_type; // Datový typ symbolu
-    bool is_defined; // Příznak označující, zda je symbol definován (pro funkce)
-    char* unique_name; // Unikátní jméno pro pojmenování
-   
+SymbolKind kind;    // Druh symbolu (proměnná, funkce atd.)
+DataType data_type; // Datový typ symbolu
+bool is_defined; // Příznak označující, zda je symbol definován (pro funkce)
+char* unique_name; // Unikátní jméno pro pojmenování
+
 } SymbolData;
 
 
 // Záznam v tabulce symbolů
 typedef struct{
-    char *key;              // Klíč symbolu (jméno)
-    SymbolData *data;      // Ukazatel na data symbolu
-    SlotStatus status;     // Stav slotu (obsazený, prázdný, smazaný)
-    struct Symtable *local_table; // Ukazatel na lokální tabulku symbolů (pro funkce)
+char *key;              // Klíč symbolu (jméno)
+SymbolData *data;      // Ukazatel na data symbolu
+SlotStatus status;     // Stav slotu (obsazený, prázdný, smazaný)
+struct Symtable *local_table; // Ukazatel na lokální tabulku symbolů (pro funkce)
 } TableEntry;
 
 // Tabulka symbolů
 typedef struct Symtable{
-    TableEntry* entries;   // Pole záznamů tabulky symbolů
-    size_t count;           // Současný počet záznamů v tabulce
-    size_t capacity;       // Kapacita tabulky, tj. maximální počet záznamů
+TableEntry* entries;   // Pole záznamů tabulky symbolů
+size_t count;           // Současný počet záznamů v tabulce
+size_t capacity;       // Kapacita tabulky, tj. maximální počet záznamů
 
-    int nesting_level;     // Úroveň vnořenosti (0 pro GF, 1 pro LF, 2+ pro vnořené bloky)
-    // struct Symtable* parent_scope; // Ukazatel na rodičovskou tabulku (pro vyhledávání)
+int nesting_level;     // Úroveň vnořenosti (0 pro GF, 1 pro LF, 2+ pro vnořené bloky)
+// struct Symtable* parent_scope; // Ukazatel na rodičovskou tabulku (pro vyhledávání)
 } Symtable;
 
 // ======================================*/
