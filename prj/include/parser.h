@@ -1,19 +1,32 @@
+/**
+ * @file parser.h
+ * @team Tým 253038
+ * @project Implementace překladače imperativního jazyka IFJ25 (varianta TRP-izp)
+ * @year 2025
+ *
+ * @brief Hlavičkový soubor pro parser.c
+ *
+ * @author
+ *     - Veronika Turbaievska (273123)
+ */
+
 #if !defined(PARSER_H)
 #define PARSER_H
 
 #include "lexer.h"
 #include "ast.h"
+
 typedef struct {
-    Lexer* lexer;       // Указатель на Лексер
-    FILE* file;         // Указатель на исходный файл
+    Lexer* lexer;       // Ukazatel na lexér
+    FILE* file;         // Ukazatel na vstupní soubor
 
 } Parser;
 
 /**
- * @brief Запускает парсер для анализа входного файла и построения AST.
+ * @brief Spustí parser pro analýzu vstupního souboru a vytvoření AST.
  * 
- * @param file Указатель на входной файл для парсинга.
- * @return AstNode* Указатель на корневой узел построенного AST.
+ * @param file Ukazatel na vstupní soubor pro parsování.
+ * @return AstNode* Ukazatel na kořenový uzel vytvořeného AST.
  */
 AstNode *parser_run(FILE *file);
 
