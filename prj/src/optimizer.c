@@ -203,7 +203,7 @@ static char *multiply_string_constant(TacInstruction *instr);
  * @param op Kód operace instrukce.
  * @return true Pokud instrukce má vedlejší efekty.
  */
-static bool has_side_effects(TacOperationCode op);
+static bool op_has_global_effect(TacOperationCode op);
 
 /**
  * @brief Kontroluje, zda je proměnná globální.
@@ -420,7 +420,7 @@ static bool are_args_constant(TacInstruction *instr) {
 /* ===== Implementace pomocných funkcí pro DCE =====*/
 /* ======================================*/
 
-static bool has_side_effects(TacOperationCode op) {
+static bool op_has_global_effect(TacOperationCode op) {
     switch (op) {
         case OP_CALL: 
         case OP_JUMP:
@@ -524,7 +524,7 @@ static void dead_code_elimination(TACDLList *tac_list) {
                 int id = instr->result->data.temp_id;
                 if (id >= 0 && id < MAX_TEMP_ID) {
                     int count = usage_get(usage_list, NULL, id, true);
-                    if (count == 0 && !has_side_effects(instr->operation_code)) {
+                    if (count == 0 && !op_has_global_effect(instr->operation_code)) {
                         should_remove = true;
                     }
                     
@@ -535,7 +535,7 @@ static void dead_code_elimination(TACDLList *tac_list) {
                 char *key = instr->result->data.symbol_entry->key;
                 if (!is_global_var(key)) {
                     int count = usage_get(usage_list, key, 0, false);
-                    if (count == 0 && !has_side_effects(instr->operation_code)) {
+                    if (count == 0 && !op_has_global_effect(instr->operation_code)) {
                         should_remove = true;
                     }
                 }
