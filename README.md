@@ -29,10 +29,10 @@ This project implements a complete compiler for the IFJ25 language, a simplified
 
 | Name | Student ID | Login | Contribution |
 |------|-----------|-------|--------------|
-| **Serhij Čepil** | 253038 | x253038 | Team Lead, Lexer, Optimizer, TAC Generation |
+| **Serhij Čepil** | 253038 | x253038 | Team Lead, Lexer, Symtable, Optimizer, TAC Generation |
 | **Dmytro Kravchenko** | 273125 | xkravcd00 | Lexer, Code Generation |
-| **Veronika Turbaievska** | 273123 | xturbav00 |Syntax Analysis, Grammar, Symbol Tables |
-| **Mykhailo Tarnavskyi** | 272479 | xtarnam00 | Semantic Analysis, AST, Type Checking |
+| **Veronika Turbaievska** | 273123 | xturbav00 | Lexer, Syntax Analysis, Grammar, Symbol Tables |
+| **Mykhailo Tarnavskyi** | 272479 | xtarnam00 | Lexer, Semantic Analysis, AST, Type Checking |
 
 ## 🏗️ Technical Architecture
 
@@ -333,4 +333,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 ---
 
 **Note**: This project was developed as part of the IFJ course at VUT FIT. It is intended for educational purposes.
+
 
