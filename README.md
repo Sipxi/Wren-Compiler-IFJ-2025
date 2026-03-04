@@ -22,7 +22,7 @@ This project implements a complete compiler for the IFJ25 language, a simplified
 
 **Course:** Formal Languages and Compilers (IFJ)  
 **Institution:** Brno University of Technology, Faculty of Information Technology (VUT FIT)  
-**Academic Year:** 2024/2025  
+**Academic Year:** 2025/2026  
 **Team ID:** 253038
 
 ## 👥 Team
